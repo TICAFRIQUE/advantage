@@ -28,7 +28,7 @@ class RechercheTitulaireController extends Controller
             return response()->json(['existe' => false]);
         }
 
-        $carteEnCirculation = $titulaire->cartes->first(fn (Carte $carte) => $carte->peutEtreDeclareePerdue());
+        $carteEnCirculation = $titulaire->cartes->first(fn (Carte $carte) => $carte->estEnCirculation());
 
         return response()->json([
             'existe' => true,

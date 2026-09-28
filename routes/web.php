@@ -84,9 +84,35 @@ Route::middleware(['auth', 'compte.actif'])->group(function () use ($parcoursTra
             Route::post('/cartes', [Gestion\CarteController::class, 'store'])
                 ->middleware(['permission:'.Permission::ActiverCarte->value, 'throttle:activation-carte'])
                 ->name('cartes.store');
+            Route::get('/cartes/rapport', [Gestion\RapportCartesController::class, 'index'])
+                ->middleware('permission:'.Permission::VoirRapportCartes->value)
+                ->name('cartes.rapport');
+            Route::get('/cartes/rapport/donnees', [Gestion\RapportCartesController::class, 'donnees'])
+                ->middleware('permission:'.Permission::VoirRapportCartes->value)
+                ->name('cartes.rapport.donnees');
             Route::get('/cartes/{carte}', [Gestion\CarteController::class, 'show'])
+                ->whereNumber('carte')
                 ->middleware('permission:'.Permission::VoirCartes->value)
                 ->name('cartes.show');
+            Route::post('/cartes/{carte}/statut', Gestion\StatutCarteController::class)
+                ->middleware(['permission:'.Permission::GererStatutCarte->value, 'throttle:activation-carte'])
+                ->name('cartes.statut');
+
+            // Titulaire : identité (permission dédiée) et téléphone (permission
+            // dédiée + PIN confirmé depuis moins de 5 minutes).
+            Route::get('/cartes/{carte}/titulaire', [Gestion\TitulaireController::class, 'edit'])
+                ->middleware('permission:'.Permission::ModifierTitulaire->value.'|'.Permission::ModifierTelephoneTitulaire->value)
+                ->name('cartes.titulaire.edit');
+            Route::put('/cartes/{carte}/titulaire', [Gestion\TitulaireController::class, 'update'])
+                ->middleware('permission:'.Permission::ModifierTitulaire->value)
+                ->name('cartes.titulaire.update');
+            Route::middleware(['permission:'.Permission::ModifierTelephoneTitulaire->value, 'password.confirm:password.confirm,300'])
+                ->group(function () {
+                    Route::get('/cartes/{carte}/titulaire/telephone', [Gestion\TitulaireController::class, 'editTelephone'])
+                        ->name('cartes.titulaire.telephone.edit');
+                    Route::put('/cartes/{carte}/titulaire/telephone', [Gestion\TitulaireController::class, 'updateTelephone'])
+                        ->name('cartes.titulaire.telephone.update');
+                });
             Route::post('/titulaires/recherche', Gestion\RechercheTitulaireController::class)
                 ->middleware(['permission:'.Permission::ActiverCarte->value, 'throttle:recherche-titulaire'])
                 ->name('titulaires.recherche');

@@ -28,11 +28,16 @@ const francais = {
 document.querySelectorAll('table[data-source]').forEach((tableau) => {
     const filtres = tableau.dataset.filtres ? document.querySelector(tableau.dataset.filtres) : null;
 
+    // data-lien="colonne_url" : la cellule devient un lien. Les valeurs sont
+    // déjà échappées côté serveur par Yajra (pas de double échappement).
     const colonnes = [...tableau.querySelectorAll('thead th')].map((th) => ({
         data: th.dataset.colonne,
         name: th.dataset.colonne,
         orderable: th.dataset.triable !== 'false',
         searchable: false,
+        render: th.dataset.lien
+            ? (valeur, type, ligne) => (type === 'display' && ligne[th.dataset.lien] ? `<a href="${ligne[th.dataset.lien]}">${valeur}</a>` : valeur)
+            : undefined,
     }));
 
     const table = new DataTable(tableau, {
@@ -40,7 +45,8 @@ document.querySelectorAll('table[data-source]').forEach((tableau) => {
         processing: true,
         responsive: true,
         pageLength: 25,
-        order: [[0, 'desc']],
+        // Tri initial sur la première colonne triable (côté serveur).
+        order: [[Math.max(0, colonnes.findIndex((colonne) => colonne.orderable)), 'desc']],
         columns: colonnes,
         language: francais,
         ajax: {

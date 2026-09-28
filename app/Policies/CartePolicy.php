@@ -26,4 +26,22 @@ class CartePolicy
     {
         return $user->can(Permission::ActiverCarte->value);
     }
+
+    /**
+     * Suspendre, réactiver ou révoquer (l'action revérifie la transition).
+     */
+    public function changerStatut(User $user, Carte $carte): bool
+    {
+        return $user->can(Permission::GererStatutCarte->value) && $carte->transitionsPossibles() !== [];
+    }
+
+    public function modifierTitulaire(User $user, Carte $carte): bool
+    {
+        return $user->can(Permission::ModifierTitulaire->value);
+    }
+
+    public function modifierTelephone(User $user, Carte $carte): bool
+    {
+        return $user->can(Permission::ModifierTelephoneTitulaire->value);
+    }
 }

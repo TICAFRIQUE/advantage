@@ -1,6 +1,4 @@
-<x-layouts.app :titre="'Carte '.$carte->numeroFormate()" sous-titre="Back-office">
-
-
+<x-layouts.app :titre="'Carte '.$carte->numeroFormate()" sous-titre="Back-office · Cartes">
     <nav aria-label="Fil d'Ariane" class="mb-3">
         <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item"><a href="{{ route('gestion.cartes.index') }}">Cartes</a></li>
@@ -11,13 +9,20 @@
     <div class="row g-4">
         <div class="col-12 col-lg-5">
             <x-carte-visuelle :carte="$carte" class="mb-4" />
-            <x-actions-carte :carte="$carte" :detail="false" />
+            <x-actions-statut-carte :carte="$carte" class="mb-2" />
         </div>
 
         <div class="col-12 col-lg-7">
             <section class="card border-0 shadow-sm mb-4" aria-labelledby="titre-titulaire">
                 <div class="card-body">
-                    <h1 class="h5 fw-bold" id="titre-titulaire">{{ $carte->titulaire->nomComplet() }}</h1>
+                    <div class="d-flex flex-wrap align-items-start justify-content-between gap-2">
+                        <h1 class="h5 fw-bold" id="titre-titulaire">{{ $carte->titulaire->nomComplet() }}</h1>
+                        @if (auth()->user()->canAny(['modifierTitulaire', 'modifierTelephone'], $carte))
+                            <a href="{{ route('gestion.cartes.titulaire.edit', $carte) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil me-1" aria-hidden="true"></i>Modifier le titulaire
+                            </a>
+                        @endif
+                    </div>
                     <dl class="row mb-0 small">
                         <dt class="col-5 col-sm-4">Téléphone</dt>
                         <dd class="col-7 col-sm-8">{{ $carte->titulaire->telephoneFormate() }}</dd>

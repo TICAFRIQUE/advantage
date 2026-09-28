@@ -47,7 +47,8 @@ class BarreLaterale extends Component
             ],
             'Cartes' => [
                 $this->entree('Activer une carte', 'bi-credit-card-2-front', 'gestion.cartes.create', ['gestion.cartes.create'], $user->can(Permission::ActiverCarte->value)),
-                $this->entree('Liste des cartes', 'bi-wallet2', 'gestion.cartes.index', ['gestion.cartes.index', 'gestion.cartes.show'], $user->can(Permission::VoirCartes->value)),
+                $this->entree('Liste des cartes', 'bi-wallet2', 'gestion.cartes.index', ['gestion.cartes.index', 'gestion.cartes.show', 'gestion.cartes.titulaire.*'], $user->can(Permission::VoirCartes->value)),
+                $this->entree('Rapport des cartes', 'bi-bar-chart-line', 'gestion.cartes.rapport', ['gestion.cartes.rapport'], $user->can(Permission::VoirRapportCartes->value)),
             ],
             'Partenaires' => [
                 $this->entree('Transaction', 'bi-upc-scan', 'gestion.transaction.verifier', ['gestion.transaction.*'], $user->can(Permission::EffectuerTransactionPartenaire->value)),

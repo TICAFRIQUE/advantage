@@ -35,7 +35,7 @@ class CarteController extends Controller
         $cartes = Carte::query()
             ->with(['titulaire', 'activePar.roles', 'modifiePar.roles'])
             ->when($filtres['recherche'] ?? null, fn (Builder $query, string $recherche) => $this->rechercher($query, $recherche))
-            ->when($filtres['statut'] ?? null, fn (Builder $query, string $statut) => $this->filtrerStatut($query, StatutCarte::from($statut)))
+            ->when($filtres['statut'] ?? null, fn (Builder $query, string $statut) => $query->statutEffectif(StatutCarte::from($statut)))
             ->when($request->boolean('mes_activations'), fn (Builder $query) => $query->where('active_par_id', $request->user()->id))
             ->latest('active_le')
             ->latest('id')
@@ -76,7 +76,8 @@ class CarteController extends Controller
             ->with('acteur.roles')
             ->where('type_entite', 'Carte')
             ->where('entite_id', $carte->id)
-            ->where('action', '!=', 'carte.consultee') // opérations uniquement (consultations dans le journal complet)
+            // Opérations uniquement : consultations et vérifications restent dans le journal complet.
+            ->whereNotIn('action', ['carte.consultee', 'carte.verifiee'])
             ->latest('cree_le')
             ->latest('id')
             ->limit(20)
@@ -84,7 +85,6 @@ class CarteController extends Controller
 
         return view('gestion.cartes.show', ['carte' => $carte, 'historique' => $historique]);
     }
-
 
     /**
      * Numérique : préfixe du numéro de carte ou fragment du téléphone.
@@ -108,21 +108,5 @@ class CarteController extends Controller
         $query->whereHas('titulaire', fn (Builder $t) => $t
             ->where('nom', 'like', '%'.$texte.'%')
             ->orWhere('prenom', 'like', '%'.$texte.'%'));
-    }
-
-    /**
-     * Le filtre tient compte du statut effectif (date échue = expirée).
-     *
-     * @param  Builder<Carte>  $query
-     */
-    private function filtrerStatut(Builder $query, StatutCarte $statut): void
-    {
-        match ($statut) {
-            StatutCarte::Active => $query->where('statut', StatutCarte::Active)->where('expire_le', '>', now()),
-            StatutCarte::Expiree => $query->where(fn (Builder $q) => $q
-                ->where('statut', StatutCarte::Expiree)
-                ->orWhere(fn (Builder $q) => $q->where('statut', StatutCarte::Active)->where('expire_le', '<=', now()))),
-            default => $query->where('statut', $statut),
-        };
     }
 }

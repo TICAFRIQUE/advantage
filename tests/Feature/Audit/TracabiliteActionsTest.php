@@ -57,3 +57,15 @@ it('logs logouts', function () {
 
     expect(JournalAudit::where('action', 'deconnexion')->sole()->acteur_id)->toBe($agent->id);
 });
+
+it('keeps partner verifications out of the card operations history', function () {
+    $carte = Carte::factory()->create(['numero_carte' => '4567890']);
+    connecter(utilisateurAvecRole(Role::Partenaire))
+        ->post(route('partenaire.transaction.verifier.store'), ['numero_carte' => '4567890']);
+
+    connecter(utilisateurAvecRole(Role::Admin))->get(route('gestion.cartes.show', $carte))
+        ->assertSee('Carte activée')
+        ->assertDontSee('Carte vérifiée (partenaire)');
+
+    expect(JournalAudit::where('action', 'carte.verifiee')->exists())->toBeTrue();
+});

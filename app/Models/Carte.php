@@ -9,6 +9,7 @@ use Database\Factories\CarteFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -49,6 +50,27 @@ class Carte extends Model
             $carte->expire_le = $carte->active_le?->copy()
                 ->addMonthsNoOverflow((int) config('plateforme.carte.duree_validite_mois', 12));
         });
+    }
+
+    /**
+     * Filtre sur le statut effectif : une carte « active » dont la date est
+     * échue compte comme expirée, même avant le passage du job quotidien.
+     *
+     * @param  Builder<Carte>  $query
+     */
+    public function scopeStatutEffectif(Builder $query, StatutCarte $statut): void
+    {
+        // Colonnes qualifiées : le scope reste sûr en cas de jointure (users a aussi un « statut »).
+        $colStatut = $query->qualifyColumn('statut');
+        $colExpire = $query->qualifyColumn('expire_le');
+
+        match ($statut) {
+            StatutCarte::Active => $query->where($colStatut, StatutCarte::Active)->where($colExpire, '>', now()),
+            StatutCarte::Expiree => $query->where(fn (Builder $q) => $q
+                ->where($colStatut, StatutCarte::Expiree)
+                ->orWhere(fn (Builder $q) => $q->where($colStatut, StatutCarte::Active)->where($colExpire, '<=', now()))),
+            default => $query->where($colStatut, $statut),
+        };
     }
 
     /**
@@ -128,11 +150,32 @@ class Carte extends Model
     }
 
     /**
-     * Perte déclarable uniquement sur une carte encore en circulation.
+     * Carte encore en circulation (active ou suspendue, date non échue) :
+     * un titulaire n'en possède qu'une à la fois.
      */
-    public function peutEtreDeclareePerdue(): bool
+    public function estEnCirculation(): bool
     {
-        return in_array($this->statutEffectif(), [StatutCarte::Active, StatutCarte::Suspendue], true);
+        return in_array($this->statutEffectif(), [StatutCarte::Active, StatutCarte::Suspendue], true)
+            && $this->expire_le?->isFuture() === true;
+    }
+
+    /**
+     * Changements de statut autorisés depuis l'état actuel :
+     * - active → suspendue (réversible) ou révoquée (définitif, ex. perte) ;
+     * - suspendue → active (si la date de validité n'est pas échue) ou révoquée ;
+     * - expirée et révoquée sont définitifs ; l'expiration est automatique.
+     *
+     * @return list<StatutCarte>
+     */
+    public function transitionsPossibles(): array
+    {
+        return match ($this->statutEffectif()) {
+            StatutCarte::Active => [StatutCarte::Suspendue, StatutCarte::Revoquee],
+            StatutCarte::Suspendue => $this->expire_le?->isFuture() === true
+                ? [StatutCarte::Active, StatutCarte::Revoquee]
+                : [StatutCarte::Revoquee],
+            default => [],
+        };
     }
 
     /**
