@@ -28,6 +28,11 @@ class PartenairePolicy
         return $user->can(Permission::GererPartenaires->value);
     }
 
+    public function delete(User $user, Partenaire $partenaire): bool
+    {
+        return $user->can(Permission::SupprimerPartenaires->value);
+    }
+
     public function gererOperateurs(User $user, Partenaire $partenaire): bool
     {
         return $user->can(Permission::GererOperateursPartenaires->value);

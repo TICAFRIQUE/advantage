@@ -37,5 +37,18 @@
                 <i class="bi {{ $actif ? 'bi-person-x' : 'bi-person-check' }}" aria-hidden="true"></i>
             </button>
         </form>
+
+        @can('supprimer', $compte)
+            <form method="POST" action="{{ route('gestion.comptes.supprimer', $compte) }}"
+                  data-titre="Supprimer le compte {{ $compte->nom_utilisateur }} ?"
+                  data-confirmer="L'utilisateur ne pourra plus se connecter et disparaîtra des listes. Son nom reste visible dans l'historique."
+                  data-bouton-confirmer="Supprimer" data-danger="1">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-sm btn-danger" aria-label="Supprimer {{ $compte->nom }}" title="Supprimer">
+                    <i class="bi bi-trash" aria-hidden="true"></i>
+                </button>
+            </form>
+        @endcan
     </div>
 @endcan

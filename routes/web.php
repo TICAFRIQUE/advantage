@@ -143,6 +143,10 @@ Route::middleware(['auth', 'compte.actif'])->group(function () use ($parcoursTra
             Route::post('/partenaires/{partenaire}/statut', [Gestion\PartenaireController::class, 'changerStatut'])
                 ->middleware('permission:'.Permission::GererPartenaires->value)
                 ->name('partenaires.statut');
+            Route::delete('/partenaires/{partenaire}', [Gestion\PartenaireController::class, 'destroy'])
+                ->whereNumber('partenaire')
+                ->middleware(['permission:'.Permission::SupprimerPartenaires->value, 'password.confirm:password.confirm,300'])
+                ->name('partenaires.destroy');
             Route::post('/partenaires/{partenaire}/operateurs', [Gestion\OperateurController::class, 'store'])
                 ->middleware(['permission:'.Permission::GererOperateursPartenaires->value, 'throttle:activation-carte'])
                 ->name('partenaires.operateurs.store');
@@ -157,6 +161,9 @@ Route::middleware(['auth', 'compte.actif'])->group(function () use ($parcoursTra
                         ->name('pin');
                     Route::post('/verrouillage', [Gestion\CompteController::class, 'verrouillage'])->name('verrouillage');
                     Route::post('/statut', [Gestion\CompteController::class, 'statut'])->name('statut');
+                    Route::delete('/', [Gestion\CompteController::class, 'supprimer'])
+                        ->middleware(['permission:'.Permission::SupprimerComptes->value, 'password.confirm:password.confirm,300'])
+                        ->name('supprimer');
                 });
 
             Route::get('/transactions/rapport', [Gestion\RapportTransactionsController::class, 'index'])

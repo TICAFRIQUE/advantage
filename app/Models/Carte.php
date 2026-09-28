@@ -88,7 +88,7 @@ class Carte extends Model
      */
     public function activePar(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'active_par_id');
+        return $this->belongsTo(User::class, 'active_par_id')->withTrashed();
     }
 
     /**
@@ -98,7 +98,7 @@ class Carte extends Model
      */
     public function modifiePar(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'modifie_par_id');
+        return $this->belongsTo(User::class, 'modifie_par_id')->withTrashed();
     }
 
     /**

@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Gate;
 
 /**
  * Opérations sur un compte (opérateur, agent, admin) : PIN, verrouillage,
- * statut. Autorisation par UserPolicy::gerer (GardeDroits), revérifiée dans
+ * statut, suppression (archivage). Autorisation par UserPolicy::gerer (GardeDroits), revérifiée dans
  * l'action.
  */
 class CompteController extends Controller
@@ -56,6 +56,17 @@ class CompteController extends Controller
             return back()->with('succes', $statut === StatutUtilisateur::Actif
                 ? "Le compte {$compte->nom_utilisateur} est réactivé."
                 : "Le compte {$compte->nom_utilisateur} est désactivé.");
+        });
+    }
+
+    public function supprimer(User $compte, GererCompteAction $gerer): RedirectResponse
+    {
+        Gate::authorize('supprimer', $compte);
+
+        return $this->executer(function () use ($compte, $gerer): RedirectResponse {
+            $gerer->supprimer($compte, auth()->user());
+
+            return back()->with('succes', "Le compte {$compte->nom_utilisateur} a été supprimé. Son nom reste visible dans l'historique.");
         });
     }
 

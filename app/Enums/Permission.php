@@ -26,12 +26,14 @@ enum Permission: string
     // Partenaires
     case VoirPartenaires = 'voir-partenaires';
     case GererPartenaires = 'gerer-partenaires';
+    case SupprimerPartenaires = 'supprimer-partenaires';
     case GererOperateursPartenaires = 'gerer-operateurs-partenaires';
     case EffectuerTransactionPartenaire = 'effectuer-transaction-partenaire';
     case VoirRapportTransactions = 'voir-rapport-transactions';
 
     // Paramètres
     case GererUtilisateurs = 'gerer-utilisateurs';
+    case SupprimerComptes = 'supprimer-comptes';
     case GererRoles = 'gerer-roles';
     case VoirJournalAudit = 'voir-journal-audit';
     case PurgerJournalAudit = 'purger-journal-audit';

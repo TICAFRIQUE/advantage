@@ -23,7 +23,8 @@ class RapportTransactionsController extends Controller
         return view('gestion.transactions.rapport', [
             'filtres' => $request->validated(),
             'indicateurs' => $rapport->indicateurs(),
-            'partenaires' => Partenaire::query()->orderBy('nom')->get(['id', 'nom']),
+            // Partenaires supprimés compris : leurs transactions restent consultables.
+            'partenaires' => Partenaire::withTrashed()->orderBy('nom')->get(['id', 'nom', 'deleted_at']),
         ]);
     }
 

@@ -1,11 +1,15 @@
 <?php
 
+use App\Enums\Permission;
 use App\Enums\Role;
+use App\Enums\StatutDemandeOtp;
 use App\Enums\StatutPartenaire;
+use App\Models\DemandeOtp;
 use App\Models\HistoriqueTauxPartenaire;
 use App\Models\JournalAudit;
 use App\Models\Partenaire;
 use App\Models\User;
+use App\Services\PartenaireCourant;
 
 /**
  * @param  array<string, mixed>  $surcharge
@@ -169,5 +173,70 @@ describe('autorisations', function () {
 
     it('keeps partner operators out of partner management', function () {
         connecter(utilisateurAvecRole(Role::Partenaire))->get(route('gestion.partenaires.index'))->assertForbidden();
+    });
+});
+
+describe('suppression', function () {
+    it('asks for the password before deleting a partner', function () {
+        $partenaire = Partenaire::factory()->create();
+
+        connecter(utilisateurAvecRole(Role::Admin))
+            ->delete(route('gestion.partenaires.destroy', $partenaire))
+            ->assertRedirect(route('password.confirm'));
+
+        expect($partenaire->fresh()->trashed())->toBeFalse();
+    });
+
+    it('archives the partner with its users and expires its pending codes', function () {
+        $operateur = utilisateurAvecRole(Role::Partenaire);
+        $partenaire = $operateur->partenaire;
+        $autrePartenaire = Partenaire::factory()->create();
+        $demande = DemandeOtp::factory()->create(['partenaire_id' => $partenaire->id]);
+        $autreDemande = DemandeOtp::factory()->create(['partenaire_id' => $autrePartenaire->id]);
+        $admin = utilisateurAvecRole(Role::Admin);
+
+        avecPinRecent($admin)->delete(route('gestion.partenaires.destroy', $partenaire))
+            ->assertRedirect(route('gestion.partenaires.index'))
+            ->assertSessionHas('succes');
+
+        expect(Partenaire::find($partenaire->id))->toBeNull()
+            ->and(Partenaire::withTrashed()->find($partenaire->id)->trashed())->toBeTrue()
+            ->and(User::find($operateur->id))->toBeNull()
+            ->and($demande->fresh()->statut)->toBe(StatutDemandeOtp::Expiree)
+            ->and($autreDemande->fresh()->statut)->toBe(StatutDemandeOtp::EnAttente)
+            ->and(JournalAudit::where('action', 'partenaire.supprime')->where('entite_id', $partenaire->id)->sole()->acteur_id)->toBe($admin->id)
+            ->and(JournalAudit::where('action', 'utilisateur.supprime')->where('entite_id', $operateur->id)->exists())->toBeTrue();
+
+        connecter($admin)->get(route('gestion.partenaires.show', $partenaire))->assertNotFound();
+        expect(collect(donneesPartenaires($admin)['data'])->pluck('id'))->not->toContain($partenaire->id);
+    });
+
+    it('can no longer be chosen for a back-office transaction', function () {
+        $partenaire = Partenaire::factory()->create();
+        $admin = utilisateurAvecRole(Role::Admin);
+        avecPinRecent($admin)->delete(route('gestion.partenaires.destroy', $partenaire));
+
+        connecter($admin)->post(route('gestion.transaction.partenaire-courant.store'), ['partenaire_id' => $partenaire->id])
+            ->assertSessionHasErrors('partenaire_id');
+        connecter($admin)->withSession([PartenaireCourant::CLE_SESSION => $partenaire->id])
+            ->post(route('gestion.transaction.verifier.store'), ['numero_carte' => '1234567'])
+            ->assertRedirect(route('gestion.transaction.verifier'))
+            ->assertSessionHas('erreur');
+    });
+
+    it('reserves the deletion to the dedicated permission', function () {
+        $partenaire = Partenaire::factory()->create();
+        $agent = utilisateurAvecRole(Role::Agent);
+        $agent->givePermissionTo(Permission::GererPartenaires->value);
+
+        connecter($agent)->get(route('gestion.partenaires.show', $partenaire))
+            ->assertOk()
+            ->assertDontSee('action="'.route('gestion.partenaires.destroy', $partenaire).'"', false);
+        avecPinRecent($agent)->delete(route('gestion.partenaires.destroy', $partenaire))->assertForbidden();
+
+        connecter(utilisateurAvecRole(Role::Admin))->get(route('gestion.partenaires.show', $partenaire))
+            ->assertSee('action="'.route('gestion.partenaires.destroy', $partenaire).'"', false)
+            ->assertSee('Supprimer le partenaire');
+        expect($partenaire->fresh()->trashed())->toBeFalse();
     });
 });

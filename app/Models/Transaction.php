@@ -41,7 +41,7 @@ class Transaction extends Model
      */
     public function carte(): BelongsTo
     {
-        return $this->belongsTo(Carte::class);
+        return $this->belongsTo(Carte::class)->withTrashed();
     }
 
     /**
@@ -49,7 +49,7 @@ class Transaction extends Model
      */
     public function partenaire(): BelongsTo
     {
-        return $this->belongsTo(Partenaire::class);
+        return $this->belongsTo(Partenaire::class)->withTrashed();
     }
 
     /**
@@ -67,6 +67,6 @@ class Transaction extends Model
      */
     public function validePar(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'valide_par_id');
+        return $this->belongsTo(User::class, 'valide_par_id')->withTrashed();
     }
 }

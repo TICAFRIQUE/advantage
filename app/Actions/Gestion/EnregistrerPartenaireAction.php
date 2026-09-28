@@ -2,7 +2,10 @@
 
 namespace App\Actions\Gestion;
 
+use App\Actions\Comptes\GererCompteAction;
+use App\Enums\StatutDemandeOtp;
 use App\Enums\StatutPartenaire;
+use App\Models\DemandeOtp;
 use App\Models\HistoriqueTauxPartenaire;
 use App\Models\Partenaire;
 use App\Models\User;
@@ -59,6 +62,28 @@ class EnregistrerPartenaireAction
         $partenaire->update(['statut' => $statut]);
 
         return $partenaire;
+    }
+
+    /**
+     * Archivage (suppression douce) du partenaire et de ses utilisateurs : plus
+     * aucune connexion ni transaction possible, mais les transactions passées
+     * gardent le nom du partenaire. Les codes en attente sont expirés.
+     */
+    public function supprimer(Partenaire $partenaire): void
+    {
+        DB::transaction(function () use ($partenaire): void {
+            $partenaire = Partenaire::query()->lockForUpdate()->findOrFail($partenaire->id);
+            $comptes = app(GererCompteAction::class);
+
+            $partenaire->operateurs()->get()->each(fn (User $operateur) => $comptes->archiver($operateur));
+
+            DemandeOtp::query()
+                ->where('partenaire_id', $partenaire->id)
+                ->where('statut', StatutDemandeOtp::EnAttente)
+                ->update(['statut' => StatutDemandeOtp::Expiree, 'updated_at' => now()]);
+
+            $partenaire->delete();
+        });
     }
 
     private function tracerTaux(Partenaire $partenaire, ?string $ancien, User $auteur): void

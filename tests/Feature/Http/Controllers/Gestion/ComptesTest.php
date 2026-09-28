@@ -1,9 +1,15 @@
 <?php
 
+use App\Actions\Comptes\GererCompteAction;
+use App\Enums\Permission;
 use App\Enums\Role;
+use App\Enums\StatutDemandeOtp;
 use App\Enums\StatutUtilisateur;
+use App\Exceptions\OperationCompteException;
+use App\Models\DemandeOtp;
 use App\Models\JournalAudit;
 use App\Models\Partenaire;
+use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -130,5 +136,120 @@ describe('gestion d\'un compte', function () {
         avecPinRecent(utilisateurAvecRole(Role::Admin))->post(route('gestion.comptes.pin', $operateur));
 
         expect(JournalAudit::where('action', 'utilisateur.pin_reinitialise')->where('entite_id', $operateur->id)->exists())->toBeTrue();
+    });
+});
+
+describe('nom de l\'utilisateur du partenaire', function () {
+    it('makes the full name optional and falls back on the username', function () {
+        $partenaire = Partenaire::factory()->create();
+
+        connecter(utilisateurAvecRole(Role::Admin))
+            ->post(route('gestion.partenaires.operateurs.store', $partenaire), ['nom' => '   ', 'nom_utilisateur' => 'Caisse.Deux'])
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('pin_genere');
+
+        expect(User::where('nom_utilisateur', 'caisse.deux')->sole())
+            ->nom->toBe('caisse.deux')
+            ->partenaire_id->toBe($partenaire->id);
+    });
+
+    it('still rejects a one-letter name', function () {
+        connecter(utilisateurAvecRole(Role::Admin))
+            ->post(route('gestion.partenaires.operateurs.store', Partenaire::factory()->create()), ['nom' => 'A', 'nom_utilisateur' => 'caisse.trois'])
+            ->assertSessionHasErrors('nom');
+    });
+});
+
+describe('suppression d\'un compte', function () {
+    it('asks for the password before deleting', function () {
+        $operateur = utilisateurAvecRole(Role::Partenaire);
+
+        connecter(utilisateurAvecRole(Role::Admin))
+            ->delete(route('gestion.comptes.supprimer', $operateur))
+            ->assertRedirect(route('password.confirm'));
+
+        expect($operateur->fresh()->trashed())->toBeFalse();
+    });
+
+    it('archives the account, expires its pending codes and audits the deletion', function () {
+        $operateur = utilisateurAvecRole(Role::Partenaire);
+        $admin = utilisateurAvecRole(Role::Admin);
+        $demande = DemandeOtp::factory()->create(['partenaire_id' => $operateur->partenaire_id, 'demandee_par_id' => $operateur->id]);
+
+        avecPinRecent($admin)->delete(route('gestion.comptes.supprimer', $operateur))->assertSessionHas('succes');
+
+        expect(User::find($operateur->id))->toBeNull()
+            ->and(User::withTrashed()->find($operateur->id)->trashed())->toBeTrue()
+            ->and($demande->fresh()->statut)->toBe(StatutDemandeOtp::Expiree)
+            ->and(JournalAudit::where('action', 'utilisateur.supprime')->where('entite_id', $operateur->id)->sole()->acteur_id)->toBe($admin->id);
+
+        connecter($admin)->get(route('gestion.partenaires.show', $operateur->partenaire_id))
+            ->assertOk()
+            ->assertDontSee('@'.$operateur->nom_utilisateur);
+    });
+
+    it('prevents a deleted account from logging in and keeps its username reserved', function () {
+        $operateur = utilisateurAvecRole(Role::Partenaire, ['nom_utilisateur' => 'caisse.archivee']);
+        $operateur->forceFill(['password' => '24680'])->save();
+
+        avecPinRecent(utilisateurAvecRole(Role::Admin))->delete(route('gestion.comptes.supprimer', $operateur));
+        auth()->logout();
+
+        $this->post(route('login.store'), ['nom_utilisateur' => 'caisse.archivee', 'password' => '24680'])
+            ->assertSessionHasErrors();
+        $this->assertGuest();
+
+        connecter(utilisateurAvecRole(Role::Admin))
+            ->post(route('gestion.partenaires.operateurs.store', Partenaire::factory()->create()), ['nom_utilisateur' => 'caisse.archivee'])
+            ->assertSessionHasErrors('nom_utilisateur');
+    });
+
+    it('keeps the author name of past transactions', function () {
+        $operateur = utilisateurAvecRole(Role::Partenaire, ['nom' => 'Aya Caisse']);
+        $transaction = Transaction::factory()->create(['valide_par_id' => $operateur->id]);
+
+        avecPinRecent(utilisateurAvecRole(Role::Admin))->delete(route('gestion.comptes.supprimer', $operateur));
+
+        expect($transaction->fresh()->validePar->nom)->toBe('Aya Caisse');
+    });
+
+    it('shows the delete button only to accounts allowed to delete', function () {
+        $operateur = utilisateurAvecRole(Role::Partenaire);
+        $url = 'action="'.route('gestion.comptes.supprimer', $operateur).'"';
+        $agent = utilisateurAvecRole(Role::Agent);
+        $agent->givePermissionTo(Permission::GererOperateursPartenaires->value);
+
+        connecter(utilisateurAvecRole(Role::Admin))->get(route('gestion.partenaires.show', $operateur->partenaire_id))->assertSee($url, false);
+        connecter($agent)->get(route('gestion.partenaires.show', $operateur->partenaire_id))->assertDontSee($url, false);
+    });
+
+    it('requires the dedicated permission, even for someone who manages the account', function () {
+        $operateur = utilisateurAvecRole(Role::Partenaire);
+        $agent = utilisateurAvecRole(Role::Agent);
+        $agent->givePermissionTo(Permission::GererOperateursPartenaires->value);
+
+        avecPinRecent($agent)->delete(route('gestion.comptes.supprimer', $operateur))->assertForbidden();
+
+        $agent->givePermissionTo(Permission::SupprimerComptes->value);
+        avecPinRecent($agent)->delete(route('gestion.comptes.supprimer', $operateur))->assertSessionHas('succes');
+
+        expect(User::find($operateur->id))->toBeNull();
+    });
+
+    it('never lets an admin delete their own account, another admin or a superadmin', function (?Role $role) {
+        $admin = utilisateurAvecRole(Role::Admin);
+        $cible = $role === null ? $admin : utilisateurAvecRole($role);
+
+        avecPinRecent($admin)->delete(route('gestion.comptes.supprimer', $cible))->assertForbidden();
+
+        expect(User::find($cible->id))->not->toBeNull();
+    })->with(['soi-même' => [null], 'admin' => [Role::Admin], 'superadmin' => [Role::Superadmin]]);
+
+    it('refuses the deletion in the action as well', function () {
+        $agent = utilisateurAvecRole(Role::Agent);
+        $agent->givePermissionTo(Permission::GererOperateursPartenaires->value);
+
+        expect(fn () => app(GererCompteAction::class)->supprimer(utilisateurAvecRole(Role::Partenaire), $agent))
+            ->toThrow(OperationCompteException::class, 'Vous n\'avez pas le droit de supprimer ce compte.');
     });
 });

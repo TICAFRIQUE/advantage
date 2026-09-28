@@ -32,4 +32,9 @@ class PartenaireObserver
             'apres' => array_intersect_key($partenaire->getAttributes(), array_flip($modifies)),
         ]);
     }
+
+    public function deleted(Partenaire $partenaire): void
+    {
+        JournaliserAudit::enregistrer('partenaire.supprime', $partenaire, ['avant' => ['nom' => $partenaire->nom]]);
+    }
 }

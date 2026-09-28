@@ -131,3 +131,46 @@ describe('depuis la fiche carte', function () {
             ->assertDontSee(route('gestion.transactions.rapport').'?carte=', false);
     });
 });
+
+describe('depuis la fiche partenaire', function () {
+    it('shows the last ten passages and links to the report filtered on the partner', function () {
+        $pharmacie = Partenaire::factory()->create();
+        foreach (range(1, 11) as $jour) {
+            passage($pharmacie, valideeLe: now()->subDays($jour)->toDateTimeString());
+        }
+        $recente = passage($pharmacie, Carte::factory()->create(['numero_carte' => '7654321']), 15);
+        passage(Partenaire::factory()->create());
+
+        $reponse = connecter(utilisateurAvecRole(Role::Admin))->get(route('gestion.partenaires.show', $pharmacie));
+
+        $reponse->assertOk()
+            ->assertSeeInOrder(['Derniers passages', '(10 derniers sur 12)', '765 432 1', '15 %'])
+            ->assertSee(route('gestion.cartes.show', $recente->carte_id), false)
+            ->assertSee(route('gestion.transactions.rapport', ['partenaire_id' => $pharmacie->id]), false);
+        expect($reponse->viewData('transactions'))->toHaveCount(10)
+            ->and($reponse->viewData('transactions')->first()->is($recente))->toBeTrue()
+            ->and($reponse->viewData('transactions')->pluck('partenaire_id')->unique()->all())->toBe([$pharmacie->id]);
+    });
+
+    it('hides the passages without the report permission', function () {
+        $pharmacie = Partenaire::factory()->create();
+        passage($pharmacie);
+
+        connecter(utilisateurAvecRole(Role::Agent))->get(route('gestion.partenaires.show', $pharmacie))
+            ->assertOk()
+            ->assertDontSee('Derniers passages');
+    });
+
+    it('keeps the transactions of a deleted partner in the report, under its name', function () {
+        $pharmacie = Partenaire::factory()->create(['nom' => 'Pharmacie Archivée']);
+        passage($pharmacie);
+        $admin = utilisateurAvecRole(Role::Admin);
+        $pharmacie->delete();
+
+        $ligne = donneesRapportTransactions($admin, ['partenaire_id' => $pharmacie->id])['data'][0];
+
+        expect($ligne['partenaire'])->toBe('Pharmacie Archivée');
+        connecter($admin)->get(route('gestion.transactions.rapport'))
+            ->assertSee('Pharmacie Archivée (supprimé)');
+    });
+});

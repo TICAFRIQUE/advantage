@@ -39,6 +39,19 @@
                             </form>
                         </div>
                     @endcan
+
+                    @can('delete', $partenaire)
+                        <form method="POST" action="{{ route('gestion.partenaires.destroy', $partenaire) }}" class="mt-2"
+                              data-titre="Supprimer {{ $partenaire->nom }} ?"
+                              data-confirmer="Le partenaire et ses utilisateurs seront supprimés : plus aucune connexion ni transaction. Ses transactions passées restent consultables dans le rapport."
+                              data-bouton-confirmer="Supprimer" data-danger="1">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger w-100">
+                                <i class="bi bi-trash me-1" aria-hidden="true"></i>Supprimer le partenaire
+                            </button>
+                        </form>
+                    @endcan
                 </div>
             </section>
 
@@ -105,7 +118,7 @@
 
             @can('gererOperateurs', $partenaire)
                 <form method="POST" action="{{ route('gestion.partenaires.operateurs.store', $partenaire) }}" novalidate
-                      class="card border-0 shadow-sm" aria-labelledby="titre-nouvel-operateur">
+                      class="card border-0 shadow-sm mb-4" aria-labelledby="titre-nouvel-operateur">
                     @csrf
                     <div class="card-body">
                         <h2 class="h6 fw-bold" id="titre-nouvel-operateur">
@@ -113,8 +126,8 @@
                         </h2>
                         <div class="row g-3">
                             <div class="col-12 col-md-4">
-                                <label for="nom" class="form-label fw-semibold">Nom complet</label>
-                                <input type="text" id="nom" name="nom" value="{{ old('nom') }}" required maxlength="150"
+                                <label for="nom" class="form-label fw-semibold">Nom complet <span class="text-secondary fw-normal">(facultatif)</span></label>
+                                <input type="text" id="nom" name="nom" value="{{ old('nom') }}" maxlength="150"
                                        class="form-control @error('nom') is-invalid @enderror">
                                 @error('nom')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
@@ -132,11 +145,56 @@
                                 @error('telephone')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                         </div>
-                        <p class="small text-secondary mt-2 mb-3">Un PIN à 5 chiffres sera généré et affiché une seule fois.</p>
+                        <p class="small text-secondary mt-2 mb-3">Sans nom complet, le nom d'utilisateur est affiché à la place. Un PIN à 5 chiffres sera généré et affiché une seule fois.</p>
                         <button type="submit" class="btn btn-primary">Créer l'utilisateur</button>
                     </div>
                 </form>
             @endcan
+
+            @if ($transactions !== null)
+                <section class="card border-0 shadow-sm" aria-labelledby="titre-transactions">
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                            <h2 class="h5 fw-bold mb-0" id="titre-transactions">
+                                Derniers passages
+                                @if ($partenaire->transactions_count > $transactions->count())
+                                    <span class="h6 fw-normal text-secondary">({{ $transactions->count() }} derniers sur {{ $partenaire->transactions_count }})</span>
+                                @endif
+                            </h2>
+                            @if ($partenaire->transactions_count > 0)
+                                <a href="{{ route('gestion.transactions.rapport', ['partenaire_id' => $partenaire->id]) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-clock-history me-1" aria-hidden="true"></i>Voir tout l'historique
+                                </a>
+                            @endif
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr><th scope="col">Date</th><th scope="col">Carte</th><th scope="col">Remise</th><th scope="col">Validée par</th></tr>
+                                </thead>
+                                <tbody>
+                                    @forelse ($transactions as $transaction)
+                                        <tr>
+                                            <td class="text-nowrap">{{ $transaction->validee_le->format('d/m/Y H:i') }}</td>
+                                            <td class="font-monospace text-nowrap">
+                                                @can('voir-cartes')
+                                                    <a href="{{ route('gestion.cartes.show', $transaction->carte_id) }}">{{ $transaction->carte->numeroFormate() }}</a>
+                                                @else
+                                                    {{ $transaction->carte->numeroFormate() }}
+                                                @endcan
+                                            </td>
+                                            <td>{{ rtrim(rtrim((string) $transaction->taux_applique, '0'), '.') }} %</td>
+                                            <td class="small">{{ $transaction->validePar?->libelleActeur() ?? '—' }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="4" class="text-secondary">Aucun passage chez ce partenaire.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            @endif
         </div>
     </div>
 </x-layouts.app>

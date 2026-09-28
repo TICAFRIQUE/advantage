@@ -102,7 +102,7 @@ class Titulaire extends Model
      */
     public function creePar(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'cree_par_id');
+        return $this->belongsTo(User::class, 'cree_par_id')->withTrashed();
     }
 
     /**
@@ -110,7 +110,7 @@ class Titulaire extends Model
      */
     public function modifiePar(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'modifie_par_id');
+        return $this->belongsTo(User::class, 'modifie_par_id')->withTrashed();
     }
 
     public function nomComplet(): string

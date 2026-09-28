@@ -47,7 +47,7 @@ class DemandeOtp extends Model
      */
     public function partenaire(): BelongsTo
     {
-        return $this->belongsTo(Partenaire::class);
+        return $this->belongsTo(Partenaire::class)->withTrashed();
     }
 
     /**
@@ -55,7 +55,7 @@ class DemandeOtp extends Model
      */
     public function demandeePar(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'demandee_par_id');
+        return $this->belongsTo(User::class, 'demandee_par_id')->withTrashed();
     }
 
     /**

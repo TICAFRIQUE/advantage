@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Gestion;
 
 use App\Actions\Gestion\EnregistrerPartenaireAction;
+use App\Enums\Permission;
 use App\Enums\StatutPartenaire;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Gestion\EnregistrerPartenaireRequest;
@@ -17,8 +18,8 @@ use Yajra\DataTables\Facades\DataTables;
 
 /**
  * Partenaires : liste, fiche, création, modification (taux historisé) et
- * activation / désactivation. Aucune suppression : un partenaire est
- * référencé par ses transactions.
+ * activation / désactivation, suppression (archivage : ses transactions
+ * restent consultables sous son nom).
  */
 class PartenaireController extends Controller
 {
@@ -80,7 +81,15 @@ class PartenaireController extends Controller
             'historiqueTaux' => fn ($q) => $q->with('modifiePar.roles')->latest('modifie_le')->latest('id'),
         ])->loadCount('transactions');
 
-        return view('gestion.partenaires.show', ['partenaire' => $partenaire]);
+        // Derniers passages : réservés au droit « rapport des transactions ».
+        $voirTransactions = request()->user()->can(Permission::VoirRapportTransactions->value);
+
+        return view('gestion.partenaires.show', [
+            'partenaire' => $partenaire,
+            'transactions' => $voirTransactions
+                ? $partenaire->transactions()->with(['carte', 'validePar.roles'])->latest('validee_le')->latest('id')->limit(10)->get()
+                : null,
+        ]);
     }
 
     public function edit(Partenaire $partenaire): View
@@ -110,5 +119,15 @@ class PartenaireController extends Controller
         return redirect()->route('gestion.partenaires.show', $partenaire)->with('succes', $statut === StatutPartenaire::Actif
             ? 'Le partenaire a été réactivé.'
             : 'Le partenaire a été désactivé : ses utilisateurs ne peuvent plus effectuer de transaction.');
+    }
+
+    public function destroy(Partenaire $partenaire, EnregistrerPartenaireAction $enregistrer): RedirectResponse
+    {
+        Gate::authorize('delete', $partenaire);
+
+        $enregistrer->supprimer($partenaire);
+
+        return redirect()->route('gestion.partenaires.index')
+            ->with('succes', "Le partenaire {$partenaire->nom} et ses utilisateurs ont été supprimés. Ses transactions restent consultables dans le rapport.");
     }
 }

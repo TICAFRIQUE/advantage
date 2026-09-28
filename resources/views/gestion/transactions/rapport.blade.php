@@ -28,7 +28,7 @@
                 <select id="partenaire_id" name="partenaire_id" class="form-select">
                     <option value="">Tous</option>
                     @foreach ($partenaires as $choix)
-                        <option value="{{ $choix->id }}" @selected((int) ($filtres['partenaire_id'] ?? 0) === $choix->id)>{{ $choix->nom }}</option>
+                        <option value="{{ $choix->id }}" @selected((int) ($filtres['partenaire_id'] ?? 0) === $choix->id)>{{ $choix->nom }}{{ $choix->trashed() ? ' (supprimé)' : '' }}</option>
                     @endforeach
                 </select>
             </div>

@@ -58,7 +58,8 @@ return [
             'permissions' => [
                 'voir-partenaires' => ['libelle' => 'Voir les partenaires', 'roles' => ['admin', 'agent']],
                 'gerer-partenaires' => ['libelle' => 'Créer et modifier les partenaires (taux compris)', 'roles' => ['admin']],
-                'gerer-operateurs-partenaires' => ['libelle' => 'Gérer les opérateurs des partenaires', 'roles' => ['admin']],
+                'supprimer-partenaires' => ['libelle' => 'Supprimer (archiver) un partenaire et ses utilisateurs', 'roles' => ['admin']],
+                'gerer-operateurs-partenaires' => ['libelle' => 'Gérer les utilisateurs des partenaires', 'roles' => ['admin']],
                 'effectuer-transaction-partenaire' => ['libelle' => 'Effectuer une transaction pour un partenaire', 'roles' => ['admin']],
                 'voir-rapport-transactions' => ['libelle' => 'Voir le rapport des transactions', 'roles' => ['admin']],
             ],
@@ -69,6 +70,7 @@ return [
             'espace' => 'gestion',
             'permissions' => [
                 'gerer-utilisateurs' => ['libelle' => 'Gérer les utilisateurs (agents)', 'roles' => ['admin']],
+                'supprimer-comptes' => ['libelle' => 'Supprimer (archiver) un compte utilisateur', 'roles' => ['admin']],
                 'gerer-roles' => ['libelle' => 'Gérer les rôles et permissions', 'roles' => []],
                 'voir-journal-audit' => ['libelle' => "Consulter le journal d'audit", 'roles' => ['admin']],
                 'purger-journal-audit' => ['libelle' => "Supprimer des entrées du journal d'audit", 'roles' => []],

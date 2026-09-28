@@ -28,7 +28,7 @@ class HistoriqueTauxPartenaire extends Model
      */
     public function partenaire(): BelongsTo
     {
-        return $this->belongsTo(Partenaire::class);
+        return $this->belongsTo(Partenaire::class)->withTrashed();
     }
 
     /**
@@ -36,6 +36,6 @@ class HistoriqueTauxPartenaire extends Model
      */
     public function modifiePar(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'modifie_par_id');
+        return $this->belongsTo(User::class, 'modifie_par_id')->withTrashed();
     }
 }

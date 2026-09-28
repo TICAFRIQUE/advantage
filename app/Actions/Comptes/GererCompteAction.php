@@ -2,12 +2,16 @@
 
 namespace App\Actions\Comptes;
 
+use App\Enums\Permission;
 use App\Enums\Role;
+use App\Enums\StatutDemandeOtp;
 use App\Enums\StatutUtilisateur;
 use App\Exceptions\OperationCompteException;
+use App\Models\DemandeOtp;
 use App\Models\User;
 use App\Services\Droits\GardeDroits;
 use App\Services\GenerateurPin;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Opérations sur un compte existant. Chaque méthode revérifie les droits
@@ -67,6 +71,39 @@ class GererCompteAction
         $this->autoriser($compte, $auteur);
 
         $compte->forceFill(['statut' => $statut])->save();
+    }
+
+    /**
+     * Archivage (suppression douce) : le compte ne peut plus se connecter (le
+     * garde ne retrouve plus un compte archivé) et disparaît des listes, mais
+     * reste lisible dans l'historique (activations, transactions, journal).
+     * Son nom d'utilisateur reste réservé. Ses codes en attente sont expirés.
+     *
+     * @throws OperationCompteException
+     */
+    public function supprimer(User $compte, ?User $auteur): void
+    {
+        $this->autoriser($compte, $auteur);
+
+        if ($auteur !== null && ! $auteur->can(Permission::SupprimerComptes->value)) {
+            throw new OperationCompteException('Vous n\'avez pas le droit de supprimer ce compte.');
+        }
+
+        DB::transaction(fn () => $this->archiver($compte));
+    }
+
+    /**
+     * Sans contrôle de droits : réservé aux appelants qui les ont déjà vérifiés
+     * (suppression d'un partenaire et de ses utilisateurs).
+     */
+    public function archiver(User $compte): void
+    {
+        DemandeOtp::query()
+            ->where('demandee_par_id', $compte->id)
+            ->where('statut', StatutDemandeOtp::EnAttente)
+            ->update(['statut' => StatutDemandeOtp::Expiree, 'updated_at' => now()]);
+
+        $compte->delete();
     }
 
     private function autoriser(User $compte, ?User $auteur): void

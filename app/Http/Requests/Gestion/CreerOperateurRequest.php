@@ -26,7 +26,7 @@ class CreerOperateurRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'nom' => trim((string) preg_replace('/\s+/u', ' ', (string) $this->input('nom'))),
+            'nom' => trim((string) preg_replace('/\s+/u', ' ', (string) $this->input('nom'))) ?: null,
             'nom_utilisateur' => mb_strtolower(trim((string) $this->input('nom_utilisateur'))),
         ]);
     }
@@ -37,7 +37,7 @@ class CreerOperateurRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nom' => ['required', 'string', 'min:2', 'max:150'],
+            'nom' => ['nullable', 'string', 'min:2', 'max:150'],
             'nom_utilisateur' => ['required', 'string', 'min:3', 'max:50', 'regex:'.self::REGEX_NOM_UTILISATEUR, Rule::unique('users', 'nom_utilisateur')],
             'pays_telephone' => ['nullable', 'string', Rule::in(array_keys(Telephone::tousLesPays()))],
             'telephone' => ['nullable', 'string', 'max:25', new TelephoneValide($this->input('pays_telephone'))],
@@ -61,7 +61,8 @@ class CreerOperateurRequest extends FormRequest
     public function donnees(): array
     {
         return [
-            'nom' => $this->validated('nom'),
+            // Nom facultatif : le nom d'utilisateur en tient lieu (affichage, traçabilité).
+            'nom' => filled($this->validated('nom')) ? $this->validated('nom') : $this->validated('nom_utilisateur'),
             'nom_utilisateur' => $this->validated('nom_utilisateur'),
             'telephone' => filled($this->validated('telephone'))
                 ? Telephone::normaliser($this->validated('telephone'), $this->validated('pays_telephone'))
