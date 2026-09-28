@@ -46,6 +46,7 @@ enum Role: string
                 Permission::VoirTransactions,
                 Permission::VoirStatistiques,
                 Permission::VoirJournalAudit,
+                Permission::VoirSmsSimules,
                 ...self::Agent->permissions(),
                 ...self::Partenaire->permissions(),
             ],

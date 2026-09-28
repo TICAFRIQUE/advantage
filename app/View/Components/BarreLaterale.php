@@ -3,6 +3,7 @@
 namespace App\View\Components;
 
 use App\Enums\Permission;
+use App\Http\Controllers\Admin\SmsSimulesController;
 use App\Models\Carte;
 use App\Models\User;
 use Closure;
@@ -48,6 +49,10 @@ class BarreLaterale extends Component
             ],
             'Partenaire' => [
                 $this->entree('Accueil partenaire', 'bi-shop', 'partenaire.tableau-de-bord', ['partenaire.tableau-de-bord'], $user->can(Permission::AccederEspacePartenaire->value)),
+            ],
+            'Outils de test' => [
+                $this->entree('SMS simulés', 'bi-chat-dots', 'admin.sms-simules.index', ['admin.sms-simules.*'],
+                    SmsSimulesController::disponible() && $user->can(Permission::VoirSmsSimules->value)),
             ],
         ];
 

@@ -22,6 +22,11 @@ enum Permission: string
     case VoirStatistiques = 'voir-statistiques';
     case VoirJournalAudit = 'voir-journal-audit';
     case GererParametres = 'gerer-parametres';
+    // Suppression manuelle du journal d'audit : accordée à aucun rôle par
+    // défaut (superadmin uniquement, via Gate::before).
+    case PurgerJournalAudit = 'purger-journal-audit';
+    // Boîte des SMS simulés (hors production, pour lire les codes en test).
+    case VoirSmsSimules = 'voir-sms-simules';
     case GererRoles = 'gerer-roles';
 
     // Agent

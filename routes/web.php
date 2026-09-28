@@ -30,6 +30,16 @@ Route::middleware(['auth', 'compte.actif'])->group(function () {
         ->middleware(['role:'.Role::Superadmin->value.'|'.Role::Admin->value, 'permission:'.Permission::AccederEspaceAdmin->value])
         ->group(function () {
             Route::get('/', Admin\TableauDeBordController::class)->name('tableau-de-bord');
+
+            // Outils de test : boîte des SMS simulés (jamais en production).
+            if (Admin\SmsSimulesController::disponible()) {
+                Route::middleware('permission:'.Permission::VoirSmsSimules->value)->group(function () {
+                    Route::get('/sms-simules', [Admin\SmsSimulesController::class, 'index'])->name('sms-simules.index');
+                    Route::post('/sms-simules', [Admin\SmsSimulesController::class, 'store'])
+                        ->middleware('throttle:10,1')
+                        ->name('sms-simules.store');
+                });
+            }
         });
 
     Route::prefix('agent')->name('agent.')

@@ -9,9 +9,12 @@ return [
     'carte.statut_modifie' => 'Statut modifié',
     'carte.modifiee' => 'Carte modifiée',
     'carte.supprimee' => 'Carte supprimée',
+    'carte.consultee' => 'Carte consultée',
+    'cartes.recherchees' => 'Recherche de cartes',
 
     'titulaire.cree' => 'Titulaire créé',
     'titulaire.modifie' => 'Titulaire modifié',
+    'titulaire.recherche' => 'Recherche de titulaire',
 
     'utilisateur.cree' => 'Utilisateur créé',
     'utilisateur.modifie' => 'Utilisateur modifié',
@@ -26,6 +29,7 @@ return [
     'connexion.echec' => 'Échec de connexion',
     'connexion.refusee' => 'Connexion refusée',
     'confirmation.echec' => 'Échec de confirmation du PIN',
+    'deconnexion' => 'Déconnexion',
 
     'role.attribue' => 'Rôle attribué',
     'role.retire' => 'Rôle retiré',

@@ -13,6 +13,7 @@ use App\Http\Requests\Agent\DeclarerPerteRequest;
 use App\Http\Requests\Agent\FiltrerCartesRequest;
 use App\Models\Carte;
 use App\Models\JournalAudit;
+use App\Services\JournaliserAudit;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -26,6 +27,13 @@ class CarteController extends Controller
     public function index(FiltrerCartesRequest $request): View
     {
         $filtres = $request->validated();
+
+        if (filled($filtres['recherche'] ?? null) || filled($filtres['statut'] ?? null)) {
+            JournaliserAudit::enregistrer('cartes.recherchees', donnees: array_filter([
+                'recherche' => $filtres['recherche'] ?? null,
+                'statut' => $filtres['statut'] ?? null,
+            ]));
+        }
 
         $cartes = Carte::query()
             ->with(['titulaire', 'activePar.roles', 'modifiePar.roles'])
@@ -63,12 +71,15 @@ class CarteController extends Controller
     {
         Gate::authorize('view', $carte);
 
+        JournaliserAudit::enregistrer('carte.consultee', $carte);
+
         $carte->load(['titulaire.cartes' => fn ($query) => $query->latest('active_le'), 'activePar.roles', 'modifiePar.roles', 'titulaire.creePar.roles']);
 
         $historique = JournalAudit::query()
             ->with('acteur.roles')
             ->where('type_entite', 'Carte')
             ->where('entite_id', $carte->id)
+            ->where('action', '!=', 'carte.consultee') // opérations uniquement (consultations dans le journal complet)
             ->latest('cree_le')
             ->latest('id')
             ->limit(20)

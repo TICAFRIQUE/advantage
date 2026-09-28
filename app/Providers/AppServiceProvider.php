@@ -4,12 +4,17 @@ namespace App\Providers;
 
 use App\Enums\Role;
 use App\Models\User;
+use App\Services\Sms\PasserelleSms;
+use App\Services\Sms\PasserelleSmsSimulee;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use InvalidArgumentException;
+use RuntimeException;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -18,7 +23,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Pilote SMS actif. La simulation n'envoie rien : elle est refusée en
+        // production pour qu'aucun code OTP ne soit « envoyé » dans le vide.
+        $this->app->bind(PasserelleSms::class, function (Application $app): PasserelleSms {
+            $pilote = (string) config('plateforme.sms.driver');
+
+            return match ($pilote) {
+                'simulation' => $app->isProduction()
+                    ? throw new RuntimeException('Le pilote SMS « simulation » est interdit en production : configurez SMS_DRIVER.')
+                    : new PasserelleSmsSimulee,
+                default => throw new InvalidArgumentException("Pilote SMS inconnu : « {$pilote} »."),
+            };
+        });
     }
 
     /**

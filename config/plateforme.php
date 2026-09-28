@@ -124,7 +124,27 @@ return [
     */
 
     'sms' => [
-        'driver' => env('SMS_DRIVER', 'log'),
+        // « simulation » : aucun envoi réel, messages consultables dans la boîte
+        // « SMS simulés » (interdit en production). Le pilote du fournisseur
+        // sera ajouté dès que son API sera disponible.
+        'driver' => env('SMS_DRIVER', 'simulation'),
+        'expediteur' => env('SMS_EXPEDITEUR', 'ADVANTAGE'),
+        'tentatives' => 3,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Journal d'audit : rétention
+    |--------------------------------------------------------------------------
+    |
+    | Les entrées plus anciennes que la rétention sont purgées chaque jour
+    | (commande journal:purger). Chaque purge est inscrite dans le registre
+    | des purges, qui lui n'est jamais effaçable.
+    |
+    */
+
+    'journal_audit' => [
+        'retention_jours' => (int) env('JOURNAL_AUDIT_RETENTION_JOURS', 14),
     ],
 
 ];

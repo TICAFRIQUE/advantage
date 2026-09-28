@@ -1,8 +1,16 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+/*
+|--------------------------------------------------------------------------
+| Tâches planifiées
+|--------------------------------------------------------------------------
+|
+| En production, une seule entrée cron suffit :
+| * * * * * cd /chemin/du/projet && php artisan schedule:run >> /dev/null 2>&1
+|
+*/
+
+// Rétention du journal d'audit (14 jours par défaut), inscrite au registre des purges.
+Schedule::command('journal:purger')->dailyAt('02:00')->withoutOverlapping()->onOneServer();

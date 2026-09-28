@@ -110,7 +110,13 @@ Règles d'implémentation :
 `id`, `carte_id`, `partenaire_id`, `demandee_par_id`, `code_hash` (jamais en clair), `demandee_le`, `expire_le`, `tentatives`, `statut`, `utilisee_le`, `created_at`, `updated_at`
 
 ### `journaux_audit` (modèle `JournalAudit`)
-`id`, `acteur_id`, `type_acteur`, `action`, `type_entite`, `entite_id`, `donnees` (avant/après, JSON), `cree_le` — table append-only, aucune suppression manuelle
+`id`, `acteur_id`, `type_acteur`, `action`, `type_entite`, `entite_id`, `donnees` (avant/après, JSON), `cree_le` — jamais modifiable ; conservée **14 jours** (purge quotidienne `journal:purger`), suppression manuelle possible (superadmin, motif obligatoire) — toute purge est inscrite dans `purges_journal_audit` (jamais effaçable)
+
+### `purges_journal_audit` (modèle `PurgeJournalAudit`)
+`id`, `type` (`automatique`, `manuelle`), `purge_par_id`, `supprime_avant`, `nombre_entrees`, `motif`, `cree_le` — registre en ajout seul (triggers UPDATE/DELETE)
+
+### `messages_sms` (modèle `MessageSms`)
+`id`, `telephone`, `type` (`otp`, `alerte_expiration`, `information`), `contenu` (chiffré ; masqué après envoi réel pour un OTP), `statut`, `fournisseur`, `reference_fournisseur`, `erreur`, `tentatives`, `envoye_le`, `created_at`, `updated_at`
 
 ### `alertes_expiration` (modèle `AlerteExpiration`)
 `id`, `carte_id`, `palier` (`3_mois`, `2_mois`, `1_mois`), `canal` (`sms`, `in_app`), `envoyee_le`, `statut_livraison`, `created_at`
@@ -130,6 +136,9 @@ Règles métier structurantes à respecter dans les migrations/modèles :
 - **Téléphones multi-pays**, **Côte d'Ivoire par défaut** (10 chiffres, tout préfixe) : pays configurés dans `config/plateforme.php` (`telephone.pays`), normalisation par `App\Services\Telephone`.
 - **Connexion** : nom d'utilisateur + **PIN permanent à 5 chiffres** généré (`GenerateurPin`, sans suites triviales), affiché une fois, réinitialisable par un admin ou `php artisan utilisateur:reinitialiser-pin`. Protections : 5 essais/min par (utilisateur, IP), limite par IP, verrouillage après 10 échecs, message générique, sessions 8 h max / 2 h d'inactivité.
 - **Traçabilité** : chaque action affiche son auteur « Nom · Rôle » (`User::libelleActeur()`), en plus du journal d'audit (`JournaliserAudit`, champs sensibles retirés).
+- **SMS** : pilote choisi par `SMS_DRIVER`. En attendant l'API du fournisseur (qui couvre tous les pays), pilote `simulation` : aucun envoi réel, messages lisibles dans la boîte « SMS simulés » de l'admin (codes OTP compris) — **interdit en production**. Tout envoi passe par `EnvoiSms` puis la file d'attente (`EnvoyerSmsJob`, 3 tentatives, idempotent, aucun contenu dans la charge utile du job).
+- **Journal d'audit** : rétention 14 jours + suppression manuelle (voir `purges_journal_audit`).
+- **Opérateurs partenaires** : créés par l'admin, ou par un agent disposant de la permission dédiée (phase 5).
 - **Interface** : coque type ERP (barre latérale réductible, volet mobile, menu utilisateur en dropdown), charte bleu nuit / or tirée des visuels de la carte. La liste des cartes agent est une grille de cartes visuelles paginée côté serveur (Yajra est réservé aux tableaux d'administration).
 
 ## 4. Optimisation base de données
@@ -167,7 +176,7 @@ Règles métier structurantes à respecter dans les migrations/modèles :
 - Le partenaire ne voit **jamais** le nom/téléphone du titulaire avant validation OTP — uniquement le statut de la carte.
 - Idempotence sur la validation OTP (double soumission réseau ne doit jamais créer deux `transactions`).
 - Contrainte unique en base sur `cartes.numero_carte` pour empêcher toute double activation en cas de concurrence entre agents.
-- `journaux_audit` : table append-only, aucune route ni policy ne doit permettre l'update/delete.
+- `journaux_audit` : jamais modifiable ; suppression uniquement via l'action `PurgerJournalAudit` (verrou de session MySQL levé le temps de la purge, trigger bloquant sinon), chaque purge étant tracée dans `purges_journal_audit`. Tout ce que fait un agent ou un partenaire est journalisé, consultations sensibles comprises.
 
 ## 8. Conventions de code
 
