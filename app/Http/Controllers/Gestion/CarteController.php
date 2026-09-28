@@ -9,8 +9,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Gestion\ActiverCarteRequest;
 use App\Http\Requests\Gestion\FiltrerCartesRequest;
 use App\Models\Carte;
-use App\Models\JournalAudit;
 use App\Services\JournaliserAudit;
+use App\Services\Rapports\IndicateursCartes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -32,17 +32,25 @@ class CarteController extends Controller
             ]));
         }
 
+        $mesActivations = $request->boolean('mes_activations');
+
         $cartes = Carte::query()
             ->with(['titulaire', 'activePar.roles', 'modifiePar.roles'])
             ->when($filtres['recherche'] ?? null, fn (Builder $query, string $recherche) => $this->rechercher($query, $recherche))
             ->when($filtres['statut'] ?? null, fn (Builder $query, string $statut) => $query->statutEffectif(StatutCarte::from($statut)))
-            ->when($request->boolean('mes_activations'), fn (Builder $query) => $query->where('active_par_id', $request->user()->id))
+            ->when($mesActivations, fn (Builder $query) => $query->where('active_par_id', $request->user()->id))
             ->latest('active_le')
             ->latest('id')
             ->paginate(12)
             ->withQueryString();
 
-        return view('gestion.cartes.index', ['cartes' => $cartes, 'filtres' => $filtres]);
+        // Indicateurs du parc (ou des seules activations de l'utilisateur),
+        // indépendants de la recherche et du statut filtrés.
+        $indicateurs = IndicateursCartes::calculer(
+            Carte::query()->when($mesActivations, fn (Builder $query) => $query->where('active_par_id', $request->user()->id)),
+        );
+
+        return view('gestion.cartes.index', ['cartes' => $cartes, 'filtres' => $filtres, 'indicateurs' => $indicateurs]);
     }
 
     public function create(): View
@@ -72,13 +80,10 @@ class CarteController extends Controller
 
         $carte->load(['titulaire.cartes' => fn ($query) => $query->latest('active_le'), 'activePar.roles', 'modifiePar.roles', 'titulaire.creePar.roles']);
 
-        $historique = JournalAudit::query()
-            ->with('acteur.roles')
-            ->where('type_entite', 'Carte')
-            ->where('entite_id', $carte->id)
-            // Opérations uniquement : consultations et vérifications restent dans le journal complet.
-            ->whereNotIn('action', ['carte.consultee', 'carte.verifiee'])
-            ->latest('cree_le')
+        // Historique permanent (le journal d'audit n'est conservé que 14 jours).
+        $historique = $carte->operations()
+            ->with('effectueePar.roles')
+            ->latest('effectuee_le')
             ->latest('id')
             ->limit(20)
             ->get();

@@ -2,7 +2,12 @@
 
     <div class="row justify-content-center">
         <div class="col-12 col-md-10 col-lg-7 col-xl-6">
-            <h1 class="h3 fw-bold mb-3">Activer une carte</h1>
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                <h1 class="h3 fw-bold mb-0">Activer une carte</h1>
+                <a href="{{ route('gestion.cartes.index') }}" class="btn btn-outline-primary">
+                    <i class="bi bi-list-ul me-1" aria-hidden="true"></i> Liste des cartes
+                </a>
+            </div>
 
             @error('activation')
                 <div class="alert alert-danger" role="alert">{{ $message }}</div>

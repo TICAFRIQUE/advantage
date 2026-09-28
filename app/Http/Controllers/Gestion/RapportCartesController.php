@@ -5,25 +5,23 @@ namespace App\Http\Controllers\Gestion;
 use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Gestion\FiltrerRapportCartesRequest;
-use App\Models\Carte;
+use App\Models\OperationCarte;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
 use Yajra\DataTables\Facades\DataTables;
 
 /**
- * Rapport des cartes : indicateurs + liste filtrable (Yajra, côté serveur).
+ * Rapport des cartes : historique des opérations sur la période choisie
+ * (indicateurs par type + liste filtrable Yajra, côté serveur).
  */
 class RapportCartesController extends Controller
 {
     public function index(FiltrerRapportCartesRequest $request): View
     {
-        $rapport = $request->rapport();
-
         return view('gestion.cartes.rapport', [
-            'filtres' => $request->validated() + ['mes_activations' => $request->boolean('mes_activations')],
-            'indicateurs' => $rapport->indicateurs(),
-            'parAgent' => $rapport->parAgent(),
+            'filtres' => $request->validated() + ['mes_operations' => $request->boolean('mes_operations')],
+            'indicateurs' => $request->rapport()->indicateurs(),
             'agents' => User::query()->role([Role::Admin->value, Role::Agent->value, Role::Superadmin->value])->orderBy('nom')->get(['id', 'nom']),
         ]);
     }
@@ -31,18 +29,18 @@ class RapportCartesController extends Controller
     public function donnees(FiltrerRapportCartesRequest $request): JsonResponse
     {
         $requete = $request->rapport()->requete()
-            ->with(['titulaire', 'activePar.roles'])
-            ->select('cartes.*');
+            ->with(['carte.titulaire', 'effectueePar.roles'])
+            ->select('operations_cartes.*');
 
         return DataTables::eloquent($requete)
-            ->addColumn('numero', fn (Carte $c) => $c->numeroFormate())
-            ->addColumn('titulaire', fn (Carte $c) => $c->titulaire->nomComplet())
-            ->addColumn('telephone', fn (Carte $c) => $c->titulaire->telephoneFormate())
-            ->addColumn('statut_libelle', fn (Carte $c) => $c->statutEffectif()->libelle())
-            ->editColumn('active_le', fn (Carte $c) => $c->active_le?->format('d/m/Y H:i'))
-            ->editColumn('expire_le', fn (Carte $c) => $c->expire_le?->format('d/m/Y'))
-            ->addColumn('active_par', fn (Carte $c) => $c->activePar?->libelleActeur() ?? '—')
-            ->addColumn('lien', fn (Carte $c) => route('gestion.cartes.show', $c))
+            ->editColumn('effectuee_le', fn (OperationCarte $o) => $o->effectuee_le->format('d/m/Y H:i'))
+            ->addColumn('operation', fn (OperationCarte $o) => $o->type->libelle())
+            ->addColumn('numero', fn (OperationCarte $o) => $o->carte->numeroFormate())
+            ->addColumn('titulaire', fn (OperationCarte $o) => $o->carte->titulaire->nomComplet())
+            ->addColumn('telephone', fn (OperationCarte $o) => $o->carte->titulaire->telephoneFormate())
+            ->addColumn('effectuee_par', fn (OperationCarte $o) => $o->libelleAuteur())
+            ->editColumn('motif', fn (OperationCarte $o) => $o->motif ?? '—')
+            ->addColumn('lien', fn (OperationCarte $o) => route('gestion.cartes.show', $o->carte_id))
             ->filter(function ($query) use ($request): void {
                 $recherche = trim((string) $request->input('search.value'));
 
@@ -53,13 +51,13 @@ class RapportCartesController extends Controller
                 $texte = addcslashes($recherche, '%_\\');
                 $chiffres = preg_replace('/\D/', '', $recherche);
 
-                $query->where(fn ($q) => $q
-                    ->when($chiffres !== '', fn ($q) => $q->where('numero_carte', 'like', $chiffres.'%'))
+                $query->whereHas('carte', fn ($c) => $c->withTrashed()->where(fn ($c) => $c
+                    ->when($chiffres !== '', fn ($c) => $c->where('numero_carte', 'like', $chiffres.'%'))
                     ->orWhereHas('titulaire', fn ($t) => $t
                         ->where('nom', 'like', "%{$texte}%")
                         ->orWhere('prenom', 'like', "%{$texte}%")
                         // Sans chiffre, un LIKE '%%' ramènerait toutes les cartes.
-                        ->when($chiffres !== '', fn ($t) => $t->orWhere('telephone', 'like', "%{$chiffres}%"))));
+                        ->when($chiffres !== '', fn ($t) => $t->orWhere('telephone', 'like', "%{$chiffres}%")))));
             }, true)
             ->toJson();
     }

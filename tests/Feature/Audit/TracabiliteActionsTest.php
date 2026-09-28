@@ -22,7 +22,7 @@ it('does not clutter the card history with consultations', function () {
     connecter($agent)->get(route('gestion.cartes.show', $carte));
 
     connecter($agent)->get(route('gestion.cartes.show', $carte))
-        ->assertSee('Carte activée')
+        ->assertSeeInOrder(['Historique des opérations', 'Activation'])
         ->assertDontSee('Carte consultée');
 });
 
@@ -64,7 +64,7 @@ it('keeps partner verifications out of the card operations history', function ()
         ->post(route('partenaire.transaction.verifier.store'), ['numero_carte' => '4567890']);
 
     connecter(utilisateurAvecRole(Role::Admin))->get(route('gestion.cartes.show', $carte))
-        ->assertSee('Carte activée')
+        ->assertSeeInOrder(['Historique des opérations', 'Activation'])
         ->assertDontSee('Carte vérifiée (partenaire)');
 
     expect(JournalAudit::where('action', 'carte.verifiee')->exists())->toBeTrue();

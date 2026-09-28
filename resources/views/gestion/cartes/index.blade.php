@@ -8,6 +8,37 @@
         @endcan
     </div>
 
+    {{-- Indicateurs du parc : chaque tuile de statut filtre la liste. --}}
+    <div class="row g-3 mb-4">
+        @foreach ([
+            [request()->boolean('mes_activations') ? 'Mes cartes' : 'Cartes', $indicateurs['total'], 'bi-collection', null],
+            ['Actives', $indicateurs['actives'], 'bi-check-circle', App\Enums\StatutCarte::Active],
+            ['Expirent sous 30 jours', $indicateurs['expirent_sous_30_jours'], 'bi-hourglass-split', null],
+            ['Suspendues', $indicateurs['suspendues'], 'bi-pause-circle', App\Enums\StatutCarte::Suspendue],
+            ['Révoquées', $indicateurs['revoquees'], 'bi-x-octagon', App\Enums\StatutCarte::Revoquee],
+            ['Expirées', $indicateurs['expirees'], 'bi-calendar-x', App\Enums\StatutCarte::Expiree],
+        ] as [$libelle, $valeur, $icone, $statut])
+            <div class="col-6 col-md-4 col-xl-2">
+                @php($selectionne = $statut !== null && ($filtres['statut'] ?? null) === $statut->value)
+                <div @class(['card border-0 shadow-sm fond-nuit h-100', 'border border-2 border-warning' => $selectionne])>
+                    <div class="card-body">
+                        <p class="small text-white-50 mb-1"><i class="bi {{ $icone }} me-1" aria-hidden="true"></i>{{ $libelle }}</p>
+                        <p class="h2 fw-bold texte-or mb-0">
+                            @if ($statut)
+                                <a href="{{ route('gestion.cartes.index', array_filter(['statut' => $statut->value, 'mes_activations' => request()->boolean('mes_activations') ?: null])) }}"
+                                   class="texte-or text-decoration-none stretched-link"
+                                   @if ($selectionne) aria-current="true" @endif
+                                   aria-label="{{ $valeur }} {{ mb_strtolower($libelle) }} : afficher ces cartes">{{ $valeur }}</a>
+                            @else
+                                {{ $valeur }}
+                            @endif
+                        </p>
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    </div>
+
     <form method="GET" action="{{ route('gestion.cartes.index') }}" class="card card-body shadow-sm mb-4" role="search">
         <div class="row g-2 align-items-end">
             <div class="col-12 col-md-5">

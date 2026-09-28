@@ -28,7 +28,7 @@ class TitulaireController extends Controller
 
     public function update(ModifierIdentiteTitulaireRequest $request, Carte $carte, ModifierTitulaireAction $modifier): RedirectResponse
     {
-        $modifier->identite($carte->titulaire, $request->validated());
+        $modifier->identite($carte->titulaire, $request->validated(), $carte);
 
         return redirect()->route('gestion.cartes.show', $carte)->with('succes', 'Les informations du titulaire ont été mises à jour.');
     }
@@ -46,7 +46,7 @@ class TitulaireController extends Controller
     public function updateTelephone(ModifierTelephoneTitulaireRequest $request, Carte $carte, ModifierTitulaireAction $modifier): RedirectResponse
     {
         try {
-            $modifier->telephone($carte->titulaire, $request->telephone());
+            $modifier->telephone($carte->titulaire, $request->telephone(), $carte);
         } catch (ActionCarteImpossibleException $exception) {
             return back()->withInput()->withErrors(['telephone' => $exception->getMessage()]);
         }

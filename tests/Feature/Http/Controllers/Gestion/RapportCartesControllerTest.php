@@ -1,9 +1,13 @@
 <?php
 
 use App\Enums\Role;
+use App\Enums\StatutCarte;
+use App\Enums\TypeOperationCarte;
 use App\Models\Carte;
+use App\Models\OperationCarte;
 use App\Models\Titulaire;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 function donneesRapportCartes(User $user, array $parametres = []): array
 {
@@ -13,57 +17,90 @@ function donneesRapportCartes(User $user, array $parametres = []): array
         ->json();
 }
 
-it('computes the indicators on the effective status', function () {
+it('counts the operations by type', function () {
+    $carte = Carte::factory()->create();
     Carte::factory()->create();
-    Carte::factory()->activeeIlYa(11, 15)->create(); // expire dans ~15 jours
-    Carte::factory()->activeeIlYa(12, 2)->create(); // date échue : expirée
-    Carte::factory()->suspendue()->create();
-    Carte::factory()->revoquee()->create();
+    Auth::login(utilisateurAvecRole(Role::Admin));
+    $carte->update(['statut' => StatutCarte::Suspendue, 'motif_statut' => 'Suspension : contrôle']);
+    $carte->update(['statut' => StatutCarte::Active, 'motif_statut' => 'Réactivation : ok']);
+    $carte->update(['statut' => StatutCarte::Revoquee, 'motif_statut' => 'Révocation : perte']);
+    Auth::logout();
 
-    $reponse = connecter(utilisateurAvecRole(Role::Admin))->get(route('gestion.cartes.rapport'))->assertOk();
+    $indicateurs = connecter(utilisateurAvecRole(Role::Admin))->get(route('gestion.cartes.rapport'))->assertOk()->viewData('indicateurs');
 
-    expect($reponse->viewData('indicateurs'))->toBe([
-        'total' => 5, 'actives' => 2, 'suspendues' => 1, 'revoquees' => 1, 'expirees' => 1, 'expirent_sous_30_jours' => 1,
+    expect($indicateurs)->toMatchArray([
+        'total' => 5,
+        'activation' => 2,
+        'suspension' => 1,
+        'reactivation' => 1,
+        'revocation' => 1,
+        'expiration' => 0,
     ]);
 });
 
-it('applies the same filters to indicators and list', function () {
+it('filters on the date of every operation, not only activations', function () {
+    $ancienne = Carte::factory()->activeeIlYa(3)->create();
+    Carte::factory()->activeeIlYa(2)->create();
+    Auth::login(utilisateurAvecRole(Role::Admin));
+    $ancienne->update(['statut' => StatutCarte::Suspendue, 'motif_statut' => 'Suspension : contrôle']);
+    Auth::logout();
+
+    $admin = utilisateurAvecRole(Role::Admin);
+    $filtres = ['du' => now()->toDateString(), 'au' => now()->toDateString()];
+    $donnees = donneesRapportCartes($admin, $filtres);
+
+    expect($donnees['recordsFiltered'])->toBe(1)
+        ->and($donnees['data'][0]['operation'])->toBe('Suspension')
+        ->and($donnees['data'][0]['motif'])->toBe('Suspension : contrôle')
+        ->and(connecter($admin)->get(route('gestion.cartes.rapport', $filtres))->viewData('indicateurs')['total'])->toBe(1);
+});
+
+it('filters on the type and the author of the operation', function () {
     $agent = utilisateurAvecRole(Role::Agent, ['nom' => 'Agent Filtre']);
     Carte::factory()->for($agent, 'activePar')->create();
-    Carte::factory()->for($agent, 'activePar')->suspendue()->create();
     Carte::factory()->create();
 
-    $filtres = ['agent_id' => $agent->id, 'statut' => 'suspendue'];
     $admin = utilisateurAvecRole(Role::Admin);
 
-    expect(connecter($admin)->get(route('gestion.cartes.rapport', $filtres))->viewData('indicateurs')['total'])->toBe(1)
-        ->and(donneesRapportCartes($admin, $filtres)['recordsFiltered'])->toBe(1);
+    expect(donneesRapportCartes($admin, ['agent_id' => $agent->id, 'type' => 'activation'])['recordsFiltered'])->toBe(1)
+        ->and(donneesRapportCartes($admin, ['type' => 'suspension'])['recordsFiltered'])->toBe(0);
 });
 
-it('filters on the activation period', function () {
-    Carte::factory()->activeeIlYa(3)->create();
-    Carte::factory()->create();
-
-    $donnees = donneesRapportCartes(utilisateurAvecRole(Role::Admin), ['du' => now()->subDays(7)->toDateString(), 'au' => now()->toDateString()]);
-
-    expect($donnees['recordsFiltered'])->toBe(1);
-});
-
-it('lets an agent see all cards or only its activations', function () {
+it('lets an agent see all operations or only its own', function () {
     $agent = utilisateurAvecRole(Role::Agent);
     Carte::factory()->for($agent, 'activePar')->create();
     Carte::factory()->create();
 
     expect(donneesRapportCartes($agent)['recordsFiltered'])->toBe(2)
-        ->and(donneesRapportCartes($agent, ['mes_activations' => 1])['recordsFiltered'])->toBe(1);
+        ->and(donneesRapportCartes($agent, ['mes_operations' => 1])['recordsFiltered'])->toBe(1);
 });
 
-it('ranks activations by agent', function () {
-    $agent = utilisateurAvecRole(Role::Agent, ['nom' => 'Top Agent']);
-    Carte::factory(3)->for($agent, 'activePar')->create();
-
+it('no longer ranks activations by agent', function () {
     connecter(utilisateurAvecRole(Role::Admin))->get(route('gestion.cartes.rapport'))
-        ->assertSeeInOrder(['Activations par agent', 'Top Agent', '3']);
+        ->assertOk()
+        ->assertDontSee('Activations par agent');
+});
+
+it('attributes automatic expirations to the system', function () {
+    $carte = Carte::factory()->activeeIlYa(13)->create();
+    Auth::login(utilisateurAvecRole(Role::Agent));
+    $carte->update(['statut' => StatutCarte::Expiree, 'motif_statut' => 'Date de validité dépassée']);
+    Auth::logout();
+
+    $ligne = donneesRapportCartes(utilisateurAvecRole(Role::Admin), ['type' => 'expiration'])['data'][0];
+
+    expect($ligne['effectuee_par'])->toBe('Système');
+});
+
+it('records holder changes without the phone number', function () {
+    $carte = Carte::factory()->for(Titulaire::factory()->create(['nom' => 'ANCIEN']))->create();
+
+    connecter(utilisateurAvecRole(Role::Admin))
+        ->put(route('gestion.cartes.titulaire.update', $carte), ['nom' => 'KOUASSI', 'prenom' => $carte->titulaire->prenom]);
+
+    expect(OperationCarte::where('type', TypeOperationCarte::ModificationTitulaire)->sole())
+        ->carte_id->toBe($carte->id)
+        ->motif->toBe('Modifié : nom');
 });
 
 it('searches by name without a digit matching every card', function () {
@@ -84,10 +121,17 @@ it('links each row to the card and escapes values', function () {
         ->and($ligne['titulaire'])->not->toContain('<b>');
 });
 
+it('keeps the history append-only', function () {
+    Carte::factory()->create();
+
+    expect(fn () => OperationCarte::sole()->update(['motif' => 'x']))->toThrow(LogicException::class)
+        ->and(fn () => OperationCarte::sole()->delete())->toThrow(LogicException::class);
+});
+
 it('rejects inconsistent filters', function () {
     connecter(utilisateurAvecRole(Role::Admin))
-        ->get(route('gestion.cartes.rapport', ['du' => '2026-09-10', 'au' => '2026-09-01', 'statut' => 'inconnu']))
-        ->assertSessionHasErrors(['au', 'statut']);
+        ->get(route('gestion.cartes.rapport', ['du' => '2026-09-10', 'au' => '2026-09-01', 'type' => 'inconnu']))
+        ->assertSessionHasErrors(['au', 'type']);
 });
 
 it('forbids the report without the permission', function () {

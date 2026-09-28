@@ -126,6 +126,14 @@ class Carte extends Model
     }
 
     /**
+     * @return HasMany<OperationCarte, $this>
+     */
+    public function operations(): HasMany
+    {
+        return $this->hasMany(OperationCarte::class);
+    }
+
+    /**
      * Carte utilisable chez un partenaire : statut actif et date non échue,
      * indépendamment du passage du job quotidien d'expiration.
      */

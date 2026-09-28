@@ -61,7 +61,13 @@ document.querySelectorAll('table[data-source]').forEach((tableau) => {
         },
     });
 
+    // data-soumission="page" sur le formulaire : soumission normale (les
+    // indicateurs rendus côté serveur suivent les filtres).
     filtres?.addEventListener('submit', (evenement) => {
+        if (filtres.dataset.soumission === 'page') {
+            return;
+        }
+
         evenement.preventDefault();
         table.ajax.reload();
     });

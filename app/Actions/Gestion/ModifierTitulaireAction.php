@@ -3,9 +3,12 @@
 namespace App\Actions\Gestion;
 
 use App\Enums\StatutDemandeOtp;
+use App\Enums\TypeOperationCarte;
 use App\Enums\TypeSms;
 use App\Exceptions\ActionCarteImpossibleException;
+use App\Models\Carte;
 use App\Models\DemandeOtp;
+use App\Models\OperationCarte;
 use App\Models\Titulaire;
 use App\Services\Sms\EnvoiSms;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -26,13 +29,20 @@ class ModifierTitulaireAction
 
     /**
      * @param  array{nom?: string, prenom?: string}  $identite
+     * @param  Carte|null  $depuis  carte depuis laquelle la modification est faite (historique des opérations)
      */
-    public function identite(Titulaire $titulaire, array $identite): Titulaire
+    public function identite(Titulaire $titulaire, array $identite, ?Carte $depuis = null): Titulaire
     {
         $titulaire->fill($identite);
 
         if ($titulaire->isDirty()) {
+            $champs = collect(['nom' => 'nom', 'prenom' => 'prénoms'])->only(array_keys($titulaire->getDirty()));
+
             $titulaire->save();
+
+            if ($depuis !== null) {
+                OperationCarte::enregistrer($depuis, TypeOperationCarte::ModificationTitulaire, 'Modifié : '.$champs->implode(', '));
+            }
         }
 
         return $titulaire;
@@ -40,10 +50,11 @@ class ModifierTitulaireAction
 
     /**
      * @param  string  $telephone  numéro au format E.164
+     * @param  Carte|null  $depuis  carte depuis laquelle la modification est faite (historique des opérations)
      *
      * @throws ActionCarteImpossibleException
      */
-    public function telephone(Titulaire $titulaire, string $telephone): Titulaire
+    public function telephone(Titulaire $titulaire, string $telephone, ?Carte $depuis = null): Titulaire
     {
         if ($telephone === $titulaire->telephone) {
             return $titulaire;
@@ -56,8 +67,13 @@ class ModifierTitulaireAction
         $ancien = $titulaire->telephone;
 
         try {
-            DB::transaction(function () use ($titulaire, $telephone): void {
+            DB::transaction(function () use ($titulaire, $telephone, $depuis): void {
                 $titulaire->update(['telephone' => $telephone]);
+
+                if ($depuis !== null) {
+                    // Aucun numéro dans l'historique : il est lisible par tout agent habilité au rapport.
+                    OperationCarte::enregistrer($depuis, TypeOperationCarte::ChangementTelephone);
+                }
 
                 DemandeOtp::query()
                     ->whereIn('carte_id', $titulaire->cartes()->select('id'))

@@ -1,9 +1,7 @@
 <?php
 
 use App\Enums\Role;
-use App\Enums\StatutCarte;
 use App\Models\Carte;
-use App\Models\JournalAudit;
 use App\Models\Titulaire;
 use Illuminate\Database\Eloquent\Model;
 
@@ -171,6 +169,29 @@ describe('liste', function () {
             ->get(route('gestion.cartes.index', ['statut' => 'inexistant']))
             ->assertSessionHasErrors('statut');
     });
+
+    it('shows indicators on the effective status of the whole park', function () {
+        Carte::factory()->create();
+        Carte::factory()->activeeIlYa(11, 15)->create(); // expire dans ~15 jours
+        Carte::factory()->activeeIlYa(12, 2)->create(); // date échue : expirée
+        Carte::factory()->suspendue()->create();
+        Carte::factory()->revoquee()->create();
+
+        // Le filtre de statut ne change pas les indicateurs.
+        $reponse = connecter(utilisateurAvecRole(Role::Agent))->get(route('gestion.cartes.index', ['statut' => 'suspendue']))->assertOk();
+
+        expect($reponse->viewData('indicateurs'))->toBe([
+            'total' => 5, 'actives' => 2, 'expirent_sous_30_jours' => 1, 'suspendues' => 1, 'revoquees' => 1, 'expirees' => 1,
+        ]);
+    });
+
+    it('limits the indicators to my activations when asked', function () {
+        $agent = utilisateurAvecRole(Role::Agent);
+        Carte::factory()->for($agent, 'activePar')->create();
+        Carte::factory()->create();
+
+        expect(connecter($agent)->get(route('gestion.cartes.index', ['mes_activations' => 1]))->viewData('indicateurs')['total'])->toBe(1);
+    });
 });
 
 describe('détail', function () {
@@ -186,6 +207,16 @@ describe('détail', function () {
             ->assertSee('Agent Activateur')
             ->assertSee('Agent Modificateur')
             ->assertSee($carte->titulaire->telephoneFormate());
+    });
+
+    it('shows the durable history of operations with their author', function () {
+        $carte = Carte::factory()->for(utilisateurAvecRole(Role::Agent, ['nom' => 'Agent Activateur']), 'activePar')->create();
+        $admin = utilisateurAvecRole(Role::Admin, ['nom' => 'Admin Suspension']);
+
+        connecter($admin)->post(route('gestion.cartes.statut', $carte), ['statut' => 'suspendue', 'motif' => 'Contrôle']);
+
+        connecter($admin)->get(route('gestion.cartes.show', $carte))
+            ->assertSeeInOrder(['Historique des opérations', 'Suspension', 'Admin Suspension', 'Suspension : Contrôle', 'Activation', 'Agent Activateur']);
     });
 });
 

@@ -80,11 +80,11 @@
                     <ul class="list-unstyled small mb-0">
                         @forelse ($historique as $entree)
                             <li class="border-start border-3 border-warning ps-2 mb-2">
-                                <span class="fw-semibold">{{ __('audit.'.$entree->action) }}</span>
-                                — {{ $entree->acteur?->libelleActeur() ?? 'Système' }},
-                                {{ $entree->cree_le->format('d/m/Y à H:i') }}
-                                @if (isset($entree->donnees['apres']['motif_statut']))
-                                    <span class="d-block text-secondary">{{ $entree->donnees['apres']['motif_statut'] }}</span>
+                                <span class="fw-semibold"><i class="bi {{ $entree->type->icone() }} me-1" aria-hidden="true"></i>{{ $entree->type->libelle() }}</span>
+                                — {{ $entree->libelleAuteur() }},
+                                {{ $entree->effectuee_le->format('d/m/Y à H:i') }}
+                                @if ($entree->motif)
+                                    <span class="d-block text-secondary">{{ $entree->motif }}</span>
                                 @endif
                             </li>
                         @empty
