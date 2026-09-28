@@ -76,13 +76,16 @@ Guards / rôles à modéliser avec `laravel-permission` :
 
 | Rôle | Description | Permissions clés |
 |---|---|---|
-| `admin` | Pilote toute la plateforme | `gerer-utilisateurs`, `gerer-cartes`, `gerer-partenaires`, `gerer-taux`, `gerer-activations`, `voir-transactions`, `voir-statistiques`, `gerer-parametres`, `gerer-roles` |
-| `agent` | Active les cartes en agence | `activer-carte`, `rechercher-carte`, `voir-ses-activations`, `signaler-carte-perdue` |
-| `partenaire` | Compte partenaire (peut avoir plusieurs opérateurs) | `verifier-carte`, `confirmer-otp`, `voir-ses-transactions` |
+| `superadmin` | Accès total (via `Gate::before`), compte créé depuis le `.env` (`SUPERADMIN_*`), mot de passe fort (≥ 12 car.) | toutes, y compris `gerer-roles` et `gerer-parametres` (réservées) |
+| `admin` | Pilote toute la plateforme **et peut faire tout ce que font agent et partenaire** (chaque action tracée à son nom + rôle) | `acceder-espace-admin`, `gerer-utilisateurs`, `gerer-cartes`, `gerer-partenaires`, `gerer-taux`, `gerer-activations`, `voir-transactions`, `voir-statistiques`, `voir-journal-audit` + permissions agent et partenaire |
+| `agent` | Active les cartes en agence (tous les agents agissent sur toutes les cartes) | `acceder-espace-agent`, `activer-carte`, `rechercher-carte`, `voir-ses-activations`, `signaler-carte-perdue` |
+| `partenaire` | Compte partenaire (peut avoir plusieurs opérateurs) | `acceder-espace-partenaire`, `verifier-carte`, `confirmer-otp`, `voir-ses-transactions` |
+
+Source de vérité : enums `App\Enums\Role` (dont `Role::permissions()`) et `App\Enums\Permission`, synchronisés par `RolesEtPermissionsSeeder`.
 
 Règles d'implémentation :
 - Un **partenaire** peut avoir plusieurs utilisateurs opérateurs rattachés à un même compte (prévoir la relation `partenaires` ↔ `users` dès le modèle de données, même si le MVP ne gère qu'un utilisateur par partenaire).
-- Middleware de redirection post-login selon le rôle (`admin` → `/admin`, `agent` → `/agent`, `partenaire` → `/partenaire`).
+- Middleware de redirection post-login selon le rôle (`superadmin`/`admin` → `/admin`, `agent` → `/agent`, `partenaire` → `/partenaire`). Admin et superadmin accèdent aussi aux espaces agent et partenaire.
 - Toute route de chaque espace protégée par middleware `role:` + `permission:` (ne jamais se fier uniquement à la visibilité UI).
 - Les policies Laravel (`CartePolicy`, `PartenairePolicy`, `TransactionPolicy`) encapsulent les règles d'accès aux ressources (ex. un partenaire ne voit que ses propres transactions).
 
@@ -91,17 +94,20 @@ Règles d'implémentation :
 ### `partenaires` (modèle `Partenaire`)
 `id`, `nom`, `secteur`, `localisation`, `contact`, `taux_reduction` (taux unique au MVP), `statut`, `created_at`, `updated_at`
 
+### `users` (table technique, colonnes métier ajoutées)
+`nom`, `nom_utilisateur` (unique, minuscules — identifiant de connexion), `email` (nullable), `telephone`, `partenaire_id` (opérateur partenaire), `statut`, `tentatives_echouees`, `verrouille_le`, `derniere_connexion_le`, soft deletes
+
 ### `titulaires` (modèle `Titulaire`)
-`id`, `nom`, `prenom`, `telephone`, `numero_piece_identite` (chiffré — cast `encrypted`), `statut`, `created_at`, `updated_at`
+`id`, `nom`, `prenom`, `telephone` (**unique**, format E.164 `+<indicatif><numéro>` — identifie le titulaire et reçoit les OTP), `numero_piece_identite` (**facultatif**, non collecté au MVP ; chiffré si renseigné) + `numero_piece_identite_hash` (HMAC, recherche/unicité), `statut`, `cree_par_id`, `modifie_par_id`, `created_at`, `updated_at`
 
 ### `cartes` (modèle `Carte`)
-`id`, `numero_carte` (unique, à vie), `titulaire_id`, `active_par_id` (agent — clé vers `users`), `active_le`, `expire_le` (= `active_le` + 1 an), `statut` (`non_activee`, `active`, `expiree`, `suspendue`, `revoquee`), `created_at`, `updated_at`
+`id`, `numero_carte` (**7 chiffres**, unique à vie, soft-deletées comprises), `titulaire_id`, `active_par_id` (créateur — clé vers `users`), `active_le`, `expire_le` (= `active_le` + 1 an), `statut` (`non_activee`, `active`, `expiree`, `suspendue`, `revoquee`), `motif_statut`, `modifie_par_id`, `created_at`, `updated_at`
 
 ### `transactions` (modèle `Transaction`)
-`id`, `carte_id`, `partenaire_id`, `taux_applique`, `validee_le`, `statut`, `created_at`, `updated_at`
+`id`, `carte_id`, `partenaire_id`, `demande_otp_id` (**unique** — idempotence), `valide_par_id` (opérateur), `taux_applique`, `validee_le`, `statut`, `created_at`, `updated_at` — **aucun montant** : une transaction atteste le passage chez un partenaire au taux indiqué
 
 ### `demandes_otp` (modèle `DemandeOtp`)
-`id`, `carte_id`, `partenaire_id`, `code_hash` (jamais en clair), `demandee_le`, `expire_le`, `tentatives`, `statut`, `created_at`
+`id`, `carte_id`, `partenaire_id`, `demandee_par_id`, `code_hash` (jamais en clair), `demandee_le`, `expire_le`, `tentatives`, `statut`, `utilisee_le`, `created_at`, `updated_at`
 
 ### `journaux_audit` (modèle `JournalAudit`)
 `id`, `acteur_id`, `type_acteur`, `action`, `type_entite`, `entite_id`, `donnees` (avant/après, JSON), `cree_le` — table append-only, aucune suppression manuelle
@@ -118,9 +124,17 @@ Règles métier structurantes à respecter dans les migrations/modèles :
 - `taux_reduction` vit sur `partenaires` (taux unique MVP) — chaque modification est tracée dans `historique_taux_partenaires`.
 - Un OTP est à usage unique, à courte durée de vie (3–5 min), avec compteur de tentatives (`tentatives`) — jamais de transaction créée avant validation OTP.
 
+### Décisions validées (priment sur le reste du document)
+- **Pas de stock de cartes** : elles sont produites hors application. La ligne `cartes` est créée à l'activation par l'agent, qui saisit le numéro imprimé (double saisie). La contrainte UNIQUE sur `numero_carte` empêche la double activation concurrente (erreur SQL convertie en message métier).
+- **Activation** : nom, prénoms, téléphone, numéro de carte — pas de pièce d'identité. Le **téléphone** retrouve le titulaire lors d'un renouvellement ; une seule carte en circulation par titulaire (déclarer la perte d'abord).
+- **Téléphones multi-pays**, **Côte d'Ivoire par défaut** (10 chiffres, tout préfixe) : pays configurés dans `config/plateforme.php` (`telephone.pays`), normalisation par `App\Services\Telephone`.
+- **Connexion** : nom d'utilisateur + **PIN permanent à 5 chiffres** généré (`GenerateurPin`, sans suites triviales), affiché une fois, réinitialisable par un admin ou `php artisan utilisateur:reinitialiser-pin`. Protections : 5 essais/min par (utilisateur, IP), limite par IP, verrouillage après 10 échecs, message générique, sessions 8 h max / 2 h d'inactivité.
+- **Traçabilité** : chaque action affiche son auteur « Nom · Rôle » (`User::libelleActeur()`), en plus du journal d'audit (`JournaliserAudit`, champs sensibles retirés).
+- **Interface** : coque type ERP (barre latérale réductible, volet mobile, menu utilisateur en dropdown), charte bleu nuit / or tirée des visuels de la carte. La liste des cartes agent est une grille de cartes visuelles paginée côté serveur (Yajra est réservé aux tableaux d'administration).
+
 ## 4. Optimisation base de données
 
-- **Index** systématiques sur : `cartes.numero_carte` (unique), `cartes.statut`, `cartes.expire_le`, `titulaires.telephone`, `titulaires.numero_piece_identite` (si recherché), `transactions.carte_id`, `transactions.partenaire_id`, `transactions.validee_le`, `journaux_audit.type_entite` + `entite_id` (index composite), `demandes_otp.carte_id` + `statut`.
+- **Index** systématiques sur : `cartes.numero_carte` (unique), `cartes.statut`, `cartes.expire_le`, `titulaires.telephone` (unique), `titulaires.numero_piece_identite_hash` (unique), `transactions.carte_id`, `transactions.partenaire_id`, `transactions.validee_le`, `journaux_audit.type_entite` + `entite_id` (index composite), `demandes_otp.carte_id` + `statut`.
 - **Index composites** pour les requêtes fréquentes (ex. `cartes(statut, expire_le)` pour le job d'alertes d'expiration, `transactions(partenaire_id, validee_le)` pour l'historique partenaire).
 - **Requêtes N+1** : systématiquement `with()` / eager loading sur les relations affichées dans les DataTables (`Carte::with('titulaire', 'activePar')`), jamais de lazy loading dans une boucle Blade.
 - **Pagination serveur obligatoire** partout où le volume peut croître (Yajra DataTables server-side, jamais `->get()` puis pagination côté vue).
@@ -148,7 +162,7 @@ Règles métier structurantes à respecter dans les migrations/modèles :
 
 ## 7. Sécurité — points non négociables
 
-- `titulaires.numero_piece_identite` : cast `encrypted` en base (jamais en clair).
+- `titulaires.numero_piece_identite` (facultatif) : cast `encrypted` en base (jamais en clair), recherche via empreinte HMAC.
 - `demandes_otp.code_hash` : hashé en base, jamais stocké ni loggé en clair ; rate limiting sur la génération d'OTP par carte (anti-spam/anti-harcèlement du titulaire).
 - Le partenaire ne voit **jamais** le nom/téléphone du titulaire avant validation OTP — uniquement le statut de la carte.
 - Idempotence sur la validation OTP (double soumission réseau ne doit jamais créer deux `transactions`).

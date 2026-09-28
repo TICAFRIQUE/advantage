@@ -2,24 +2,26 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
      * Seed the application's database.
+     *
+     * Les événements de modèle doivent rester actifs : ils calculent
+     * `cartes.expire_le`, l'empreinte HMAC des pièces d'identité et
+     * alimentent le journal d'audit.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->call([
+            RolesEtPermissionsSeeder::class,
+            SuperAdminSeeder::class,
         ]);
+
+        if (app()->isLocal()) {
+            $this->call(DonneesDemoSeeder::class);
+        }
     }
 }

@@ -1,0 +1,127 @@
+<?php
+
+use App\Enums\Role;
+use App\Models\JournalAudit;
+use App\Models\User;
+use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\MassAssignmentException;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Route as RouteDefinition;
+use Illuminate\Support\Facades\Route;
+
+/**
+ * Routes authentifiées légitimement dépourvues de permission métier
+ * (aiguillage, déconnexion, confirmation d'identité).
+ */
+const ROUTES_AUTHENTIFIEES_SANS_PERMISSION = [
+    'accueil-espace',
+    'logout',
+    'password.confirm',
+    'password.confirm.store',
+    'password.confirmation',
+];
+
+it('requires a permission middleware on every authenticated route', function () {
+    $sansPermission = collect(Route::getRoutes()->getRoutes())
+        ->filter(fn (RouteDefinition $route) => in_array('auth', $route->gatherMiddleware(), true)
+            || collect($route->gatherMiddleware())->contains(fn ($m) => is_string($m) && str_starts_with($m, 'auth:')))
+        ->reject(fn (RouteDefinition $route) => in_array($route->getName(), ROUTES_AUTHENTIFIEES_SANS_PERMISSION, true))
+        ->reject(fn (RouteDefinition $route) => collect($route->gatherMiddleware())
+            ->contains(fn ($m) => is_string($m) && str_starts_with($m, 'permission:')))
+        ->map(fn (RouteDefinition $route) => $route->getName() ?? $route->uri())
+        ->values()
+        ->all();
+
+    expect($sansPermission)->toBe([]);
+});
+
+it('exposes no route able to modify or delete the audit log', function () {
+    $routes = collect(Route::getRoutes()->getRoutes())
+        ->filter(fn (RouteDefinition $route) => array_intersect($route->methods(), ['POST', 'PUT', 'PATCH', 'DELETE']) !== [])
+        ->filter(fn (RouteDefinition $route) => str_contains($route->uri(), 'journal') || str_contains($route->uri(), 'audit'))
+        ->map(fn (RouteDefinition $route) => $route->uri())
+        ->all();
+
+    expect($routes)->toBe([]);
+});
+
+it('sends security headers on every page', function () {
+    $this->get(route('login'))
+        ->assertHeader('X-Frame-Options', 'DENY')
+        ->assertHeader('X-Content-Type-Options', 'nosniff')
+        ->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+});
+
+it('forbids caching of authenticated pages', function () {
+    $reponse = connecter(utilisateurAvecRole(Role::Agent))->get(route('agent.tableau-de-bord'));
+
+    expect($reponse->headers->get('Cache-Control'))->toContain('no-store');
+});
+
+it('rejects an oversized or malformed username before any lookup', function (string $nomUtilisateur) {
+    $this->from(route('login'))
+        ->post(route('login.store'), ['nom_utilisateur' => $nomUtilisateur, 'password' => '12345'])
+        ->assertSessionHasErrors('nom_utilisateur');
+
+    expect(JournalAudit::where('action', 'connexion.echec')->exists())->toBeFalse();
+})->with([
+    'trop long' => [str_repeat('a', 51)],
+    'injection sql' => ["admin' OR '1'='1"],
+    'balise html' => ['<script>alert(1)</script>'],
+]);
+
+it('never keeps sensitive fields in the flashed old input', function () {
+    Route::middleware('web')->post('/_test/formulaire-sensible', function (Request $request) {
+        $request->validate(['champ_obligatoire' => 'required']);
+    });
+
+    $this->from('/')->post('/_test/formulaire-sensible', [
+        'numero_piece_identite' => 'CI0012345678',
+        'code' => '654321',
+        'pin' => '48157',
+        'nom' => 'Kouamé',
+    ]);
+
+    expect(session()->getOldInput())->toBe(['nom' => 'Kouamé']);
+});
+
+it('counts wrong pins on password confirmation towards the account lock', function () {
+    config(['plateforme.connexion.echecs_avant_verrouillage' => 3]);
+    $admin = utilisateurAvecRole(Role::Admin);
+
+    foreach (range(1, 3) as $essai) {
+        connecter($admin)->post(route('password.confirm.store'), ['password' => '00000']);
+    }
+
+    expect($admin->fresh()->estVerrouille())->toBeTrue();
+
+    connecter($admin->fresh())->get(route('admin.tableau-de-bord'))->assertRedirect(route('login'));
+    $this->assertGuest();
+});
+
+it('confirms the password with the correct pin', function () {
+    $admin = utilisateurAvecRole(Role::Admin);
+
+    connecter($admin)->post(route('password.confirm.store'), ['password' => UserFactory::PIN])
+        ->assertSessionHasNoErrors();
+
+    expect(User::find($admin->id)->tentatives_echouees)->toBe(0);
+});
+
+it('ignores a remember-me request', function () {
+    $agent = utilisateurAvecRole(Role::Agent);
+
+    $this->post(route('login.store'), [
+        'nom_utilisateur' => $agent->nom_utilisateur,
+        'password' => UserFactory::PIN,
+        'remember' => 'on',
+    ])->assertCookieMissing(auth()->guard('web')->getRecallerName());
+
+    $this->assertAuthenticatedAs($agent);
+});
+
+it('refuses mass assignment of the partner link and the account status', function () {
+    $user = User::factory()->create();
+
+    $user->fill(['partenaire_id' => 1]);
+})->throws(MassAssignmentException::class);

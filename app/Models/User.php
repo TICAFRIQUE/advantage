@@ -3,19 +3,29 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\Role;
+use App\Enums\StatutUtilisateur;
+use App\Observers\UserObserver;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['nom', 'nom_utilisateur', 'email', 'telephone', 'password'])]
 #[Hidden(['password', 'remember_token'])]
+#[ObservedBy(UserObserver::class)]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, HasRoles, Notifiable, SoftDeletes;
 
     /**
      * Get the attributes that should be cast.
@@ -27,6 +37,84 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'statut' => StatutUtilisateur::class,
+            'tentatives_echouees' => 'integer',
+            'verrouille_le' => 'datetime',
+            'derniere_connexion_le' => 'datetime',
         ];
+    }
+
+    /**
+     * Partenaire auquel l'opérateur est rattaché (rôle partenaire uniquement).
+     *
+     * @return BelongsTo<Partenaire, $this>
+     */
+    public function partenaire(): BelongsTo
+    {
+        return $this->belongsTo(Partenaire::class);
+    }
+
+    /**
+     * Cartes activées par cet agent.
+     *
+     * @return HasMany<Carte, $this>
+     */
+    public function cartesActivees(): HasMany
+    {
+        return $this->hasMany(Carte::class, 'active_par_id');
+    }
+
+    /**
+     * Nom d'utilisateur toujours stocké en minuscules (connexion insensible à la casse).
+     *
+     * @return Attribute<string, string>
+     */
+    protected function nomUtilisateur(): Attribute
+    {
+        return Attribute::make(set: fn (string $valeur) => mb_strtolower(trim($valeur)));
+    }
+
+    /**
+     * Rôle déterminant l'espace d'accueil (le plus élevé si plusieurs).
+     */
+    public function rolePrincipal(): ?Role
+    {
+        foreach (Role::cases() as $role) {
+            if ($this->hasRole($role)) {
+                return $role;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Libellé d'auteur affiché sur chaque action : « Nom · Rôle ».
+     */
+    public function libelleActeur(): string
+    {
+        $role = $this->rolePrincipal()?->libelle();
+
+        return $role ? "{$this->nom} · {$role}" : $this->nom;
+    }
+
+    /**
+     * Initiales pour l'avatar (2 lettres maximum).
+     */
+    public function initiales(): string
+    {
+        $mots = preg_split('/\s+/u', trim($this->nom), -1, PREG_SPLIT_NO_EMPTY) ?: ['?'];
+
+        return mb_strtoupper(mb_substr($mots[0], 0, 1).(count($mots) > 1 ? mb_substr(end($mots), 0, 1) : ''));
+    }
+
+    public function estVerrouille(): bool
+    {
+        return $this->verrouille_le !== null;
+    }
+
+    public function estActif(): bool
+    {
+        return $this->statut === StatutUtilisateur::Actif && ! $this->estVerrouille();
     }
 }

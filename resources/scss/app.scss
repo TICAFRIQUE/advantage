@@ -1,0 +1,606 @@
+// =============================================================================
+// Charte ADVANTAGE — fontaine GROUP
+// Bleu nuit et or tirés des visuels de la carte, bleu eau du logo fG.
+// Contrastes vérifiés (WCAG AA ≥ 4.5:1) :
+//   - or clair (#C9973A) sur bleu nuit : ~6.6:1 → texte sur fond sombre
+//   - or foncé (#8C5A1B) sur blanc     : ~5.8:1 → texte d'accent sur fond clair
+//   - l'or clair n'est jamais utilisé pour du texte sur fond blanc
+// =============================================================================
+
+$nuit: #0b1257;
+$nuit-profond: #07103f;
+$or-fonce: #8c5a1b;
+$or: #c9973a;
+$or-clair: #e9cb7a;
+$bleu-eau: #1f7fc4;
+
+$primary: $nuit;
+$secondary: #5b6178;
+$info: $bleu-eau;
+$warning: $or;
+$success: #1e7b4f;
+$danger: #b3261e;
+
+$body-bg: #f4f5fa;
+$body-color: #1b1f33;
+$link-color: $nuit;
+
+$font-family-sans-serif: 'Montserrat', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+$headings-font-weight: 700;
+
+$border-radius: 0.6rem;
+$border-radius-lg: 0.9rem;
+$btn-padding-y: 0.6rem;
+$btn-padding-x: 1.1rem;
+$input-padding-y: 0.6rem;
+
+$focus-ring-color: rgba($or, 0.5);
+$focus-ring-width: 0.25rem;
+
+@import 'bootstrap/scss/bootstrap';
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+
+:root {
+    --adv-nuit: #{$nuit};
+    --adv-nuit-profond: #{$nuit-profond};
+    --adv-or: #{$or};
+    --adv-or-fonce: #{$or-fonce};
+    --adv-or-clair: #{$or-clair};
+    --adv-degrade-or: linear-gradient(135deg, #{$or-fonce} 0%, #{$or} 45%, #{$or-clair} 70%, #{$or} 100%);
+    --adv-degrade-nuit: radial-gradient(ellipse at top, #13207a 0%, #{$nuit} 45%, #{$nuit-profond} 100%);
+}
+
+// Focus toujours visible (saisie rapide en boutique)
+:focus-visible {
+    outline: 3px solid $or;
+    outline-offset: 2px;
+}
+
+// Zones tactiles ≥ 44px
+.btn,
+.form-control,
+.form-select {
+    min-height: 44px;
+}
+
+// --- Composants de marque ----------------------------------------------------
+
+.fond-nuit {
+    background: var(--adv-degrade-nuit);
+    color: #fff;
+}
+
+.texte-or {
+    color: $or;
+}
+
+.texte-or-fonce {
+    color: $or-fonce;
+}
+
+.btn-or {
+    --bs-btn-color: #{$nuit-profond};
+    --bs-btn-bg: #{$or};
+    --bs-btn-border-color: #{$or};
+    --bs-btn-hover-color: #{$nuit-profond};
+    --bs-btn-hover-bg: #{$or-clair};
+    --bs-btn-hover-border-color: #{$or-clair};
+    --bs-btn-active-color: #{$nuit-profond};
+    --bs-btn-active-bg: #{$or-clair};
+    --bs-btn-disabled-bg: #{$or};
+    --bs-btn-disabled-border-color: #{$or};
+    font-weight: 700;
+    background-image: var(--adv-degrade-or);
+}
+
+.bordure-or {
+    border: 2px solid transparent;
+    background:
+        linear-gradient(var(--bs-body-bg), var(--bs-body-bg)) padding-box,
+        var(--adv-degrade-or) border-box;
+}
+
+// --- Carte ADVANTAGE (reproduction du visuel physique) ------------------------
+// Toutes les dimensions sont exprimées en cqw : la carte garde ses proportions
+// quelle que soit la largeur de son conteneur (grille, détail, mobile).
+
+.carte-adv {
+    container-type: inline-size;
+    position: relative;
+    aspect-ratio: 1.586;
+    width: 100%;
+    overflow: hidden;
+    // Les unités cqw ne s'appliquent qu'aux enfants : le conteneur utilise des %.
+    border-radius: 4.5% / 7.1%;
+    color: #fff;
+    background:
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 4px),
+        radial-gradient(ellipse at 30% 20%, #12207c 0%, #{$nuit} 50%, #{$nuit-profond} 100%);
+    box-shadow:
+        inset 0 0 0 clamp(2px, 0.7vw, 5px) #c9973a,
+        0 1rem 2rem rgba(7, 16, 63, 0.35);
+    font-family: 'Montserrat', sans-serif;
+    user-select: none;
+
+    &--inactive {
+        filter: grayscale(0.85) brightness(0.85);
+    }
+
+    &__papillon {
+        position: absolute;
+        left: 8%;
+        top: -6%;
+        width: 86%;
+        opacity: 0.92;
+        pointer-events: none;
+    }
+
+    &__marque {
+        position: absolute;
+        left: 6%;
+        top: 17%;
+        line-height: 1;
+    }
+
+    &__groupe {
+        display: block;
+        font-size: 5cqw;
+        font-weight: 500;
+        color: #{$or};
+        letter-spacing: -0.02em;
+
+        strong {
+            font-weight: 700;
+        }
+    }
+
+    &__nom {
+        display: block;
+        margin-top: 1.2cqw;
+        font-size: 9.4cqw;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        text-shadow: 0.4cqw 0.5cqw 0 rgba(7, 16, 63, 0.9);
+    }
+
+    &__puce {
+        position: absolute;
+        left: 6%;
+        top: 47%;
+        width: 9%;
+        aspect-ratio: 1.3;
+        border-radius: 1.2cqw;
+        background:
+            linear-gradient(90deg, transparent 32%, rgba(90, 50, 10, 0.55) 32% 36%, transparent 36% 64%, rgba(90, 50, 10, 0.55) 64% 68%, transparent 68%),
+            linear-gradient(0deg, transparent 30%, rgba(90, 50, 10, 0.55) 30% 34%, transparent 34% 66%, rgba(90, 50, 10, 0.55) 66% 70%, transparent 70%),
+            linear-gradient(135deg, #f3d58b, #c9973a 55%, #9c6a23);
+    }
+
+    &__expiration {
+        position: absolute;
+        left: 6%;
+        bottom: 17%;
+        font-family: 'Courier New', monospace;
+        font-style: italic;
+        font-weight: 700;
+        font-size: 3.2cqw;
+        letter-spacing: 0.35em;
+        line-height: 1.5;
+    }
+
+    &__logo {
+        position: absolute;
+        right: 6.5%;
+        top: 10%;
+        width: 17%;
+        border-radius: 0.6cqw;
+    }
+
+    &__type {
+        position: absolute;
+        right: 6.5%;
+        top: 46%;
+        width: 17%;
+        font-size: 2.9cqw;
+        line-height: 1.25;
+        color: #{$or};
+        letter-spacing: 0.02em;
+    }
+
+    &__numero {
+        position: absolute;
+        right: 6.5%;
+        bottom: 7%;
+        width: 17%;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.6cqw 1.3cqw;
+    }
+
+    &__chiffre {
+        display: grid;
+        place-items: center;
+        aspect-ratio: 0.85;
+        border-radius: 1cqw;
+        background: #050a2e;
+        font-family: 'Courier New', monospace;
+        font-style: italic;
+        font-weight: 700;
+        font-size: 3.4cqw;
+    }
+
+    &__lignes {
+        grid-column: span 2;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 0.8cqw;
+
+        i {
+            display: block;
+            height: 0.45cqw;
+            background: #{$bleu-eau};
+            border-radius: 1cqw;
+        }
+    }
+
+    &__bandeau {
+        position: absolute;
+        top: 7%;
+        left: -12%;
+        transform: rotate(-12deg);
+        padding: 1cqw 16%;
+        background: #{$danger};
+        color: #fff;
+        font-size: 3.4cqw;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+}
+
+// Sélecteur d'indicatif pays accolé au champ téléphone
+.selecteur-pays {
+    max-width: 8.5rem;
+    font-variant-numeric: tabular-nums;
+}
+
+// Boutons d'action sous chaque carte : zone tactile confortable
+.actions-carte .btn {
+    min-height: 44px;
+}
+
+// =============================================================================
+// Coque applicative type ERP : barre latérale + barre haute
+// =============================================================================
+
+.app-erp {
+    --largeur-barre: 264px;
+    --largeur-barre-reduite: 80px;
+    --hauteur-barre-haut: 64px;
+    background: $body-bg;
+}
+
+// --- Barre latérale -----------------------------------------------------------
+
+.barre-laterale {
+    display: flex;
+    flex-direction: column;
+    color: rgba(255, 255, 255, 0.8);
+    background: linear-gradient(180deg, #{$nuit} 0%, #{$nuit-profond} 100%);
+
+    // Filigrane papillon or, discret, sous la navigation
+    &::after {
+        content: '';
+        position: absolute;
+        inset: auto 15% 5.5rem;
+        height: 28%;
+        background: url('/images/papillon-or.png') no-repeat center bottom / contain;
+        opacity: 0.12;
+        pointer-events: none;
+    }
+
+    > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    // Volet mobile (offcanvas) : même habillage
+    &.offcanvas-lg {
+        --bs-offcanvas-width: min(300px, 85vw);
+        --bs-offcanvas-bg: #{$nuit};
+    }
+
+    &__marque {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-height: var(--hauteur-barre-haut);
+        padding: 0.75rem 1.25rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        white-space: nowrap;
+    }
+
+    &__nav {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 0.75rem 0;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    }
+
+    &__section {
+        margin: 0.75rem 1.75rem 0.35rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(233, 203, 122, 0.75);
+        white-space: nowrap;
+    }
+
+    &__lien {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        min-height: 44px;
+        margin: 0.15rem 0.75rem;
+        padding: 0.6rem 1rem;
+        border-radius: 0.65rem;
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: 500;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: background-color 0.15s ease, color 0.15s ease;
+
+        .bi {
+            flex-shrink: 0;
+            width: 1.35rem;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+
+        &:hover,
+        &:focus-visible {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        &.actif {
+            color: #fff;
+            background: linear-gradient(90deg, rgba(201, 151, 58, 0.28), rgba(201, 151, 58, 0.06));
+            box-shadow: inset 3px 0 0 #{$or};
+
+            .bi {
+                color: #{$or-clair};
+            }
+        }
+    }
+
+    &__pied {
+        padding: 0.5rem 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    &__chevron {
+        transition: transform 0.2s ease;
+    }
+}
+
+// Desktop : barre fixe, réductible
+@include media-breakpoint-up(lg) {
+    .barre-laterale {
+        position: fixed;
+        inset: 0 auto 0 0;
+        z-index: $zindex-fixed;
+        width: var(--largeur-barre);
+        transition: width 0.2s ease;
+    }
+
+    .app-erp__principal {
+        margin-left: var(--largeur-barre);
+        transition: margin-left 0.2s ease;
+    }
+
+    .app-erp.barre-reduite {
+        --largeur-barre: var(--largeur-barre-reduite);
+
+        .barre-laterale__texte {
+            display: none;
+        }
+
+        .barre-laterale__marque {
+            justify-content: center;
+            padding-inline: 0.5rem;
+        }
+
+        .barre-laterale__section {
+            height: 1px;
+            margin: 0.75rem 1.25rem;
+            overflow: hidden;
+            color: transparent;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .barre-laterale__lien {
+            justify-content: center;
+            padding-inline: 0;
+
+            // Infobulle au survol / focus quand seules les icônes sont visibles
+            &::after {
+                content: attr(data-infobulle);
+                position: absolute;
+                left: calc(100% + 0.75rem);
+                top: 50%;
+                transform: translateY(-50%);
+                padding: 0.35rem 0.65rem;
+                border-radius: 0.4rem;
+                background: #{$nuit-profond};
+                color: #fff;
+                font-size: 0.8rem;
+                white-space: nowrap;
+                box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.2);
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.12s ease;
+            }
+
+            &:hover::after,
+            &:focus-visible::after {
+                opacity: 1;
+            }
+        }
+
+        .barre-laterale__nav {
+            overflow: visible;
+        }
+
+        .barre-laterale__chevron {
+            transform: rotate(180deg);
+        }
+
+        .barre-laterale::after {
+            display: none;
+        }
+    }
+}
+
+// --- Barre haute ---------------------------------------------------------------
+
+.app-erp__principal {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.barre-haut {
+    position: sticky;
+    top: 0;
+    z-index: $zindex-sticky;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: var(--hauteur-barre-haut);
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(11, 18, 87, 0.08);
+
+    @include media-breakpoint-up(md) {
+        padding-inline: 1.5rem;
+    }
+
+    &__icone {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 0.65rem;
+        color: #{$nuit};
+        font-size: 1.35rem;
+
+        &:hover {
+            background: #eef0f8;
+        }
+    }
+
+    &__titre {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        line-height: 1.2;
+        color: #{$nuit};
+    }
+
+    &__utilisateur {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        min-height: 44px;
+        padding: 0.25rem 0.6rem 0.25rem 0.3rem;
+        border-radius: 0.8rem;
+        border: 0;
+        color: #{$body-color};
+
+        &:hover,
+        &[aria-expanded="true"] {
+            background: #eef0f8;
+        }
+    }
+
+    &__nom {
+        max-width: 12rem;
+    }
+}
+
+.avatar {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--adv-degrade-or);
+    color: #{$nuit-profond};
+    font-weight: 800;
+    font-size: 0.9rem;
+    letter-spacing: 0.02em;
+
+    &--grand {
+        width: 52px;
+        height: 52px;
+        font-size: 1.15rem;
+    }
+}
+
+.menu-compte {
+    width: min(300px, calc(100vw - 2rem));
+    padding: 0.5rem;
+    border-radius: 0.9rem;
+
+    &__entete {
+        display: flex;
+        gap: 0.85rem;
+        align-items: flex-start;
+        padding: 0.75rem;
+        border-radius: 0.7rem;
+        background: #f4f5fa;
+    }
+
+    .dropdown-item {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        border-radius: 0.5rem;
+    }
+}
+
+.min-w-0 {
+    min-width: 0;
+}
+
+// --- Contenu -----------------------------------------------------------------
+
+.app-erp__contenu {
+    flex: 1 0 auto;
+    width: 100%;
+    max-width: 1440px;
+    padding: 1.25rem 1rem;
+
+    @include media-breakpoint-up(md) {
+        padding: 1.75rem 1.5rem;
+    }
+
+    &:focus {
+        outline: none;
+    }
+}
+
+.app-erp__pied {
+    padding: 1rem 1.5rem;
+    font-size: 0.8rem;
+    color: #{$secondary};
+}
