@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Enums\Role;
 use App\Models\User;
+use App\Services\PartenaireCourant;
 use App\Services\Sms\PasserelleSms;
 use App\Services\Sms\PasserelleSmsSimulee;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -51,6 +52,13 @@ class AppServiceProvider extends ServiceProvider
         Model::preventSilentlyDiscardingAttributes(! $this->app->isProduction());
 
         RateLimiter::for('activation-carte', fn (Request $request) => Limit::perMinute(30)->by('agent:'.$request->user()?->id));
+        // Anti-énumération des numéros de carte : par opérateur et par partenaire.
+        RateLimiter::for('verification-carte', fn (Request $request) => [
+            Limit::perMinute((int) config('plateforme.verification.par_minute_par_operateur'))->by('operateur:'.$request->user()?->id),
+            Limit::perMinute((int) config('plateforme.verification.par_minute_par_partenaire'))
+                ->by('partenaire:'.($request->user() ? PartenaireCourant::pour($request->user())?->id : 'aucun')),
+        ]);
+        RateLimiter::for('confirmation-otp', fn (Request $request) => Limit::perMinute(20)->by('operateur:'.$request->user()?->id));
         RateLimiter::for('recherche-titulaire', fn (Request $request) => Limit::perMinute(60)->by('agent:'.$request->user()?->id));
     }
 }

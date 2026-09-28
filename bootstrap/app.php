@@ -3,6 +3,7 @@
 use App\Http\Middleware\CompteActif;
 use App\Http\Middleware\EntetesSecurite;
 use App\Http\Middleware\PartenaireActif;
+use App\Http\Middleware\PartenaireCourantRequis;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -23,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => PermissionMiddleware::class,
             'compte.actif' => CompteActif::class,
             'partenaire.actif' => PartenaireActif::class,
+            'partenaire.courant' => PartenaireCourantRequis::class,
         ]);
 
         $middleware->web(append: [EntetesSecurite::class]);

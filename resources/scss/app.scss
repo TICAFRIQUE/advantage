@@ -259,6 +259,117 @@ $focus-ring-width: 0.25rem;
     }
 }
 
+// --- Parcours caisse (espace partenaire, mobile d'abord) ----------------------
+
+.parcours-caisse {
+    max-width: 560px;
+}
+
+.etapes-caisse {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0;
+    margin: 0 0 1rem;
+    list-style: none;
+    counter-reset: etape;
+
+    li {
+        flex: 1;
+        padding: 0.5rem 0.25rem;
+        border-radius: 0.6rem;
+        background: #e6e8f2;
+        color: #{$secondary};
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-align: center;
+        counter-increment: etape;
+
+        &::before {
+            content: counter(etape) '. ';
+        }
+
+        &.actif {
+            background: #{$nuit};
+            color: #fff;
+        }
+
+        &.fait {
+            background: rgba($success, 0.15);
+            color: #{$success};
+
+            &::before {
+                content: '✓ ';
+            }
+        }
+    }
+}
+
+// Champs de saisie en caisse : gros, lisibles, chiffres espacés
+.champ-caisse,
+.champ-code {
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    text-align: center;
+    min-height: 64px;
+}
+
+.champ-caisse {
+    font-size: 2rem;
+    letter-spacing: 0.3em;
+}
+
+.champ-code {
+    font-size: 2.4rem;
+    letter-spacing: 0.6em;
+    padding-left: 0.6em; // compense l'espacement après le dernier chiffre
+}
+
+.resultat-caisse {
+    &__icone {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-size: 3.5rem;
+        line-height: 1;
+    }
+
+    &--valide {
+        background: rgba($success, 0.08);
+        box-shadow: inset 0 0 0 2px rgba($success, 0.35) !important;
+
+        .resultat-caisse__icone {
+            color: #{$success};
+        }
+    }
+
+    &--refus {
+        background: rgba($danger, 0.06);
+        box-shadow: inset 0 0 0 2px rgba($danger, 0.35) !important;
+
+        .resultat-caisse__icone {
+            color: #{$danger};
+        }
+    }
+}
+
+.bandeau-partenaire {
+    padding: 0.75rem 1rem;
+    border-radius: 0.9rem;
+    background: #fff;
+    box-shadow: 0 0.125rem 0.5rem rgba(11, 18, 87, 0.06);
+
+    &__icone {
+        display: inline-grid;
+        place-items: center;
+        flex-shrink: 0;
+        width: 44px;
+        height: 44px;
+        border-radius: 0.7rem;
+        background: #{$nuit};
+        color: #{$or-clair};
+        font-size: 1.25rem;
+    }
+}
+
 // Sélecteur d'indicatif pays accolé au champ téléphone
 .selecteur-pays {
     max-width: 8.5rem;

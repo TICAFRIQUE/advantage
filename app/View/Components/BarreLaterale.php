@@ -49,6 +49,8 @@ class BarreLaterale extends Component
             ],
             'Partenaire' => [
                 $this->entree('Accueil partenaire', 'bi-shop', 'partenaire.tableau-de-bord', ['partenaire.tableau-de-bord'], $user->can(Permission::AccederEspacePartenaire->value)),
+                $this->entree('Vérifier une carte', 'bi-upc-scan', 'partenaire.verifier', ['partenaire.verifier', 'partenaire.codes.*'], $user->can(Permission::VerifierCarte->value)),
+                $this->entree('Historique des passages', 'bi-clock-history', 'partenaire.transactions.index', ['partenaire.transactions.*'], $user->can(Permission::VoirSesTransactions->value)),
             ],
             'Outils de test' => [
                 $this->entree('SMS simulés', 'bi-chat-dots', 'admin.sms-simules.index', ['admin.sms-simules.*'],

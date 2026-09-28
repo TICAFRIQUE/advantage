@@ -71,5 +71,48 @@ Route::middleware(['auth', 'compte.actif'])->group(function () {
         ->middleware(['role:'.Role::Superadmin->value.'|'.Role::Admin->value.'|'.Role::Partenaire->value, 'permission:'.Permission::AccederEspacePartenaire->value, 'partenaire.actif'])
         ->group(function () {
             Route::get('/', Partenaire\TableauDeBordController::class)->name('tableau-de-bord');
+
+            // Admin / superadmin : « agir pour le compte de » (option A).
+            Route::post('/partenaire-courant', [Partenaire\PartenaireCourantController::class, 'store'])
+                ->middleware('permission:'.Permission::AccederEspaceAdmin->value)
+                ->name('partenaire-courant.store');
+            Route::delete('/partenaire-courant', [Partenaire\PartenaireCourantController::class, 'destroy'])
+                ->middleware('permission:'.Permission::AccederEspaceAdmin->value)
+                ->name('partenaire-courant.destroy');
+
+            Route::middleware('partenaire.courant')->group(function () {
+                // Étape 1 : vérification (réponse binaire, anti-énumération).
+                Route::get('/verifier', [Partenaire\VerificationController::class, 'create'])
+                    ->middleware('permission:'.Permission::VerifierCarte->value)
+                    ->name('verifier');
+                Route::post('/verifier', [Partenaire\VerificationController::class, 'store'])
+                    ->middleware(['permission:'.Permission::VerifierCarte->value, 'throttle:verification-carte'])
+                    ->name('verifier.store');
+
+                // Étapes 2 et 3 : code à usage unique.
+                Route::post('/codes', [Partenaire\DemandeOtpController::class, 'store'])
+                    ->middleware(['permission:'.Permission::VerifierCarte->value, 'throttle:verification-carte'])
+                    ->name('codes.store');
+                Route::get('/codes/{demande}', [Partenaire\DemandeOtpController::class, 'show'])
+                    ->middleware('permission:'.Permission::ConfirmerOtp->value)
+                    ->name('codes.show');
+                Route::post('/codes/{demande}/valider', [Partenaire\DemandeOtpController::class, 'valider'])
+                    ->middleware(['permission:'.Permission::ConfirmerOtp->value, 'throttle:confirmation-otp'])
+                    ->name('codes.valider');
+                Route::post('/codes/{demande}/renvoyer', [Partenaire\DemandeOtpController::class, 'renvoyer'])
+                    ->middleware(['permission:'.Permission::ConfirmerOtp->value, 'throttle:verification-carte'])
+                    ->name('codes.renvoyer');
+
+                // Étape 4 et historique.
+                Route::get('/transactions', [Partenaire\TransactionController::class, 'index'])
+                    ->middleware('permission:'.Permission::VoirSesTransactions->value)
+                    ->name('transactions.index');
+                Route::get('/transactions/donnees', [Partenaire\TransactionController::class, 'donnees'])
+                    ->middleware('permission:'.Permission::VoirSesTransactions->value)
+                    ->name('transactions.donnees');
+                Route::get('/transactions/{transaction}', [Partenaire\TransactionController::class, 'show'])
+                    ->middleware('permission:'.Permission::VoirSesTransactions->value)
+                    ->name('transactions.show');
+            });
         });
 });

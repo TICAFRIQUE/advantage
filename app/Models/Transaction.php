@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\Enums\StatutTransaction;
+use App\Observers\TransactionObserver;
 use Database\Factories\TransactionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * Aucun montant n'est enregistré.
  */
 #[Table('transactions')]
+#[ObservedBy(TransactionObserver::class)]
 #[Fillable(['carte_id', 'partenaire_id', 'demande_otp_id', 'valide_par_id', 'taux_applique', 'validee_le', 'statut'])]
 class Transaction extends Model
 {

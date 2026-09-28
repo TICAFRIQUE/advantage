@@ -103,6 +103,22 @@ return [
         'longueur' => 6,
         'duree_minutes' => (int) env('OTP_DUREE_MINUTES', 5),
         'tentatives_max' => (int) env('OTP_TENTATIVES_MAX', 3),
+        // Délai avant de pouvoir redemander un code pour la même carte.
+        'renvoi_apres_secondes' => 60,
+        // Anti-harcèlement du titulaire (SMS) : codes par carte.
+        'codes_par_carte_15_minutes' => 3,
+        'codes_par_carte_par_jour' => 10,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Vérification de carte (anti-énumération des numéros)
+    |--------------------------------------------------------------------------
+    */
+
+    'verification' => [
+        'par_minute_par_operateur' => 20,
+        'par_minute_par_partenaire' => 60,
     ],
 
     /*

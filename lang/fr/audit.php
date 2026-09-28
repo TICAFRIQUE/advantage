@@ -31,6 +31,13 @@ return [
     'confirmation.echec' => 'Échec de confirmation du PIN',
     'deconnexion' => 'Déconnexion',
 
+    'carte.verifiee' => 'Carte vérifiée (partenaire)',
+    'otp.demande' => 'Code de validation envoyé',
+    'otp.echec' => 'Code de validation incorrect',
+    'otp.valide' => 'Code de validation accepté',
+    'transaction.creee' => 'Remise accordée',
+    'partenaire.choisi' => 'Partenaire choisi (admin)',
+
     'role.attribue' => 'Rôle attribué',
     'role.retire' => 'Rôle retiré',
 
