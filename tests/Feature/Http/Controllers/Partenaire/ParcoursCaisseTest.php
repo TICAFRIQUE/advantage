@@ -143,8 +143,23 @@ describe('back-office agissant pour un partenaire (option A)', function () {
     it('shows the partner selector before any transaction', function () {
         connecter(utilisateurAvecRole(Role::Admin))->get(route('gestion.transaction.verifier'))
             ->assertOk()
+            ->assertSee('Pour quel partenaire effectuez-vous cette transaction')
+            ->assertSee('Continuer')
+            ->assertDontSee('Numéro de la carte');
+    });
+
+    it('offers to change partner on the same page, never through the partner space', function () {
+        $partenaire = Partenaire::factory()->create(['nom' => 'Hôtel Ivoire']);
+
+        connecter(utilisateurAvecRole(Role::Admin))
+            ->withSession([PartenaireCourant::CLE_SESSION => $partenaire->id])
+            ->get(route('gestion.transaction.verifier'))
+            ->assertOk()
             ->assertSee('Transaction pour le compte de')
-            ->assertSee("Choisissez d'abord un partenaire", false);
+            ->assertSee('Changer de partenaire')
+            ->assertSee('Valider le changement')
+            ->assertSee('Numéro de la carte')
+            ->assertDontSee(route('partenaire.tableau-de-bord'), false);
     });
 
     it('refuses a verification before a partner is chosen', function () {

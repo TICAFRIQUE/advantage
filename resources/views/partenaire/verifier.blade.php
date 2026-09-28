@@ -1,37 +1,44 @@
 <x-layouts.app titre="Transaction" :sous-titre="$peutChoisir ? 'Back-office · Partenaires' : 'Espace partenaire'">
-    <div class="parcours-caisse mx-auto">
+    <div @class(['parcours-caisse mx-auto', 'parcours-caisse--large' => $peutChoisir])
+         x-data="{ changer: {{ $peutChoisir && (! $partenaire || $errors->has('partenaire_id')) ? 'true' : 'false' }} }">
         @if ($peutChoisir)
-            {{-- Back-office : choix du partenaire pour le compte duquel on agit (option A). --}}
-            <form method="POST" action="{{ route('gestion.transaction.partenaire-courant.store') }}"
-                  class="card border-0 shadow-sm mb-3" aria-labelledby="titre-choix">
+            {{-- Back-office : choix du partenaire pour le compte duquel on agit (option A).
+                 Affiché d'office tant qu'aucun partenaire n'est choisi ; ensuite, déplié
+                 par « Changer de partenaire ». --}}
+            <form method="POST" action="{{ route('gestion.transaction.partenaire-courant.store') }}" id="choix-partenaire"
+                  class="card border-0 shadow-sm mb-3" aria-labelledby="titre-choix"
+                  x-show="changer" @if ($partenaire && ! $errors->has('partenaire_id')) style="display: none" @endif>
                 @csrf
-                <div class="card-body">
-                    <h1 class="h6 fw-bold" id="titre-choix">
-                        <i class="bi bi-shop me-1" aria-hidden="true"></i>Transaction pour le compte de
+                <div class="card-body p-4">
+                    <h1 class="h5 fw-bold mb-3" id="titre-choix">
+                        <i class="bi bi-shop me-1" aria-hidden="true"></i>Pour quel partenaire effectuez-vous cette transaction&nbsp;?
                     </h1>
-                    <div class="d-flex flex-column flex-sm-row gap-2">
-                        <label for="partenaire_id" class="visually-hidden">Partenaire</label>
-                        <select id="partenaire_id" name="partenaire_id" required
-                                class="form-select form-select-lg @error('partenaire_id') is-invalid @enderror">
-                            <option value="">— Choisir un partenaire —</option>
-                            @foreach ($partenairesActifs as $choix)
-                                <option value="{{ $choix->id }}" @selected($partenaire?->id === $choix->id)>
-                                    {{ $choix->nom }}{{ $choix->localisation ? ' — '.$choix->localisation : '' }} ({{ rtrim(rtrim((string) $choix->taux_reduction, '0'), '.') }} %)
-                                </option>
-                            @endforeach
-                        </select>
-                        <button type="submit" class="btn btn-primary btn-lg text-nowrap">{{ $partenaire ? 'Changer' : 'Choisir' }}</button>
+                    <label for="partenaire_id" class="form-label fw-semibold">Partenaire</label>
+                    <select id="partenaire_id" name="partenaire_id" required
+                            class="form-select form-select-lg @error('partenaire_id') is-invalid @enderror">
+                        <option value="">— Choisir un partenaire —</option>
+                        @foreach ($partenairesActifs as $choix)
+                            <option value="{{ $choix->id }}" @selected($partenaire?->id === $choix->id)>
+                                {{ $choix->nom }}{{ $choix->localisation ? ' — '.$choix->localisation : '' }} ({{ $choix->tauxFormate() }})
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('partenaire_id')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                    <p class="small text-secondary mt-2 mb-3">La remise sera enregistrée pour ce partenaire, à votre nom.</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg flex-grow-1">
+                            {{ $partenaire ? 'Valider le changement' : 'Continuer' }}
+                        </button>
+                        @if ($partenaire)
+                            <button type="button" class="btn btn-outline-secondary btn-lg" x-on:click="changer = false">Annuler</button>
+                        @endif
                     </div>
-                    @error('partenaire_id')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                    <p class="small text-secondary mb-0 mt-2">La remise sera enregistrée pour ce partenaire, à votre nom.</p>
                 </div>
             </form>
         @endif
 
-        @if (! $partenaire)
-            <div class="alert alert-info" role="status">Choisissez d'abord un partenaire pour effectuer une transaction.</div>
-        @else
-        <x-bandeau-partenaire :partenaire="$partenaire" />
+        @if ($partenaire)
+        <x-bandeau-partenaire :partenaire="$partenaire" :changeable="$peutChoisir" />
 
         <ol class="etapes-caisse" aria-label="Étapes">
             <li class="actif" aria-current="step">Carte</li>

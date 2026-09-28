@@ -7,6 +7,7 @@ use App\Models\Carte;
 use App\Models\OperationCarte;
 use App\Models\Titulaire;
 use App\Models\User;
+use App\Services\Rapports\RapportCartes;
 use Illuminate\Support\Facades\Auth;
 
 function donneesRapportCartes(User $user, array $parametres = []): array
@@ -26,7 +27,7 @@ it('counts the operations by type', function () {
     $carte->update(['statut' => StatutCarte::Revoquee, 'motif_statut' => 'Révocation : perte']);
     Auth::logout();
 
-    $indicateurs = connecter(utilisateurAvecRole(Role::Admin))->get(route('gestion.cartes.rapport'))->assertOk()->viewData('indicateurs');
+    $indicateurs = (new RapportCartes([], utilisateurAvecRole(Role::Admin)))->indicateurs();
 
     expect($indicateurs)->toMatchArray([
         'total' => 5,
@@ -52,7 +53,7 @@ it('filters on the date of every operation, not only activations', function () {
     expect($donnees['recordsFiltered'])->toBe(1)
         ->and($donnees['data'][0]['operation'])->toBe('Suspension')
         ->and($donnees['data'][0]['motif'])->toBe('Suspension : contrôle')
-        ->and(connecter($admin)->get(route('gestion.cartes.rapport', $filtres))->viewData('indicateurs')['total'])->toBe(1);
+        ->and((new RapportCartes($filtres, $admin))->indicateurs()['total'])->toBe(1);
 });
 
 it('filters on the type and the author of the operation', function () {
@@ -139,4 +140,25 @@ it('forbids the report without the permission', function () {
     Spatie\Permission\Models\Role::findByName('agent')->revokePermissionTo('voir-rapport-cartes');
 
     connecter($agent->fresh())->get(route('gestion.cartes.rapport'))->assertForbidden();
+});
+
+it('filters the history on one card number', function () {
+    $carte = Carte::factory()->create(['numero_carte' => '4567890']);
+    Carte::factory()->create();
+    Auth::login(utilisateurAvecRole(Role::Admin));
+    $carte->update(['statut' => StatutCarte::Suspendue, 'motif_statut' => 'Suspension : contrôle']);
+    Auth::logout();
+
+    $admin = utilisateurAvecRole(Role::Admin);
+
+    expect(donneesRapportCartes($admin, ['carte' => '456 789 0'])['recordsFiltered'])->toBe(2);
+    connecter($admin)->get(route('gestion.cartes.rapport', ['carte' => '4567890']))
+        ->assertOk()
+        ->assertSee('value="4567890"', false)
+        ->assertDontSee('bi-activity', false);
+});
+
+it('rejects a malformed card number filter', function () {
+    connecter(utilisateurAvecRole(Role::Admin))->get(route('gestion.cartes.rapport', ['carte' => '12AB']))
+        ->assertSessionHasErrors('carte');
 });

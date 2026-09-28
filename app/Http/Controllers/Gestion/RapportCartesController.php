@@ -13,7 +13,8 @@ use Yajra\DataTables\Facades\DataTables;
 
 /**
  * Rapport des cartes : historique des opérations sur la période choisie
- * (indicateurs par type + liste filtrable Yajra, côté serveur).
+ * (liste filtrable Yajra, côté serveur). Les indicateurs par type restent
+ * calculables (RapportCartes::indicateurs) mais ne sont plus affichés.
  */
 class RapportCartesController extends Controller
 {
@@ -21,7 +22,6 @@ class RapportCartesController extends Controller
     {
         return view('gestion.cartes.rapport', [
             'filtres' => $request->validated() + ['mes_operations' => $request->boolean('mes_operations')],
-            'indicateurs' => $request->rapport()->indicateurs(),
             'agents' => User::query()->role([Role::Admin->value, Role::Agent->value, Role::Superadmin->value])->orderBy('nom')->get(['id', 'nom']),
         ]);
     }

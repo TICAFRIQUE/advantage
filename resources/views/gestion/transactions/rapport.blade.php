@@ -50,43 +50,21 @@
         @endforeach
     </div>
 
-    <div class="row g-4">
-        <div class="col-12 col-xl-3">
-            <section class="card border-0 shadow-sm h-100" aria-labelledby="titre-par-partenaire">
-                <div class="card-body">
-                    <h2 class="h6 fw-bold" id="titre-par-partenaire">Passages par partenaire</h2>
-                    <ol class="list-unstyled mb-0 small">
-                        @forelse ($parPartenaire as $ligne)
-                            <li class="d-flex justify-content-between border-bottom py-2">
-                                <span class="text-truncate me-2">{{ $ligne->partenaire }}</span>
-                                <span class="fw-bold">{{ $ligne->total }}</span>
-                            </li>
-                        @empty
-                            <li class="text-secondary">Aucun passage sur ce périmètre.</li>
-                        @endforelse
-                    </ol>
-                </div>
-            </section>
-        </div>
-
-        <div class="col-12 col-xl-9">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <table class="table table-striped align-middle w-100" id="tableau-rapport-transactions"
-                           data-source="{{ route('gestion.transactions.rapport.donnees') }}" data-filtres="#filtres-rapport-transactions">
-                        <thead>
-                            <tr>
-                                <th scope="col" data-colonne="validee_le">Date</th>
-                                <th scope="col" data-colonne="partenaire" data-triable="false">Partenaire</th>
-                                <th scope="col" data-colonne="carte" data-triable="false" data-lien="lien_carte">Carte</th>
-                                <th scope="col" data-colonne="titulaire" data-triable="false">Titulaire</th>
-                                <th scope="col" data-colonne="taux_applique">Remise</th>
-                                <th scope="col" data-colonne="valide_par" data-triable="false">Validée par</th>
-                            </tr>
-                        </thead>
-                    </table>
-                </div>
-            </div>
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <table class="table table-striped align-middle w-100" id="tableau-rapport-transactions"
+                   data-source="{{ route('gestion.transactions.rapport.donnees') }}" data-filtres="#filtres-rapport-transactions">
+                <thead>
+                    <tr>
+                        <th scope="col" data-colonne="validee_le">Date</th>
+                        <th scope="col" data-colonne="partenaire" data-triable="false">Partenaire</th>
+                        <th scope="col" data-colonne="carte" data-triable="false" data-lien="lien_carte">Carte</th>
+                        <th scope="col" data-colonne="titulaire" data-triable="false">Titulaire</th>
+                        <th scope="col" data-colonne="taux_applique">Remise</th>
+                        <th scope="col" data-colonne="valide_par" data-triable="false">Validée par</th>
+                    </tr>
+                </thead>
+            </table>
         </div>
     </div>
 </x-layouts.app>

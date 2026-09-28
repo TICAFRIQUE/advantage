@@ -85,10 +85,14 @@ class CarteController extends Controller
             ->with('effectueePar.roles')
             ->latest('effectuee_le')
             ->latest('id')
-            ->limit(20)
+            ->limit(10)
             ->get();
 
-        return view('gestion.cartes.show', ['carte' => $carte, 'historique' => $historique]);
+        return view('gestion.cartes.show', [
+            'carte' => $carte,
+            'historique' => $historique,
+            'nombreOperations' => $carte->operations()->count(),
+        ]);
     }
 
     /**

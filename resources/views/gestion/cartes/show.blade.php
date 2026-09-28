@@ -76,7 +76,19 @@
 
             <section class="card border-0 shadow-sm" aria-labelledby="titre-historique">
                 <div class="card-body">
-                    <h2 class="h6 fw-bold" id="titre-historique">Historique des opérations</h2>
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                        <h2 class="h6 fw-bold mb-0" id="titre-historique">
+                            Historique des opérations
+                            @if ($nombreOperations > $historique->count())
+                                <span class="fw-normal text-secondary">({{ $historique->count() }} dernières sur {{ $nombreOperations }})</span>
+                            @endif
+                        </h2>
+                        @can('voir-rapport-cartes')
+                            <a href="{{ route('gestion.cartes.rapport', ['carte' => $carte->numero_carte]) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-clock-history me-1" aria-hidden="true"></i>Voir tout l'historique
+                            </a>
+                        @endcan
+                    </div>
                     <ul class="list-unstyled small mb-0">
                         @forelse ($historique as $entree)
                             <li class="border-start border-3 border-warning ps-2 mb-2">

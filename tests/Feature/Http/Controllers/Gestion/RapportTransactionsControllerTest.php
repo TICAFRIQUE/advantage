@@ -57,13 +57,10 @@ it('filters by partner and period, identically for indicators and list', functio
         ->and(donneesRapportTransactions($admin, $filtres)['recordsFiltered'])->toBe(1);
 });
 
-it('ranks passages by partner', function () {
-    $top = Partenaire::factory()->create(['nom' => 'Top Partenaire']);
-    passage($top);
-    passage($top);
-
+it('no longer ranks passages by partner', function () {
     connecter(utilisateurAvecRole(Role::Admin))->get(route('gestion.transactions.rapport'))
-        ->assertSeeInOrder(['Passages par partenaire', 'Top Partenaire', '2']);
+        ->assertOk()
+        ->assertDontSee('Passages par partenaire');
 });
 
 it('searches by partner name on the server', function () {

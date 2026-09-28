@@ -15,13 +15,13 @@ use Illuminate\Database\Eloquent\Builder;
  * (Yajra) et les exports — un export ne peut jamais contenir plus que ce que
  * l'écran affiche.
  *
- * Filtres : du / au (date de l'opération), type, agent_id (auteur),
- * mes_operations.
+ * Filtres : du / au (date de l'opération), carte (numéro), type, agent_id
+ * (auteur), mes_operations.
  */
 class RapportCartes
 {
     /**
-     * @param  array{du?: ?string, au?: ?string, type?: ?string, agent_id?: ?int, mes_operations?: ?bool}  $filtres
+     * @param  array{du?: ?string, au?: ?string, carte?: ?string, type?: ?string, agent_id?: ?int, mes_operations?: ?bool}  $filtres
      */
     public function __construct(private array $filtres, private User $utilisateur) {}
 
@@ -35,6 +35,8 @@ class RapportCartes
         return OperationCarte::query()
             ->when($f['du'] ?? null, fn (Builder $q, string $du) => $q->where('operations_cartes.effectuee_le', '>=', $du.' 00:00:00'))
             ->when($f['au'] ?? null, fn (Builder $q, string $au) => $q->where('operations_cartes.effectuee_le', '<=', $au.' 23:59:59'))
+            // Cartes supprimées comprises : leur historique reste consultable.
+            ->when($f['carte'] ?? null, fn (Builder $q, string $numero) => $q->whereHas('carte', fn (Builder $c) => $c->withTrashed()->where('numero_carte', $numero)))
             ->when($f['type'] ?? null, fn (Builder $q, string $type) => $q->where('operations_cartes.type', $type))
             ->when($f['agent_id'] ?? null, fn (Builder $q, int|string $agent) => $q->where('operations_cartes.effectuee_par_id', $agent))
             ->when($f['mes_operations'] ?? false, fn (Builder $q) => $q->where('operations_cartes.effectuee_par_id', $this->utilisateur->id));

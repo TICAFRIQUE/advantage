@@ -24,10 +24,26 @@ class FiltrerRapportCartesRequest extends FormRequest
         return [
             'du' => ['nullable', 'date_format:Y-m-d'],
             'au' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:du'],
+            'carte' => ['nullable', 'string', 'regex:/^\d{7}$/'],
             'type' => ['nullable', Rule::enum(TypeOperationCarte::class)],
             'agent_id' => ['nullable', 'integer', 'exists:users,id'],
             'mes_operations' => ['nullable', 'boolean'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->filled('carte')) {
+            $this->merge(['carte' => preg_replace('/\s+/', '', (string) $this->input('carte'))]);
+        }
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return ['carte.regex' => 'Le numéro de carte comporte 7 chiffres.'];
     }
 
     public function rapport(): RapportCartes

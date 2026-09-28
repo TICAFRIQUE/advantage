@@ -4,7 +4,6 @@ namespace App\Services\Rapports;
 
 use App\Models\Transaction;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Collection;
 
 /**
  * Rapport des transactions (passages chez les partenaires) : une seule
@@ -51,21 +50,5 @@ class RapportTransactions
             'partenaires_distincts' => (int) $resultat->partenaires_distincts,
             'taux_moyen' => $resultat->taux_moyen === null ? '—' : rtrim(rtrim(number_format((float) $resultat->taux_moyen, 2, ',', ''), '0'), ',').' %',
         ];
-    }
-
-    /**
-     * Passages par partenaire (les 10 premiers), sur le même périmètre.
-     *
-     * @return Collection<int, object{partenaire: string, total: int}>
-     */
-    public function parPartenaire(): Collection
-    {
-        return $this->requete()->toBase()
-            ->join('partenaires', 'partenaires.id', '=', 'transactions.partenaire_id')
-            ->selectRaw('partenaires.nom AS partenaire, COUNT(*) AS total')
-            ->groupBy('partenaires.id', 'partenaires.nom')
-            ->orderByDesc('total')
-            ->limit(10)
-            ->get();
     }
 }

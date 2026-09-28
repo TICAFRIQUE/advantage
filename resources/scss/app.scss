@@ -270,6 +270,11 @@ $focus-ring-width: 0.25rem;
 
 .parcours-caisse {
     max-width: 560px;
+
+    // Back-office (poste de travail) : plus d'espace pour le choix du partenaire.
+    &--large {
+        max-width: 760px;
+    }
 }
 
 .etapes-caisse {
@@ -520,6 +525,13 @@ $focus-ring-width: 0.25rem;
 
     &__chevron {
         transition: transform 0.2s ease;
+    }
+
+    // Libellés longs : coupés proprement (le libellé complet reste dans l'infobulle).
+    &__lien &__texte {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 }
 

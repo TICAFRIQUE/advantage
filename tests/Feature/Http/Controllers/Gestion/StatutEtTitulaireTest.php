@@ -166,3 +166,29 @@ describe('téléphone du titulaire', function () {
             ->assertForbidden();
     });
 });
+
+describe('historique sur la fiche carte', function () {
+    it('shows the ten latest operations and links to the full history of this card', function () {
+        $carte = Carte::factory()->create(['numero_carte' => '4567890']);
+        $this->actingAs(utilisateurAvecRole(Role::Admin));
+
+        foreach (range(1, 6) as $i) {
+            $carte->update(['statut' => StatutCarte::Suspendue, 'motif_statut' => "Suspension : contrôle {$i}"]);
+            $carte->update(['statut' => StatutCarte::Active, 'motif_statut' => "Réactivation : ok {$i}"]);
+        }
+
+        connecter(utilisateurAvecRole(Role::Admin))->get(route('gestion.cartes.show', $carte))
+            ->assertSee('(10 dernières sur 13)')
+            ->assertSee(route('gestion.cartes.rapport', ['carte' => '4567890']), false)
+            ->assertDontSee('Suspension : contrôle 1<', false);
+    });
+
+    it('hides the full history link without the report permission', function () {
+        $agent = utilisateurAvecRole(Role::Agent);
+        Spatie\Permission\Models\Role::findByName('agent')->revokePermissionTo('voir-rapport-cartes');
+
+        connecter($agent->fresh())->get(route('gestion.cartes.show', Carte::factory()->create()))
+            ->assertOk()
+            ->assertDontSee("Voir tout l'historique", false);
+    });
+});

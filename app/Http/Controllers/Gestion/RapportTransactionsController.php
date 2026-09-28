@@ -23,7 +23,6 @@ class RapportTransactionsController extends Controller
         return view('gestion.transactions.rapport', [
             'filtres' => $request->validated(),
             'indicateurs' => $rapport->indicateurs(),
-            'parPartenaire' => $rapport->parPartenaire(),
             'partenaires' => Partenaire::query()->orderBy('nom')->get(['id', 'nom']),
         ]);
     }
