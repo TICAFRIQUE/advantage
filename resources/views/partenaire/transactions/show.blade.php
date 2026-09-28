@@ -23,7 +23,7 @@
             </div>
         </section>
 
-        <a href="{{ App\Services\EspaceTransaction::route('verifier') }}" class="btn btn-or btn-lg w-100 py-3 mb-2">
+        <a href="{{ App\Services\EspaceTransaction::estGestion() ? route('gestion.transaction.nouvelle') : route('partenaire.transaction.verifier') }}" class="btn btn-or btn-lg w-100 py-3 mb-2">
             <i class="bi bi-plus-circle me-2" aria-hidden="true"></i>Nouvelle transaction
         </a>
         @unless (App\Services\EspaceTransaction::estGestion())

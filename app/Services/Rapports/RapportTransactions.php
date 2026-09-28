@@ -9,12 +9,13 @@ use Illuminate\Database\Eloquent\Builder;
  * Rapport des transactions (passages chez les partenaires) : une seule
  * définition des filtres pour indicateurs, liste et exports.
  *
- * Filtres : du / au (date de validation), partenaire_id, valide_par_id.
+ * Filtres : du / au (date de validation), carte (numéro), partenaire_id,
+ * valide_par_id.
  */
 class RapportTransactions
 {
     /**
-     * @param  array{du?: ?string, au?: ?string, partenaire_id?: ?int, valide_par_id?: ?int}  $filtres
+     * @param  array{du?: ?string, au?: ?string, carte?: ?string, partenaire_id?: ?int, valide_par_id?: ?int}  $filtres
      */
     public function __construct(private array $filtres) {}
 
@@ -28,6 +29,7 @@ class RapportTransactions
         return Transaction::query()
             ->when($f['du'] ?? null, fn (Builder $q, string $du) => $q->where('transactions.validee_le', '>=', $du.' 00:00:00'))
             ->when($f['au'] ?? null, fn (Builder $q, string $au) => $q->where('transactions.validee_le', '<=', $au.' 23:59:59'))
+            ->when($f['carte'] ?? null, fn (Builder $q, string $numero) => $q->whereHas('carte', fn (Builder $c) => $c->withTrashed()->where('numero_carte', $numero)))
             ->when($f['partenaire_id'] ?? null, fn (Builder $q, int|string $id) => $q->where('transactions.partenaire_id', $id))
             ->when($f['valide_par_id'] ?? null, fn (Builder $q, int|string $id) => $q->where('transactions.valide_par_id', $id));
     }

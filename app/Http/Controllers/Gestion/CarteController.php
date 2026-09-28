@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Gestion;
 
 use App\Actions\Gestion\ActiverCarteAction;
+use App\Enums\Permission;
 use App\Enums\StatutCarte;
 use App\Exceptions\ActivationImpossibleException;
 use App\Http\Controllers\Controller;
@@ -88,10 +89,17 @@ class CarteController extends Controller
             ->limit(10)
             ->get();
 
+        // Passages chez les partenaires : réservés au droit « rapport des transactions ».
+        $voirTransactions = request()->user()->can(Permission::VoirRapportTransactions->value);
+
         return view('gestion.cartes.show', [
             'carte' => $carte,
             'historique' => $historique,
             'nombreOperations' => $carte->operations()->count(),
+            'transactions' => $voirTransactions
+                ? $carte->transactions()->with(['partenaire', 'validePar.roles'])->latest('validee_le')->latest('id')->limit(10)->get()
+                : null,
+            'nombreTransactions' => $voirTransactions ? $carte->transactions()->count() : 0,
         ]);
     }
 

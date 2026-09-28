@@ -52,7 +52,7 @@ class BarreLaterale extends Component
             ],
             'Partenaires' => [
                 $this->entree('Liste des partenaires', 'bi-shop', 'gestion.partenaires.index', ['gestion.partenaires.*'], $user->can(Permission::VoirPartenaires->value)),
-                $this->entree('Transaction', 'bi-upc-scan', 'gestion.transaction.verifier', ['gestion.transaction.*'], $user->can(Permission::EffectuerTransactionPartenaire->value)),
+                $this->entree('Transaction', 'bi-upc-scan', 'gestion.transaction.nouvelle', ['gestion.transaction.*'], $user->can(Permission::EffectuerTransactionPartenaire->value)),
                 $this->entree('Rapport des transactions', 'bi-graph-up', 'gestion.transactions.rapport', ['gestion.transactions.rapport'], $user->can(Permission::VoirRapportTransactions->value)),
             ],
             'Outils de test' => [

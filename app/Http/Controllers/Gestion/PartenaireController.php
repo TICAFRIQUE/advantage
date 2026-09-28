@@ -6,6 +6,7 @@ use App\Actions\Gestion\EnregistrerPartenaireAction;
 use App\Enums\StatutPartenaire;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Gestion\EnregistrerPartenaireRequest;
+use App\Http\Requests\Gestion\FiltrerPartenairesRequest;
 use App\Models\Partenaire;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -21,19 +22,22 @@ use Yajra\DataTables\Facades\DataTables;
  */
 class PartenaireController extends Controller
 {
-    public function index(): View
+    public function index(FiltrerPartenairesRequest $request): View
     {
-        Gate::authorize('viewAny', Partenaire::class);
-
-        return view('gestion.partenaires.index');
+        return view('gestion.partenaires.index', [
+            'filtres' => $request->validated(),
+            'partenaires' => Partenaire::query()->orderBy('nom')->get(['id', 'nom']),
+        ]);
     }
 
-    public function donnees(Request $request): JsonResponse
+    public function donnees(FiltrerPartenairesRequest $request): JsonResponse
     {
-        Gate::authorize('viewAny', Partenaire::class);
+        $filtres = $request->validated();
 
         // select() AVANT withCount() : sinon les colonnes de comptage sont écrasées.
-        $requete = Partenaire::query()->select('partenaires.*')->withCount(['operateurs', 'transactions']);
+        $requete = Partenaire::query()->select('partenaires.*')->withCount(['operateurs', 'transactions'])
+            ->when($filtres['partenaire_id'] ?? null, fn ($q, int|string $id) => $q->whereKey($id))
+            ->when($filtres['statut'] ?? null, fn ($q, string $statut) => $q->where('statut', $statut));
 
         return DataTables::eloquent($requete)
             ->editColumn('taux_reduction', fn (Partenaire $p) => $p->tauxFormate())
@@ -64,7 +68,7 @@ class PartenaireController extends Controller
         $partenaire = $enregistrer->creer($request->validated(), $request->user());
 
         return redirect()->route('gestion.partenaires.show', $partenaire)
-            ->with('succes', "Le partenaire {$partenaire->nom} a été créé. Ajoutez maintenant ses opérateurs.");
+            ->with('succes', "Le partenaire {$partenaire->nom} a été créé. Ajoutez maintenant ses utilisateurs.");
     }
 
     public function show(Partenaire $partenaire): View
@@ -105,6 +109,6 @@ class PartenaireController extends Controller
 
         return redirect()->route('gestion.partenaires.show', $partenaire)->with('succes', $statut === StatutPartenaire::Actif
             ? 'Le partenaire a été réactivé.'
-            : 'Le partenaire a été désactivé : ses opérateurs ne peuvent plus effectuer de transaction.');
+            : 'Le partenaire a été désactivé : ses utilisateurs ne peuvent plus effectuer de transaction.');
     }
 }

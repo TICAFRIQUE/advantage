@@ -29,7 +29,7 @@
                             </a>
                             <form method="POST" action="{{ route('gestion.partenaires.statut', $partenaire) }}" class="flex-grow-1"
                                   data-titre="{{ $partenaire->estActif() ? 'Désactiver' : 'Réactiver' }} {{ $partenaire->nom }} ?"
-                                  data-confirmer="{{ $partenaire->estActif() ? 'Ses opérateurs ne pourront plus effectuer de transaction.' : 'Ses opérateurs pourront de nouveau effectuer des transactions.' }}"
+                                  data-confirmer="{{ $partenaire->estActif() ? 'Ses utilisateurs ne pourront plus effectuer de transaction.' : 'Ses utilisateurs pourront de nouveau effectuer des transactions.' }}"
                                   data-bouton-confirmer="{{ $partenaire->estActif() ? 'Désactiver' : 'Réactiver' }}" @if ($partenaire->estActif()) data-danger="1" @endif>
                                 @csrf
                                 <input type="hidden" name="statut" value="{{ $partenaire->estActif() ? 'inactif' : 'actif' }}">
@@ -64,7 +64,8 @@
         <div class="col-12 col-xl-8">
             <section class="card border-0 shadow-sm mb-4" aria-labelledby="titre-operateurs">
                 <div class="card-body">
-                    <h2 class="h5 fw-bold" id="titre-operateurs">Opérateurs</h2>
+                    <h2 class="h5 fw-bold mb-1" id="titre-operateurs">Utilisateurs du partenaire</h2>
+                    <p class="small text-secondary mb-3">Comptes de connexion du personnel du partenaire (caissiers, gérants) : ils se connectent à l'espace partenaire pour vérifier les cartes et valider les remises. Chaque transaction indique quel utilisateur l'a validée.</p>
                     <div class="table-responsive">
                         <table class="table align-middle mb-0">
                             <thead>
@@ -94,7 +95,7 @@
                                         <td><x-actions-compte :compte="$operateur" /></td>
                                     </tr>
                                 @empty
-                                    <tr><td colspan="5" class="text-secondary">Aucun opérateur : ajoutez-en un pour que le partenaire puisse effectuer des transactions.</td></tr>
+                                    <tr><td colspan="5" class="text-secondary">Aucun utilisateur : ajoutez-en un pour que le partenaire puisse effectuer des transactions depuis son espace.</td></tr>
                                 @endforelse
                             </tbody>
                         </table>
@@ -108,7 +109,7 @@
                     @csrf
                     <div class="card-body">
                         <h2 class="h6 fw-bold" id="titre-nouvel-operateur">
-                            <i class="bi bi-person-plus me-1" aria-hidden="true"></i>Ajouter un opérateur
+                            <i class="bi bi-person-plus me-1" aria-hidden="true"></i>Ajouter un utilisateur du partenaire
                         </h2>
                         <div class="row g-3">
                             <div class="col-12 col-md-4">
@@ -132,7 +133,7 @@
                             </div>
                         </div>
                         <p class="small text-secondary mt-2 mb-3">Un PIN à 5 chiffres sera généré et affiché une seule fois.</p>
-                        <button type="submit" class="btn btn-primary">Créer l'opérateur</button>
+                        <button type="submit" class="btn btn-primary">Créer l'utilisateur</button>
                     </div>
                 </form>
             @endcan

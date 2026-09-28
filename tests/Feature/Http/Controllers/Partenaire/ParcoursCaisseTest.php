@@ -162,6 +162,26 @@ describe('back-office agissant pour un partenaire (option A)', function () {
             ->assertDontSee(route('partenaire.tableau-de-bord'), false);
     });
 
+    it('starts every new transaction without a preselected partner', function () {
+        $partenaire = Partenaire::factory()->create(['nom' => 'Hôtel Ivoire']);
+
+        connecter(utilisateurAvecRole(Role::Admin))
+            ->withSession([PartenaireCourant::CLE_SESSION => $partenaire->id])
+            ->get(route('gestion.transaction.nouvelle'))
+            ->assertRedirect(route('gestion.transaction.verifier'))
+            ->assertSessionMissing(PartenaireCourant::CLE_SESSION);
+    });
+
+    it('points the menu, the dashboard and the result page to a fresh transaction', function () {
+        connecter(utilisateurAvecRole(Role::Admin))->get(route('gestion.tableau-de-bord'))
+            ->assertOk()
+            ->assertSee(route('gestion.transaction.nouvelle'), false);
+    });
+
+    it('reserves the new transaction entry point to the permission', function () {
+        connecter(utilisateurAvecRole(Role::Agent))->get(route('gestion.transaction.nouvelle'))->assertForbidden();
+    });
+
     it('refuses a verification before a partner is chosen', function () {
         connecter(utilisateurAvecRole(Role::Admin))
             ->post(route('gestion.transaction.verifier.store'), ['numero_carte' => '1234567'])

@@ -168,6 +168,9 @@ Route::middleware(['auth', 'compte.actif'])->group(function () use ($parcoursTra
 
             // Partenaires : transaction pour le compte d'un partenaire (option A).
             Route::prefix('transaction')->name('transaction.')->group(function () use ($parcoursTransaction) {
+                Route::get('/nouvelle', [Partenaire\PartenaireCourantController::class, 'nouvelle'])
+                    ->middleware('permission:'.Permission::EffectuerTransactionPartenaire->value)
+                    ->name('nouvelle');
                 Route::post('/partenaire-courant', [Partenaire\PartenaireCourantController::class, 'store'])
                     ->middleware('permission:'.Permission::EffectuerTransactionPartenaire->value)
                     ->name('partenaire-courant.store');

@@ -109,6 +109,51 @@ describe('liste', function () {
 
         expect(donneesPartenaires(utilisateurAvecRole(Role::Agent), ['search' => ['value' => 'lagune']])['recordsFiltered'])->toBe(1);
     });
+
+    it('filters partners by partner and by status on the server', function () {
+        $lagune = Partenaire::factory()->create(['nom' => 'Pharmacie Lagune', 'statut' => StatutPartenaire::Actif]);
+        Partenaire::factory()->create(['nom' => 'Restaurant Maquis', 'statut' => StatutPartenaire::Inactif]);
+        Partenaire::factory()->create(['nom' => 'Boutique Cocody', 'statut' => StatutPartenaire::Inactif]);
+        $admin = utilisateurAvecRole(Role::Admin);
+
+        $parPartenaire = donneesPartenaires($admin, ['partenaire_id' => $lagune->id]);
+        $inactifs = donneesPartenaires($admin, ['statut' => StatutPartenaire::Inactif->value]);
+
+        expect(collect($parPartenaire['data'])->pluck('nom')->all())->toBe(['Pharmacie Lagune'])
+            ->and(collect($inactifs['data'])->pluck('nom')->sort()->values()->all())->toBe(['Boutique Cocody', 'Restaurant Maquis'])
+            ->and(donneesPartenaires($admin, ['partenaire_id' => $lagune->id, 'statut' => StatutPartenaire::Inactif->value])['recordsFiltered'])->toBe(0);
+    });
+
+    it('rejects invalid filters', function () {
+        connecter(utilisateurAvecRole(Role::Admin))
+            ->getJson(route('gestion.partenaires.donnees', ['statut' => 'supprime', 'partenaire_id' => 999999]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['statut', 'partenaire_id']);
+    });
+
+    it('shows the filter form with the current selection', function () {
+        $lagune = Partenaire::factory()->create(['nom' => 'Pharmacie Lagune']);
+
+        connecter(utilisateurAvecRole(Role::Agent))
+            ->get(route('gestion.partenaires.index', ['partenaire_id' => $lagune->id, 'statut' => 'inactif']))
+            ->assertOk()
+            ->assertSee('data-filtres="#filtres-partenaires"', false)
+            ->assertSee('<option value="'.$lagune->id.'" selected>', false)
+            ->assertSee('<option value="inactif" selected>', false);
+    });
+});
+
+describe('utilisateurs du partenaire', function () {
+    it('explains what partner users are on the detail page', function () {
+        $partenaire = Partenaire::factory()->create();
+
+        connecter(utilisateurAvecRole(Role::Admin))
+            ->get(route('gestion.partenaires.show', $partenaire))
+            ->assertOk()
+            ->assertSee('Utilisateurs du partenaire')
+            ->assertSee("se connectent à l'espace partenaire", false)
+            ->assertSee('Ajouter un utilisateur du partenaire');
+    });
 });
 
 describe('autorisations', function () {
@@ -116,7 +161,7 @@ describe('autorisations', function () {
         $agent = utilisateurAvecRole(Role::Agent);
         $partenaire = Partenaire::factory()->create();
 
-        connecter($agent)->get(route('gestion.partenaires.show', $partenaire))->assertOk()->assertDontSee('Ajouter un opérateur');
+        connecter($agent)->get(route('gestion.partenaires.show', $partenaire))->assertOk()->assertDontSee('Ajouter un utilisateur du partenaire');
         connecter($agent)->get(route('gestion.partenaires.create'))->assertForbidden();
         connecter($agent)->post(route('gestion.partenaires.store'), formulairePartenaire())->assertForbidden();
         connecter($agent)->put(route('gestion.partenaires.update', $partenaire), formulairePartenaire())->assertForbidden();

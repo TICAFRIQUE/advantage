@@ -74,6 +74,45 @@
                 </div>
             </section>
 
+            @if ($transactions !== null)
+                <section class="card border-0 shadow-sm mb-4" aria-labelledby="titre-transactions">
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                            <h2 class="h6 fw-bold mb-0" id="titre-transactions">
+                                Dernières transactions
+                                @if ($nombreTransactions > $transactions->count())
+                                    <span class="fw-normal text-secondary">({{ $transactions->count() }} dernières sur {{ $nombreTransactions }})</span>
+                                @endif
+                            </h2>
+                            @if ($nombreTransactions > 0)
+                                <a href="{{ route('gestion.transactions.rapport', ['carte' => $carte->numero_carte]) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-clock-history me-1" aria-hidden="true"></i>Voir tout l'historique
+                                </a>
+                            @endif
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr><th scope="col">Date</th><th scope="col">Partenaire</th><th scope="col">Remise</th><th scope="col">Validée par</th></tr>
+                                </thead>
+                                <tbody>
+                                    @forelse ($transactions as $transaction)
+                                        <tr>
+                                            <td class="text-nowrap">{{ $transaction->validee_le->format('d/m/Y H:i') }}</td>
+                                            <td>{{ $transaction->partenaire->nom }}</td>
+                                            <td>{{ rtrim(rtrim((string) $transaction->taux_applique, '0'), '.') }} %</td>
+                                            <td class="small">{{ $transaction->validePar?->libelleActeur() ?? '—' }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="4" class="text-secondary">Aucune transaction avec cette carte.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            @endif
+
             <section class="card border-0 shadow-sm" aria-labelledby="titre-historique">
                 <div class="card-body">
                     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">

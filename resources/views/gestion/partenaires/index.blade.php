@@ -12,10 +12,37 @@
         @endcan
     </div>
 
+    <form method="GET" action="{{ route('gestion.partenaires.index') }}" id="filtres-partenaires"
+          class="card card-body shadow-sm border-0 mb-4" aria-label="Filtres des partenaires">
+        <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-5">
+                <label for="partenaire_id" class="form-label fw-semibold">Partenaire</label>
+                <select id="partenaire_id" name="partenaire_id" class="form-select">
+                    <option value="">Tous</option>
+                    @foreach ($partenaires as $choix)
+                        <option value="{{ $choix->id }}" @selected((int) ($filtres['partenaire_id'] ?? 0) === $choix->id)>{{ $choix->nom }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-12 col-md-4">
+                <label for="statut" class="form-label fw-semibold">Statut</label>
+                <select id="statut" name="statut" class="form-select">
+                    <option value="">Tous</option>
+                    @foreach (App\Enums\StatutPartenaire::cases() as $statut)
+                        <option value="{{ $statut->value }}" @selected(($filtres['statut'] ?? null) === $statut->value)>{{ $statut->libelle() }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-12 col-md-3 d-grid">
+                <button type="submit" class="btn btn-primary">Appliquer</button>
+            </div>
+        </div>
+    </form>
+
     <div class="card border-0 shadow-sm">
         <div class="card-body">
             <table class="table table-striped align-middle w-100" id="tableau-partenaires"
-                   data-source="{{ route('gestion.partenaires.donnees') }}" data-ordre="asc">
+                   data-source="{{ route('gestion.partenaires.donnees') }}" data-filtres="#filtres-partenaires" data-ordre="asc">
                 <thead>
                     <tr>
                         <th scope="col" data-colonne="nom" data-lien="lien">Nom</th>
@@ -23,7 +50,7 @@
                         <th scope="col" data-colonne="localisation">Localisation</th>
                         <th scope="col" data-colonne="taux_reduction">Remise</th>
                         <th scope="col" data-colonne="statut_libelle" data-triable="false">Statut</th>
-                        <th scope="col" data-colonne="operateurs_count">Opérateurs</th>
+                        <th scope="col" data-colonne="operateurs_count">Utilisateurs</th>
                         <th scope="col" data-colonne="transactions_count">Passages</th>
                     </tr>
                 </thead>

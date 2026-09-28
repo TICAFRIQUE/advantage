@@ -9,7 +9,7 @@
             </a>
         @endcan
         @can('effectuer-transaction-partenaire')
-            <a href="{{ route('gestion.transaction.verifier') }}" class="btn btn-primary btn-lg">
+            <a href="{{ route('gestion.transaction.nouvelle') }}" class="btn btn-primary btn-lg">
                 <i class="bi bi-upc-scan me-1" aria-hidden="true"></i>Transaction
             </a>
         @endcan

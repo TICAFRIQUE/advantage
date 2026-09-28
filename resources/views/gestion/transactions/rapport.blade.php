@@ -17,7 +17,13 @@
                 <input type="date" id="au" name="au" value="{{ $filtres['au'] ?? '' }}" class="form-control @error('au') is-invalid @enderror">
                 @error('au')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
-            <div class="col-12 col-md-5">
+            <div class="col-6 col-md-2">
+                <label for="carte" class="form-label fw-semibold">N° de carte</label>
+                <input type="text" id="carte" name="carte" value="{{ $filtres['carte'] ?? '' }}" inputmode="numeric" maxlength="9"
+                       placeholder="0000000" class="form-control font-monospace @error('carte') is-invalid @enderror">
+                @error('carte')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+            <div class="col-6 col-md-3">
                 <label for="partenaire_id" class="form-label fw-semibold">Partenaire</label>
                 <select id="partenaire_id" name="partenaire_id" class="form-select">
                     <option value="">Tous</option>
