@@ -23,9 +23,9 @@ it('redirects each role to its own space after login', function (Role $role, str
     $this->assertAuthenticatedAs($user);
     $this->get(route('accueil-espace'))->assertRedirect(route($route));
 })->with([
-    'superadmin' => [Role::Superadmin, 'admin.tableau-de-bord'],
-    'admin' => [Role::Admin, 'admin.tableau-de-bord'],
-    'agent' => [Role::Agent, 'agent.tableau-de-bord'],
+    'superadmin' => [Role::Superadmin, 'gestion.tableau-de-bord'],
+    'admin' => [Role::Admin, 'gestion.tableau-de-bord'],
+    'agent' => [Role::Agent, 'gestion.tableau-de-bord'],
     'partenaire' => [Role::Partenaire, 'partenaire.tableau-de-bord'],
 ]);
 

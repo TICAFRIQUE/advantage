@@ -8,27 +8,27 @@ it('shows in the sidebar only the entries the role is allowed to use', function 
     $page = connecter(User::latest('id')->first())->get($reponse->headers->get('Location'))->assertOk();
 
     foreach ($visibles as $libelle) {
-        $page->assertSee($libelle);
+        $page->assertSee($libelle, false);
     }
 
     foreach ($absents as $libelle) {
-        $page->assertDontSee($libelle);
+        $page->assertDontSee($libelle, false);
     }
 })->with([
-    'agent' => [Role::Agent, ['Accueil agent', 'Activer une carte', 'Toutes les cartes'], ['Pilotage', 'Accueil partenaire']],
-    'partenaire' => [Role::Partenaire, ['Accueil partenaire'], ['Pilotage', 'Activer une carte', 'Toutes les cartes']],
-    'admin' => [Role::Admin, ['Pilotage', 'Tableau de bord', 'Activer une carte', 'Toutes les cartes', 'Accueil partenaire'], []],
+    'agent' => [Role::Agent, ['Tableau de bord', 'Activer une carte', 'Liste des cartes'], ['>Transaction<', 'Historique', 'SMS simulés']],
+    'partenaire' => [Role::Partenaire, ['Tableau de bord', '>Transaction<', 'Historique'], ['Activer une carte', 'Liste des cartes']],
+    'admin' => [Role::Admin, ['Tableau de bord', 'Activer une carte', 'Liste des cartes', 'Partenaires', '>Transaction<', 'SMS simulés'], ['Historique']],
 ]);
 
 it('marks the current page in the sidebar', function () {
-    connecter(utilisateurAvecRole(Role::Agent))->get(route('agent.cartes.index'))
-        ->assertSeeInOrder(['barre-laterale__lien actif', 'aria-current="page"', 'Toutes les cartes'], false);
+    connecter(utilisateurAvecRole(Role::Agent))->get(route('gestion.cartes.index'))
+        ->assertSeeInOrder(['barre-laterale__lien actif', 'aria-current="page"', 'Liste des cartes'], false);
 });
 
 it('shows the account menu with initials, username, role and a logout form', function () {
     $agent = utilisateurAvecRole(Role::Agent, ['nom' => 'Koffi Yao Serge', 'nom_utilisateur' => 'kys']);
 
-    connecter($agent)->get(route('agent.tableau-de-bord'))
+    connecter($agent)->get(route('gestion.tableau-de-bord'))
         ->assertSee('KS')
         ->assertSee('@kys')
         ->assertSee('Agent')
@@ -50,7 +50,7 @@ it('renders the sidebar collapsed when the preference cookie says so', function 
         $requete->withUnencryptedCookie('barre_reduite', $cookie);
     }
 
-    $html = $requete->get(route('agent.tableau-de-bord'))->getContent();
+    $html = $requete->get(route('gestion.tableau-de-bord'))->getContent();
 
     expect(str_contains($html, 'class="app-erp barre-reduite"'))->toBe($reduite);
 })->with([

@@ -10,7 +10,7 @@ use App\Models\User;
 /**
  * Partenaire pour le compte duquel l'utilisateur agit dans l'espace partenaire :
  * - opérateur partenaire : toujours son propre partenaire (non modifiable) ;
- * - admin / superadmin : le partenaire choisi, mémorisé en session.
+ * - back-office (superadmin, admin, agent) : le partenaire choisi, mémorisé en session.
  * Un partenaire inactif n'est jamais retenu.
  */
 class PartenaireCourant
@@ -27,11 +27,12 @@ class PartenaireCourant
     }
 
     /**
-     * Seuls l'admin et le superadmin choisissent le partenaire (option A).
+     * Les comptes du back-office choisissent le partenaire (option A) ;
+     * un opérateur partenaire agit toujours pour le sien.
      */
     public static function peutChoisir(User $user): bool
     {
-        return $user->hasAnyRole([Role::Superadmin, Role::Admin]);
+        return $user->hasAnyRole(Role::roleGestion());
     }
 
     public static function definir(Partenaire $partenaire): void

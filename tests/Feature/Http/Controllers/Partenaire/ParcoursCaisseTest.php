@@ -32,23 +32,23 @@ it('runs the whole checkout flow and reveals the holder only after the code', fu
     $operateur->partenaire->update(['taux_reduction' => 10]);
 
     $verification = connecter($operateur)->followingRedirects()
-        ->post(route('partenaire.verifier.store'), ['numero_carte' => '456 789 0']);
+        ->post(route('partenaire.transaction.verifier.store'), ['numero_carte' => '456 789 0']);
 
     $verification->assertSee('Carte valide')->assertSee('10 %')
         ->assertDontSee('KONAN')->assertDontSee('Yao Serge')->assertDontSee('07 07 12 34 56');
 
-    $envoi = connecter($operateur)->post(route('partenaire.codes.store'), ['numero_carte' => '4567890']);
+    $envoi = connecter($operateur)->post(route('partenaire.transaction.codes.store'), ['numero_carte' => '4567890']);
     $demande = DemandeOtp::sole();
-    $envoi->assertRedirect(route('partenaire.codes.show', $demande));
+    $envoi->assertRedirect(route('partenaire.transaction.codes.show', $demande));
 
-    connecter($operateur)->get(route('partenaire.codes.show', $demande))
+    connecter($operateur)->get(route('partenaire.transaction.codes.show', $demande))
         ->assertOk()->assertSee('456 789 0')->assertDontSee('KONAN');
 
-    $validation = connecter($operateur)->post(route('partenaire.codes.valider', $demande), ['code' => dernierCodeEnvoye()]);
+    $validation = connecter($operateur)->post(route('partenaire.transaction.codes.valider', $demande), ['code' => dernierCodeEnvoye()]);
     $transaction = Transaction::sole();
-    $validation->assertRedirect(route('partenaire.transactions.show', $transaction));
+    $validation->assertRedirect(route('partenaire.transaction.resultat', $transaction));
 
-    connecter($operateur)->get(route('partenaire.transactions.show', $transaction))
+    connecter($operateur)->get(route('partenaire.transaction.resultat', $transaction))
         ->assertOk()->assertSee('Remise de 10 % accordée')->assertSee('Yao Serge KONAN');
 });
 
@@ -56,7 +56,7 @@ it('gives the same answer for unknown and unusable cards', function (Closure $pr
     $numero = $preparer();
 
     connecter(utilisateurAvecRole(Role::Partenaire))->followingRedirects()
-        ->post(route('partenaire.verifier.store'), ['numero_carte' => $numero])
+        ->post(route('partenaire.transaction.verifier.store'), ['numero_carte' => $numero])
         ->assertSee('Carte non valide')
         ->assertDontSee('Carte valide ·');
 })->with([
@@ -67,7 +67,7 @@ it('gives the same answer for unknown and unusable cards', function (Closure $pr
 ]);
 
 it('logs every verification with its outcome', function () {
-    connecter(utilisateurAvecRole(Role::Partenaire))->post(route('partenaire.verifier.store'), ['numero_carte' => '9999999']);
+    connecter(utilisateurAvecRole(Role::Partenaire))->post(route('partenaire.transaction.verifier.store'), ['numero_carte' => '9999999']);
 
     expect(JournalAudit::where('action', 'carte.verifiee')->sole()->donnees)
         ->toMatchArray(['numero_carte' => '9999999', 'valide' => false]);
@@ -75,7 +75,7 @@ it('logs every verification with its outcome', function () {
 
 it('rejects a malformed card number', function (string $numero) {
     connecter(utilisateurAvecRole(Role::Partenaire))
-        ->post(route('partenaire.verifier.store'), ['numero_carte' => $numero])
+        ->post(route('partenaire.transaction.verifier.store'), ['numero_carte' => $numero])
         ->assertSessionHasErrors('numero_carte');
 })->with(['123456', '12345678', 'ABCDEFG', '']);
 
@@ -83,7 +83,7 @@ it('rejects a malformed code', function (string $code) {
     [$demande, $operateur] = [DemandeOtp::factory()->create(), null];
     $operateur = utilisateurAvecRole(Role::Partenaire, ['partenaire_id' => $demande->partenaire_id]);
 
-    connecter($operateur)->post(route('partenaire.codes.valider', $demande), ['code' => $code])
+    connecter($operateur)->post(route('partenaire.transaction.codes.valider', $demande), ['code' => $code])
         ->assertSessionHasErrors('code');
 
     expect($demande->fresh()->tentatives)->toBe(0);
@@ -92,13 +92,13 @@ it('rejects a malformed code', function (string $code) {
 it('creates a single transaction when the code form is submitted twice', function () {
     $carte = carteDeKonan();
     $operateur = utilisateurAvecRole(Role::Partenaire);
-    connecter($operateur)->post(route('partenaire.codes.store'), ['numero_carte' => $carte->numero_carte]);
+    connecter($operateur)->post(route('partenaire.transaction.codes.store'), ['numero_carte' => $carte->numero_carte]);
     $demande = DemandeOtp::sole();
     $code = dernierCodeEnvoye();
 
-    connecter($operateur)->post(route('partenaire.codes.valider', $demande), ['code' => $code]);
-    connecter($operateur)->post(route('partenaire.codes.valider', $demande), ['code' => $code])
-        ->assertRedirect(route('partenaire.transactions.show', Transaction::sole()));
+    connecter($operateur)->post(route('partenaire.transaction.codes.valider', $demande), ['code' => $code]);
+    connecter($operateur)->post(route('partenaire.transaction.codes.valider', $demande), ['code' => $code])
+        ->assertRedirect(route('partenaire.transaction.resultat', Transaction::sole()));
 });
 
 it('forbids a partner from using or viewing another partner code and transaction', function () {
@@ -106,9 +106,9 @@ it('forbids a partner from using or viewing another partner code and transaction
     $transaction = Transaction::factory()->create();
     $intrus = utilisateurAvecRole(Role::Partenaire);
 
-    connecter($intrus)->get(route('partenaire.codes.show', $demande))->assertForbidden();
-    connecter($intrus)->post(route('partenaire.codes.valider', $demande), ['code' => '123456'])->assertForbidden();
-    connecter($intrus)->get(route('partenaire.transactions.show', $transaction))->assertForbidden();
+    connecter($intrus)->get(route('partenaire.transaction.codes.show', $demande))->assertForbidden();
+    connecter($intrus)->post(route('partenaire.transaction.codes.valider', $demande), ['code' => '123456'])->assertForbidden();
+    connecter($intrus)->get(route('partenaire.transaction.resultat', $transaction))->assertForbidden();
 
     expect($demande->fresh()->tentatives)->toBe(0);
 });
@@ -117,47 +117,58 @@ it('limits card verifications per operator', function () {
     $operateur = utilisateurAvecRole(Role::Partenaire);
 
     foreach (range(1, 20) as $essai) {
-        connecter($operateur)->post(route('partenaire.verifier.store'), ['numero_carte' => '9999999']);
+        connecter($operateur)->post(route('partenaire.transaction.verifier.store'), ['numero_carte' => '9999999']);
     }
 
-    connecter($operateur)->post(route('partenaire.verifier.store'), ['numero_carte' => '9999999'])->assertTooManyRequests();
+    connecter($operateur)->post(route('partenaire.transaction.verifier.store'), ['numero_carte' => '9999999'])->assertTooManyRequests();
 });
 
 it('lets a new code be requested only after the waiting time', function () {
     $carte = carteDeKonan();
     $operateur = utilisateurAvecRole(Role::Partenaire);
-    connecter($operateur)->post(route('partenaire.codes.store'), ['numero_carte' => $carte->numero_carte]);
+    connecter($operateur)->post(route('partenaire.transaction.codes.store'), ['numero_carte' => $carte->numero_carte]);
     $premiere = DemandeOtp::sole();
 
-    connecter($operateur)->post(route('partenaire.codes.renvoyer', $premiere))->assertSessionHas('erreur');
+    connecter($operateur)->post(route('partenaire.transaction.codes.renvoyer', $premiere))->assertSessionHas('erreur');
     expect(DemandeOtp::count())->toBe(1);
 
     $this->travel(61)->seconds();
-    connecter($operateur)->post(route('partenaire.codes.renvoyer', $premiere))->assertSessionHas('succes');
+    connecter($operateur)->post(route('partenaire.transaction.codes.renvoyer', $premiere))->assertSessionHas('succes');
 
     expect(DemandeOtp::count())->toBe(2)
         ->and($premiere->fresh()->statut)->toBe(StatutDemandeOtp::Expiree);
 });
 
-describe('admin agissant pour un partenaire (option A)', function () {
-    it('sends the admin to the partner selector first', function () {
-        connecter(utilisateurAvecRole(Role::Admin))->get(route('partenaire.verifier'))
-            ->assertRedirect(route('partenaire.tableau-de-bord'))
+describe('back-office agissant pour un partenaire (option A)', function () {
+    it('shows the partner selector before any transaction', function () {
+        connecter(utilisateurAvecRole(Role::Admin))->get(route('gestion.transaction.verifier'))
+            ->assertOk()
+            ->assertSee('Transaction pour le compte de')
+            ->assertSee("Choisissez d'abord un partenaire", false);
+    });
+
+    it('refuses a verification before a partner is chosen', function () {
+        connecter(utilisateurAvecRole(Role::Admin))
+            ->post(route('gestion.transaction.verifier.store'), ['numero_carte' => '1234567'])
+            ->assertRedirect(route('gestion.transaction.verifier'))
             ->assertSessionHas('erreur');
     });
 
-    it('records the transaction for the chosen partner and in the admin name', function () {
+    it('records the transaction for the chosen partner and in the author name', function () {
         $carte = carteDeKonan();
         $partenaire = Partenaire::factory()->create(['nom' => 'Hôtel Ivoire', 'taux_reduction' => 20]);
         $admin = utilisateurAvecRole(Role::Admin, ['nom' => 'Awa Koné']);
 
-        connecter($admin)->post(route('partenaire.partenaire-courant.store'), ['partenaire_id' => $partenaire->id])
+        connecter($admin)->post(route('gestion.transaction.partenaire-courant.store'), ['partenaire_id' => $partenaire->id])
+            ->assertRedirect(route('gestion.transaction.verifier'))
             ->assertSessionHas(PartenaireCourant::CLE_SESSION, $partenaire->id);
 
         $session = [PartenaireCourant::CLE_SESSION => $partenaire->id];
-        connecter($admin)->withSession($session)->post(route('partenaire.codes.store'), ['numero_carte' => $carte->numero_carte]);
+        connecter($admin)->withSession($session)->post(route('gestion.transaction.codes.store'), ['numero_carte' => $carte->numero_carte])
+            ->assertRedirect(route('gestion.transaction.codes.show', DemandeOtp::sole()));
         connecter($admin)->withSession($session)
-            ->post(route('partenaire.codes.valider', DemandeOtp::sole()), ['code' => dernierCodeEnvoye()]);
+            ->post(route('gestion.transaction.codes.valider', DemandeOtp::sole()), ['code' => dernierCodeEnvoye()])
+            ->assertRedirect(route('gestion.transaction.resultat', Transaction::sole()));
 
         expect(Transaction::sole())
             ->partenaire_id->toBe($partenaire->id)
@@ -165,19 +176,39 @@ describe('admin agissant pour un partenaire (option A)', function () {
             ->taux_applique->toBe('20.00')
             ->and(JournalAudit::where('action', 'partenaire.choisi')->sole()->acteur_id)->toBe($admin->id);
 
-        connecter($admin)->withSession($session)->get(route('partenaire.transactions.show', Transaction::sole()))
+        connecter($admin)->withSession($session)->get(route('gestion.transaction.resultat', Transaction::sole()))
             ->assertSee('Awa Koné · Administrateur');
+    });
+
+    it('lets an agent granted the permission make a transaction', function () {
+        $carte = carteDeKonan();
+        $partenaire = Partenaire::factory()->create();
+        $agent = utilisateurAvecRole(Role::Agent);
+        $agent->givePermissionTo('effectuer-transaction-partenaire');
+        $session = [PartenaireCourant::CLE_SESSION => $partenaire->id];
+
+        connecter($agent->fresh())->withSession($session)->post(route('gestion.transaction.codes.store'), ['numero_carte' => $carte->numero_carte]);
+        connecter($agent->fresh())->withSession($session)
+            ->post(route('gestion.transaction.codes.valider', DemandeOtp::sole()), ['code' => dernierCodeEnvoye()]);
+
+        expect(Transaction::sole()->valide_par_id)->toBe($agent->id);
+    });
+
+    it('forbids transactions to an agent without the permission', function () {
+        connecter(utilisateurAvecRole(Role::Agent))
+            ->post(route('gestion.transaction.partenaire-courant.store'), ['partenaire_id' => Partenaire::factory()->create()->id])
+            ->assertForbidden();
     });
 
     it('cannot choose an inactive partner', function () {
         connecter(utilisateurAvecRole(Role::Admin))
-            ->post(route('partenaire.partenaire-courant.store'), ['partenaire_id' => Partenaire::factory()->inactif()->create()->id])
+            ->post(route('gestion.transaction.partenaire-courant.store'), ['partenaire_id' => Partenaire::factory()->inactif()->create()->id])
             ->assertSessionHasErrors('partenaire_id');
     });
 
     it('does not let a partner operator switch partner', function () {
         connecter(utilisateurAvecRole(Role::Partenaire))
-            ->post(route('partenaire.partenaire-courant.store'), ['partenaire_id' => Partenaire::factory()->create()->id])
+            ->post(route('gestion.transaction.partenaire-courant.store'), ['partenaire_id' => Partenaire::factory()->create()->id])
             ->assertForbidden();
     });
 

@@ -74,18 +74,20 @@ Ce fichier guide le développement de la plateforme de gestion de cartes de fid�
 
 Guards / rôles à modéliser avec `laravel-permission` :
 
-| Rôle | Description | Permissions clés |
+| Rôle | Espace | Description |
 |---|---|---|
-| `superadmin` | Accès total (via `Gate::before`), compte créé depuis le `.env` (`SUPERADMIN_*`), mot de passe fort (≥ 12 car.) | toutes, y compris `gerer-roles` et `gerer-parametres` (réservées) |
-| `admin` | Pilote toute la plateforme **et peut faire tout ce que font agent et partenaire** (chaque action tracée à son nom + rôle) | `acceder-espace-admin`, `gerer-utilisateurs`, `gerer-cartes`, `gerer-partenaires`, `gerer-taux`, `gerer-activations`, `voir-transactions`, `voir-statistiques`, `voir-journal-audit` + permissions agent et partenaire |
-| `agent` | Active les cartes en agence (tous les agents agissent sur toutes les cartes) | `acceder-espace-agent`, `activer-carte`, `rechercher-carte`, `voir-ses-activations`, `signaler-carte-perdue` |
-| `partenaire` | Compte partenaire (peut avoir plusieurs opérateurs) | `acceder-espace-partenaire`, `verifier-carte`, `confirmer-otp`, `voir-ses-transactions` |
+| `superadmin` | back-office | Accès total (`Gate::before`), compte créé depuis le `.env` (`SUPERADMIN_*`), rôle verrouillé |
+| `admin` | back-office | Toutes les fonctions du back-office sauf rôles/permissions et purge du journal (délégables par le superadmin) |
+| `agent` | back-office | **Même interface que l'admin** : ne voit et ne fait que ce que ses permissions autorisent |
+| `partenaire` | espace partenaire | Espace à part : Tableau de bord, Transaction, Historique |
 
-Source de vérité : enums `App\Enums\Role` (dont `Role::permissions()`) et `App\Enums\Permission`, synchronisés par `RolesEtPermissionsSeeder`.
+**Source de vérité** : `config/permissions.php` (rôles, groupes, libellés, espace, rôles par défaut) ; enum `App\Enums\Permission` aligné (test). Synchronisation **additive et idempotente** à chaque déploiement : `php artisan permissions:synchroniser` (jamais de doublon, n'écrase ni ne retire jamais les réglages faits dans Paramètres, retire toute permission hors de l'espace de son rôle, suppression des obsolètes uniquement avec `--supprimer-obsoletes`).
+
+**Anti-élévation de privilèges** (`App\Services\Droits\GardeDroits`) : on n'attribue que des permissions que l'on détient ; jamais sur son propre rôle ni son propre compte ; admin et superadmin créés uniquement par le superadmin ; espaces jamais mélangés.
 
 Règles d'implémentation :
 - Un **partenaire** peut avoir plusieurs utilisateurs opérateurs rattachés à un même compte (prévoir la relation `partenaires` ↔ `users` dès le modèle de données, même si le MVP ne gère qu'un utilisateur par partenaire).
-- Middleware de redirection post-login selon le rôle (`superadmin`/`admin` → `/admin`, `agent` → `/agent`, `partenaire` → `/partenaire`). Admin et superadmin accèdent aussi aux espaces agent et partenaire.
+- Redirection post-login : `superadmin`/`admin`/`agent` → `/gestion` (back-office unique), `partenaire` → `/partenaire`. Le back-office effectue les transactions « pour le compte d'un partenaire » dans `/gestion/transaction`.
 - Toute route de chaque espace protégée par middleware `role:` + `permission:` (ne jamais se fier uniquement à la visibilité UI).
 - Les policies Laravel (`CartePolicy`, `PartenairePolicy`, `TransactionPolicy`) encapsulent les règles d'accès aux ressources (ex. un partenaire ne voit que ses propres transactions).
 

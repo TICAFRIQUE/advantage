@@ -2,32 +2,17 @@
 
 namespace Database\Seeders;
 
-use App\Enums\Permission;
-use App\Enums\Role;
+use App\Services\Droits\SynchroniserPermissions;
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Permission as ModelePermission;
-use Spatie\Permission\Models\Role as ModeleRole;
-use Spatie\Permission\PermissionRegistrar;
 
 /**
- * Crée ou synchronise les rôles système et leurs permissions.
- * Idempotent : peut être relancé en production à chaque déploiement.
+ * Délègue à la synchronisation additive (même comportement que
+ * php artisan permissions:synchroniser) : relançable sans risque.
  */
 class RolesEtPermissionsSeeder extends Seeder
 {
-    public function run(): void
+    public function run(SynchroniserPermissions $synchroniser): void
     {
-        app(PermissionRegistrar::class)->forgetCachedPermissions();
-
-        foreach (Permission::cases() as $permission) {
-            ModelePermission::findOrCreate($permission->value, 'web');
-        }
-
-        foreach (Role::cases() as $role) {
-            ModeleRole::findOrCreate($role->value, 'web')
-                ->syncPermissions(array_map(fn (Permission $p) => $p->value, $role->permissions()));
-        }
-
-        app(PermissionRegistrar::class)->forgetCachedPermissions();
+        $synchroniser();
     }
 }

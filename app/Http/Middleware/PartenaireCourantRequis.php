@@ -21,7 +21,7 @@ class PartenaireCourantRequis
         }
 
         if (PartenaireCourant::peutChoisir($request->user())) {
-            return redirect()->route('partenaire.tableau-de-bord')
+            return redirect()->route('gestion.transaction.verifier')
                 ->with('erreur', 'Choisissez d\'abord le partenaire pour le compte duquel vous agissez.');
         }
 

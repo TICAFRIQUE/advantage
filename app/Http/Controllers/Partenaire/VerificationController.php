@@ -2,27 +2,34 @@
 
 namespace App\Http\Controllers\Partenaire;
 
+use App\Enums\StatutPartenaire;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Partenaire\VerifierCarteRequest;
-use App\Models\DemandeOtp;
+use App\Models\Partenaire;
+use App\Services\EspaceTransaction;
 use App\Services\PartenaireCourant;
 use App\Services\VerifierCarteService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
- * Étape 1 du parcours caisse : vérifier la carte (réponse binaire, aucune
- * donnée du titulaire).
+ * Étape 1 du parcours de transaction : vérifier la carte (réponse binaire,
+ * aucune donnée du titulaire). Dans le back-office, la page commence par
+ * le choix du partenaire pour le compte duquel on agit.
  */
 class VerificationController extends Controller
 {
-    public function create(): View
+    public function create(Request $request): View
     {
-        Gate::authorize('create', DemandeOtp::class);
+        $peutChoisir = PartenaireCourant::peutChoisir($request->user());
 
         return view('partenaire.verifier', [
-            'partenaire' => PartenaireCourant::pour(auth()->user()),
+            'partenaire' => PartenaireCourant::pour($request->user()),
+            'peutChoisir' => $peutChoisir,
+            'partenairesActifs' => $peutChoisir
+                ? Partenaire::query()->where('statut', StatutPartenaire::Actif)->orderBy('nom')->get(['id', 'nom', 'localisation', 'taux_reduction'])
+                : collect(),
             'verification' => session('verification'),
         ]);
     }
@@ -33,7 +40,7 @@ class VerificationController extends Controller
         $numero = $request->validated('numero_carte');
         $carte = $service->verifier($numero, $partenaire);
 
-        return redirect()->route('partenaire.verifier')->with('verification', [
+        return redirect(EspaceTransaction::route('verifier'))->with('verification', [
             'numero_carte' => $numero,
             'numero_formate' => trim(chunk_split($numero, 3, ' ')),
             'valide' => $carte !== null,

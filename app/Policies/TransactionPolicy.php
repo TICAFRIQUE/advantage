@@ -12,14 +12,21 @@ use App\Services\PartenaireCourant;
  */
 class TransactionPolicy
 {
+    /**
+     * Historique de l'espace partenaire.
+     */
     public function viewAny(User $user): bool
     {
-        return $user->can(Permission::VoirSesTransactions->value) && PartenaireCourant::pour($user) !== null;
+        return $user->can(Permission::VoirHistoriqueTransactions->value) && PartenaireCourant::pour($user) !== null;
     }
 
+    /**
+     * Écran de résultat après validation (opérateur ou back-office agissant
+     * pour ce partenaire).
+     */
     public function view(User $user, Transaction $transaction): bool
     {
-        return $user->can(Permission::VoirSesTransactions->value)
+        return DemandeOtpPolicy::peutEffectuerTransaction($user)
             && $transaction->partenaire_id === PartenaireCourant::pour($user)?->id;
     }
 }

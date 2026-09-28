@@ -18,7 +18,7 @@ function transactionPour(User $operateur, array $titulaire = [], string $validee
 function donneesTableau(User $operateur, array $parametres = []): array
 {
     return connecter($operateur)
-        ->getJson(route('partenaire.transactions.donnees', array_merge(['draw' => 1, 'start' => 0, 'length' => 25], $parametres)))
+        ->getJson(route('partenaire.historique.donnees', array_merge(['draw' => 1, 'start' => 0, 'length' => 25], $parametres)))
         ->assertOk()
         ->json();
 }
@@ -64,10 +64,10 @@ it('escapes values to prevent script injection', function () {
 
 it('rejects an inconsistent period', function () {
     connecter(utilisateurAvecRole(Role::Partenaire))
-        ->getJson(route('partenaire.transactions.donnees', ['du' => '2026-09-10', 'au' => '2026-09-01']))
+        ->getJson(route('partenaire.historique.donnees', ['du' => '2026-09-10', 'au' => '2026-09-01']))
         ->assertUnprocessable();
 });
 
 it('forbids agents from reading partner transactions', function () {
-    connecter(utilisateurAvecRole(Role::Agent))->getJson(route('partenaire.transactions.donnees'))->assertForbidden();
+    connecter(utilisateurAvecRole(Role::Agent))->getJson(route('partenaire.historique.donnees'))->assertForbidden();
 });

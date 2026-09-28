@@ -1,11 +1,11 @@
-<x-layouts.app titre="Historique des passages" sous-titre="Espace Partenaire">
+<x-layouts.app titre="Historique" sous-titre="Espace partenaire">
     @push('scripts')
         @vite('resources/js/tableaux.js')
     @endpush
 
     <x-bandeau-partenaire :partenaire="$partenaire" />
 
-    <h1 class="h3 fw-bold mb-3">Historique des passages</h1>
+    <h1 class="h3 fw-bold mb-3">Historique</h1>
 
     <form class="card card-body shadow-sm border-0 mb-3" id="filtres-transactions" aria-label="Filtrer par période">
         <div class="row g-2 align-items-end">
@@ -26,7 +26,7 @@
     <div class="card border-0 shadow-sm">
         <div class="card-body">
             <table class="table table-striped align-middle w-100" id="tableau-transactions"
-                   data-source="{{ route('partenaire.transactions.donnees') }}" data-filtres="#filtres-transactions">
+                   data-source="{{ route('partenaire.historique.donnees') }}" data-filtres="#filtres-transactions">
                 <thead>
                     <tr>
                         <th scope="col" data-colonne="validee_le">Date</th>

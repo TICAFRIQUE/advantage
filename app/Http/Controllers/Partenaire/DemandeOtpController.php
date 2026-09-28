@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Partenaire\ConfirmerOtpRequest;
 use App\Http\Requests\Partenaire\VerifierCarteRequest;
 use App\Models\DemandeOtp;
+use App\Services\EspaceTransaction;
 use App\Services\PartenaireCourant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,10 +27,10 @@ class DemandeOtpController extends Controller
         try {
             $demande = $demander($request->validated('numero_carte'), PartenaireCourant::pour($request->user()), $request->user());
         } catch (OperationPartenaireException $exception) {
-            return redirect()->route('partenaire.verifier')->with('erreur', $exception->getMessage());
+            return redirect(EspaceTransaction::route('verifier'))->with('erreur', $exception->getMessage());
         }
 
-        return redirect()->route('partenaire.codes.show', $demande);
+        return redirect(EspaceTransaction::route('codes.show', $demande));
     }
 
     public function show(DemandeOtp $demande): View|RedirectResponse
@@ -37,7 +38,7 @@ class DemandeOtpController extends Controller
         Gate::authorize('valider', $demande);
 
         if ($demande->statut === StatutDemandeOtp::Utilisee) {
-            return redirect()->route('partenaire.transactions.show', $demande->transaction);
+            return redirect(EspaceTransaction::route('resultat', $demande->transaction));
         }
 
         $demande->load('carte');
@@ -54,10 +55,10 @@ class DemandeOtpController extends Controller
         try {
             $transaction = $valider($demande, $request->validated('code'), PartenaireCourant::pour($request->user()), $request->user());
         } catch (OperationPartenaireException $exception) {
-            return redirect()->route('partenaire.codes.show', $demande)->withErrors(['code' => $exception->getMessage()]);
+            return redirect(EspaceTransaction::route('codes.show', $demande))->withErrors(['code' => $exception->getMessage()]);
         }
 
-        return redirect()->route('partenaire.transactions.show', $transaction);
+        return redirect(EspaceTransaction::route('resultat', $transaction));
     }
 
     public function renvoyer(Request $request, DemandeOtp $demande, DemanderOtpAction $demander): RedirectResponse
@@ -65,17 +66,17 @@ class DemandeOtpController extends Controller
         Gate::authorize('valider', $demande);
 
         if ($this->renvoiPossibleDans($demande) > 0) {
-            return redirect()->route('partenaire.codes.show', $demande)
+            return redirect(EspaceTransaction::route('codes.show', $demande))
                 ->with('erreur', 'Patientez avant de demander un nouveau code.');
         }
 
         try {
             $nouvelle = $demander($demande->carte->numero_carte, PartenaireCourant::pour($request->user()), $request->user());
         } catch (OperationPartenaireException $exception) {
-            return redirect()->route('partenaire.codes.show', $demande)->with('erreur', $exception->getMessage());
+            return redirect(EspaceTransaction::route('codes.show', $demande))->with('erreur', $exception->getMessage());
         }
 
-        return redirect()->route('partenaire.codes.show', $nouvelle)->with('succes', 'Un nouveau code a été envoyé au client.');
+        return redirect(EspaceTransaction::route('codes.show', $nouvelle))->with('succes', 'Un nouveau code a été envoyé au client.');
     }
 
     /**

@@ -1,4 +1,4 @@
-<x-layouts.app titre="Code de validation" sous-titre="Espace Partenaire">
+<x-layouts.app titre="Code de validation" :sous-titre="App\Services\EspaceTransaction::estGestion() ? 'Back-office · Partenaires' : 'Espace partenaire'">
     <div class="parcours-caisse mx-auto">
         <ol class="etapes-caisse" aria-label="Étapes">
             <li class="fait">Carte</li>
@@ -25,7 +25,7 @@
                         <span x-show="restant === 0" class="text-danger fw-semibold" style="display: none">Code expiré : demandez-en un nouveau.</span>
                     </p>
 
-                    <form method="POST" action="{{ route('partenaire.codes.valider', $demande) }}" novalidate>
+                    <form method="POST" action="{{ App\Services\EspaceTransaction::route('codes.valider', $demande) }}" novalidate>
                         @csrf
                         <label for="code" class="visually-hidden">Code à 6 chiffres</label>
                         <input type="text" id="code" name="code" inputmode="numeric" autocomplete="one-time-code"
@@ -46,7 +46,7 @@
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('partenaire.codes.renvoyer', $demande) }}" class="mt-3">
+                <form method="POST" action="{{ App\Services\EspaceTransaction::route('codes.renvoyer', $demande) }}" class="mt-3">
                     @csrf
                     <button type="submit" class="btn btn-outline-primary btn-lg w-100" x-bind:disabled="renvoi > 0">
                         <i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>
@@ -55,7 +55,7 @@
                     </button>
                 </form>
 
-                <a href="{{ route('partenaire.verifier') }}" class="btn btn-link w-100 mt-2">Annuler</a>
+                <a href="{{ App\Services\EspaceTransaction::route('verifier') }}" class="btn btn-link w-100 mt-2">Annuler</a>
             </div>
         </section>
     </div>

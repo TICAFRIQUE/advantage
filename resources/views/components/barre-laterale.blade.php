@@ -17,7 +17,9 @@
 
     <nav class="barre-laterale__nav" aria-label="Navigation principale">
         @foreach ($sections as $section)
-            <p class="barre-laterale__section">{{ $section['titre'] }}</p>
+            @if ($section['titre'])
+                <p class="barre-laterale__section">{{ $section['titre'] }}</p>
+            @endif
             <ul class="list-unstyled mb-2">
                 @foreach ($section['entrees'] as $entree)
                     <li>

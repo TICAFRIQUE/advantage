@@ -3,42 +3,75 @@
 namespace App\Enums;
 
 /**
- * Permissions de la plateforme (Spatie laravel-permission).
+ * Références typées des permissions utilisées dans le code.
+ *
+ * Libellés, groupes, espace et rôles par défaut sont décrits dans
+ * config/permissions.php (source de vérité) ; un test garantit que cet enum
+ * et la configuration restent identiques.
  */
 enum Permission: string
 {
-    // Accès aux espaces (exigé en plus du rôle sur chaque groupe de routes)
-    case AccederEspaceAdmin = 'acceder-espace-admin';
-    case AccederEspaceAgent = 'acceder-espace-agent';
-    case AccederEspacePartenaire = 'acceder-espace-partenaire';
+    // Général (back-office)
+    case AccederGestion = 'acceder-gestion';
+    case VoirTableauDeBord = 'voir-tableau-de-bord';
 
-    // Administration
-    case GererUtilisateurs = 'gerer-utilisateurs';
-    case GererCartes = 'gerer-cartes';
-    case GererPartenaires = 'gerer-partenaires';
-    case GererTaux = 'gerer-taux';
-    case GererActivations = 'gerer-activations';
-    case VoirTransactions = 'voir-transactions';
-    case VoirStatistiques = 'voir-statistiques';
-    case VoirJournalAudit = 'voir-journal-audit';
-    case GererParametres = 'gerer-parametres';
-    // Suppression manuelle du journal d'audit : accordée à aucun rôle par
-    // défaut (superadmin uniquement, via Gate::before).
-    case PurgerJournalAudit = 'purger-journal-audit';
-    // Boîte des SMS simulés (hors production, pour lire les codes en test).
-    case VoirSmsSimules = 'voir-sms-simules';
-    case GererRoles = 'gerer-roles';
-
-    // Agent
+    // Cartes
     case ActiverCarte = 'activer-carte';
-    case RechercherCarte = 'rechercher-carte';
-    case VoirSesActivations = 'voir-ses-activations';
-    case SignalerCartePerdue = 'signaler-carte-perdue';
+    case VoirCartes = 'voir-cartes';
+    case GererStatutCarte = 'gerer-statut-carte';
+    case ModifierTitulaire = 'modifier-titulaire';
+    case ModifierTelephoneTitulaire = 'modifier-telephone-titulaire';
+    case VoirRapportCartes = 'voir-rapport-cartes';
 
-    // Partenaire
-    case VerifierCarte = 'verifier-carte';
-    case ConfirmerOtp = 'confirmer-otp';
-    case VoirSesTransactions = 'voir-ses-transactions';
+    // Partenaires
+    case VoirPartenaires = 'voir-partenaires';
+    case GererPartenaires = 'gerer-partenaires';
+    case GererOperateursPartenaires = 'gerer-operateurs-partenaires';
+    case EffectuerTransactionPartenaire = 'effectuer-transaction-partenaire';
+    case VoirRapportTransactions = 'voir-rapport-transactions';
+
+    // Paramètres
+    case GererUtilisateurs = 'gerer-utilisateurs';
+    case GererRoles = 'gerer-roles';
+    case VoirJournalAudit = 'voir-journal-audit';
+    case PurgerJournalAudit = 'purger-journal-audit';
+
+    // Exports et outils
+    case ExporterDonnees = 'exporter-donnees';
+    case VoirSmsSimules = 'voir-sms-simules';
+
+    // Espace partenaire
+    case AccederEspacePartenaire = 'acceder-espace-partenaire';
+    case EffectuerTransaction = 'effectuer-transaction';
+    case VoirHistoriqueTransactions = 'voir-historique-transactions';
+
+    public function libelle(): string
+    {
+        return (string) (self::definitions()[$this->value]['libelle'] ?? $this->value);
+    }
+
+    public function espace(): string
+    {
+        return (string) self::definitions()[$this->value]['espace'];
+    }
+
+    /**
+     * Toutes les permissions déclarées dans la configuration, à plat.
+     *
+     * @return array<string, array{libelle: string, roles: list<string>, espace: string, groupe: string}>
+     */
+    public static function definitions(): array
+    {
+        $definitions = [];
+
+        foreach (config('permissions.groupes') as $cleGroupe => $groupe) {
+            foreach ($groupe['permissions'] as $nom => $permission) {
+                $definitions[$nom] = $permission + ['espace' => $groupe['espace'], 'groupe' => $cleGroupe];
+            }
+        }
+
+        return $definitions;
+    }
 
     /**
      * @return list<string>

@@ -1,4 +1,4 @@
-<x-layouts.app titre="Remise accordée" sous-titre="Espace Partenaire">
+<x-layouts.app titre="Remise accordée" :sous-titre="App\Services\EspaceTransaction::estGestion() ? 'Back-office · Partenaires' : 'Espace partenaire'">
     <div class="parcours-caisse mx-auto">
         <ol class="etapes-caisse" aria-label="Étapes">
             <li class="fait">Carte</li>
@@ -23,9 +23,11 @@
             </div>
         </section>
 
-        <a href="{{ route('partenaire.verifier') }}" class="btn btn-or btn-lg w-100 py-3 mb-2">
-            <i class="bi bi-plus-circle me-2" aria-hidden="true"></i>Nouvelle vérification
+        <a href="{{ App\Services\EspaceTransaction::route('verifier') }}" class="btn btn-or btn-lg w-100 py-3 mb-2">
+            <i class="bi bi-plus-circle me-2" aria-hidden="true"></i>Nouvelle transaction
         </a>
-        <a href="{{ route('partenaire.transactions.index') }}" class="btn btn-outline-primary btn-lg w-100">Historique des passages</a>
+        @unless (App\Services\EspaceTransaction::estGestion())
+            <a href="{{ route('partenaire.historique.index') }}" class="btn btn-outline-primary btn-lg w-100">Historique</a>
+        @endunless
     </div>
 </x-layouts.app>

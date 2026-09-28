@@ -8,10 +8,9 @@ use App\Models\Partenaire;
 use App\Services\JournaliserAudit;
 use App\Services\PartenaireCourant;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 
 /**
- * Admin / superadmin : « Agir pour le compte de » un partenaire (option A).
+ * Back-office : « Agir pour le compte de » un partenaire (option A).
  */
 class PartenaireCourantController extends Controller
 {
@@ -22,16 +21,7 @@ class PartenaireCourantController extends Controller
         PartenaireCourant::definir($partenaire);
         JournaliserAudit::enregistrer('partenaire.choisi', $partenaire);
 
-        return redirect()->route('partenaire.tableau-de-bord')
+        return redirect()->route('gestion.transaction.verifier')
             ->with('succes', "Vous agissez désormais pour le compte de {$partenaire->nom}.");
-    }
-
-    public function destroy(Request $request): RedirectResponse
-    {
-        abort_unless(PartenaireCourant::peutChoisir($request->user()), 403);
-
-        PartenaireCourant::oublier();
-
-        return redirect()->route('partenaire.tableau-de-bord');
     }
 }

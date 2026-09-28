@@ -44,5 +44,5 @@ it('forbids browser caching of every page', function (Closure $requete) {
     expect($requete()->headers->get('Cache-Control'))->toContain('no-store');
 })->with([
     'connexion' => [fn () => test()->get(route('login'))],
-    'espace agent' => [fn () => connecter(utilisateurAvecRole(Role::Agent))->get(route('agent.tableau-de-bord'))],
+    'espace agent' => [fn () => connecter(utilisateurAvecRole(Role::Agent))->get(route('gestion.tableau-de-bord'))],
 ]);

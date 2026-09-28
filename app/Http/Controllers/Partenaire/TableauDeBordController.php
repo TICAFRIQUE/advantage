@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers\Partenaire;
 
-use App\Enums\StatutPartenaire;
 use App\Http\Controllers\Controller;
-use App\Models\Partenaire;
 use App\Models\Transaction;
 use App\Services\PartenaireCourant;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
+/**
+ * Tableau de bord de l'espace partenaire (opérateurs uniquement).
+ */
 class TableauDeBordController extends Controller
 {
     public function __invoke(Request $request): View
@@ -30,13 +31,6 @@ class TableauDeBordController extends Controller
             ];
         }
 
-        return view('partenaire.tableau-de-bord', [
-            'partenaire' => $partenaire,
-            'indicateurs' => $indicateurs,
-            'peutChoisir' => PartenaireCourant::peutChoisir($request->user()),
-            'partenairesActifs' => PartenaireCourant::peutChoisir($request->user())
-                ? Partenaire::query()->where('statut', StatutPartenaire::Actif)->orderBy('nom')->get(['id', 'nom', 'localisation', 'taux_reduction'])
-                : collect(),
-        ]);
+        return view('partenaire.tableau-de-bord', ['partenaire' => $partenaire, 'indicateurs' => $indicateurs]);
     }
 }

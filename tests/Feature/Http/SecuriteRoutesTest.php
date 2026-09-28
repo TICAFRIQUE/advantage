@@ -53,7 +53,7 @@ it('sends security headers on every page', function () {
 });
 
 it('forbids caching of authenticated pages', function () {
-    $reponse = connecter(utilisateurAvecRole(Role::Agent))->get(route('agent.tableau-de-bord'));
+    $reponse = connecter(utilisateurAvecRole(Role::Agent))->get(route('gestion.tableau-de-bord'));
 
     expect($reponse->headers->get('Cache-Control'))->toContain('no-store');
 });
@@ -95,7 +95,7 @@ it('counts wrong pins on password confirmation towards the account lock', functi
 
     expect($admin->fresh()->estVerrouille())->toBeTrue();
 
-    connecter($admin->fresh())->get(route('admin.tableau-de-bord'))->assertRedirect(route('login'));
+    connecter($admin->fresh())->get(route('gestion.tableau-de-bord'))->assertRedirect(route('login'));
     $this->assertGuest();
 });
 

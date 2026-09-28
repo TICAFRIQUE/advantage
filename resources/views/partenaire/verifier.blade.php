@@ -1,5 +1,36 @@
-<x-layouts.app titre="Vérifier une carte" sous-titre="Espace Partenaire">
+<x-layouts.app titre="Transaction" :sous-titre="$peutChoisir ? 'Back-office · Partenaires' : 'Espace partenaire'">
     <div class="parcours-caisse mx-auto">
+        @if ($peutChoisir)
+            {{-- Back-office : choix du partenaire pour le compte duquel on agit (option A). --}}
+            <form method="POST" action="{{ route('gestion.transaction.partenaire-courant.store') }}"
+                  class="card border-0 shadow-sm mb-3" aria-labelledby="titre-choix">
+                @csrf
+                <div class="card-body">
+                    <h1 class="h6 fw-bold" id="titre-choix">
+                        <i class="bi bi-shop me-1" aria-hidden="true"></i>Transaction pour le compte de
+                    </h1>
+                    <div class="d-flex flex-column flex-sm-row gap-2">
+                        <label for="partenaire_id" class="visually-hidden">Partenaire</label>
+                        <select id="partenaire_id" name="partenaire_id" required
+                                class="form-select form-select-lg @error('partenaire_id') is-invalid @enderror">
+                            <option value="">— Choisir un partenaire —</option>
+                            @foreach ($partenairesActifs as $choix)
+                                <option value="{{ $choix->id }}" @selected($partenaire?->id === $choix->id)>
+                                    {{ $choix->nom }}{{ $choix->localisation ? ' — '.$choix->localisation : '' }} ({{ rtrim(rtrim((string) $choix->taux_reduction, '0'), '.') }} %)
+                                </option>
+                            @endforeach
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-lg text-nowrap">{{ $partenaire ? 'Changer' : 'Choisir' }}</button>
+                    </div>
+                    @error('partenaire_id')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                    <p class="small text-secondary mb-0 mt-2">La remise sera enregistrée pour ce partenaire, à votre nom.</p>
+                </div>
+            </form>
+        @endif
+
+        @if (! $partenaire)
+            <div class="alert alert-info" role="status">Choisissez d'abord un partenaire pour effectuer une transaction.</div>
+        @else
         <x-bandeau-partenaire :partenaire="$partenaire" />
 
         <ol class="etapes-caisse" aria-label="Étapes">
@@ -8,7 +39,7 @@
             <li>Remise</li>
         </ol>
 
-        <form method="POST" action="{{ route('partenaire.verifier.store') }}" class="card border-0 shadow-sm mb-3"
+        <form method="POST" action="{{ App\Services\EspaceTransaction::route('verifier.store') }}" class="card border-0 shadow-sm mb-3"
               x-data="{ numero: '' }" novalidate>
             @csrf
             <div class="card-body p-4">
@@ -35,7 +66,7 @@
                         <p class="fs-4 fw-bold mb-1">Carte valide</p>
                         <p class="mb-3">Carte {{ $verification['numero_formate'] }} · remise de <strong>{{ rtrim(rtrim($verification['taux'], '0'), '.') }} %</strong></p>
 
-                        <form method="POST" action="{{ route('partenaire.codes.store') }}">
+                        <form method="POST" action="{{ App\Services\EspaceTransaction::route('codes.store') }}">
                             @csrf
                             <input type="hidden" name="numero_carte" value="{{ $verification['numero_carte'] }}">
                             <button type="submit" class="btn btn-or btn-lg w-100 py-3">
@@ -55,6 +86,7 @@
                     </div>
                 </section>
             @endif
+        @endif
         @endif
     </div>
 </x-layouts.app>

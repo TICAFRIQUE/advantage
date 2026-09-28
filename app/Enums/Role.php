@@ -3,7 +3,8 @@
 namespace App\Enums;
 
 /**
- * Rôles système de la plateforme. Ils ne sont jamais supprimables.
+ * Rôles système. Leurs métadonnées (libellé, espace, verrouillage) et les
+ * permissions par défaut sont dans config/permissions.php.
  */
 enum Role: string
 {
@@ -14,56 +15,36 @@ enum Role: string
 
     public function libelle(): string
     {
-        return match ($this) {
-            self::Superadmin => 'Super administrateur',
-            self::Admin => 'Administrateur',
-            self::Agent => 'Agent',
-            self::Partenaire => 'Partenaire',
-        };
+        return (string) config("permissions.roles.{$this->value}.libelle", $this->value);
     }
 
     /**
-     * Permissions accordées au rôle. Le superadmin n'en reçoit aucune :
-     * il est autorisé partout via Gate::before().
-     *
-     * L'admin cumule ses permissions avec celles de l'agent et du partenaire
-     * (il peut tout faire sauf gérer les rôles et les paramètres) ; chaque
-     * action reste tracée à son nom et à son rôle.
-     *
-     * @return list<Permission>
+     * gestion (back-office) ou partenaire.
      */
-    public function permissions(): array
+    public function espace(): string
     {
-        return match ($this) {
-            self::Superadmin => [],
-            self::Admin => [
-                Permission::AccederEspaceAdmin,
-                Permission::GererUtilisateurs,
-                Permission::GererCartes,
-                Permission::GererPartenaires,
-                Permission::GererTaux,
-                Permission::GererActivations,
-                Permission::VoirTransactions,
-                Permission::VoirStatistiques,
-                Permission::VoirJournalAudit,
-                Permission::VoirSmsSimules,
-                ...self::Agent->permissions(),
-                ...self::Partenaire->permissions(),
-            ],
-            self::Agent => [
-                Permission::AccederEspaceAgent,
-                Permission::ActiverCarte,
-                Permission::RechercherCarte,
-                Permission::VoirSesActivations,
-                Permission::SignalerCartePerdue,
-            ],
-            self::Partenaire => [
-                Permission::AccederEspacePartenaire,
-                Permission::VerifierCarte,
-                Permission::ConfirmerOtp,
-                Permission::VoirSesTransactions,
-            ],
-        };
+        return (string) config("permissions.roles.{$this->value}.espace");
+    }
+
+    /**
+     * Rôle dont les permissions ne sont jamais modifiables (superadmin).
+     */
+    public function estVerrouille(): bool
+    {
+        return (bool) config("permissions.roles.{$this->value}.verrouille", false);
+    }
+
+    /**
+     * Permissions attribuées par défaut (première synchronisation uniquement).
+     *
+     * @return list<string>
+     */
+    public function permissionsParDefaut(): array
+    {
+        return array_keys(array_filter(
+            Permission::definitions(),
+            fn (array $permission) => in_array($this->value, $permission['roles'], true),
+        ));
     }
 
     /**
@@ -71,11 +52,17 @@ enum Role: string
      */
     public function routeAccueil(): string
     {
-        return match ($this) {
-            self::Superadmin, self::Admin => 'admin.tableau-de-bord',
-            self::Agent => 'agent.tableau-de-bord',
-            self::Partenaire => 'partenaire.tableau-de-bord',
-        };
+        return $this->espace() === 'partenaire' ? 'partenaire.tableau-de-bord' : 'gestion.tableau-de-bord';
+    }
+
+    /**
+     * Rôles du back-office (admin, agent, superadmin).
+     *
+     * @return list<self>
+     */
+    public static function roleGestion(): array
+    {
+        return [self::Superadmin, self::Admin, self::Agent];
     }
 
     /**
