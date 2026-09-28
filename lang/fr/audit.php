@@ -36,7 +36,9 @@ return [
     'otp.echec' => 'Code de validation incorrect',
     'otp.valide' => 'Code de validation accepté',
     'transaction.creee' => 'Remise accordée',
-    'partenaire.choisi' => 'Partenaire choisi (admin)',
+    'partenaire.choisi' => 'Partenaire choisi (back-office)',
+    'partenaire.cree' => 'Partenaire créé',
+    'partenaire.modifie' => 'Partenaire modifié',
 
     'role.attribue' => 'Rôle attribué',
     'role.retire' => 'Rôle retiré',

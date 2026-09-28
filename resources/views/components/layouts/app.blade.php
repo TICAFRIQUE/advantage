@@ -76,6 +76,8 @@
         </header>
 
         <main id="contenu-principal" class="app-erp__contenu" tabindex="-1">
+            <x-pin-genere />
+
             @if (session('succes'))
                 <div class="alert alert-success d-flex gap-2 align-items-start" role="status">
                     <i class="bi bi-check-circle-fill" aria-hidden="true"></i><span>{{ session('succes') }}</span>

@@ -117,6 +117,55 @@ Route::middleware(['auth', 'compte.actif'])->group(function () use ($parcoursTra
                 ->middleware(['permission:'.Permission::ActiverCarte->value, 'throttle:recherche-titulaire'])
                 ->name('titulaires.recherche');
 
+            // Partenaires
+            Route::get('/partenaires', [Gestion\PartenaireController::class, 'index'])
+                ->middleware('permission:'.Permission::VoirPartenaires->value)
+                ->name('partenaires.index');
+            Route::get('/partenaires/donnees', [Gestion\PartenaireController::class, 'donnees'])
+                ->middleware('permission:'.Permission::VoirPartenaires->value)
+                ->name('partenaires.donnees');
+            Route::get('/partenaires/creer', [Gestion\PartenaireController::class, 'create'])
+                ->middleware('permission:'.Permission::GererPartenaires->value)
+                ->name('partenaires.create');
+            Route::post('/partenaires', [Gestion\PartenaireController::class, 'store'])
+                ->middleware('permission:'.Permission::GererPartenaires->value)
+                ->name('partenaires.store');
+            Route::get('/partenaires/{partenaire}', [Gestion\PartenaireController::class, 'show'])
+                ->whereNumber('partenaire')
+                ->middleware('permission:'.Permission::VoirPartenaires->value)
+                ->name('partenaires.show');
+            Route::get('/partenaires/{partenaire}/modifier', [Gestion\PartenaireController::class, 'edit'])
+                ->middleware('permission:'.Permission::GererPartenaires->value)
+                ->name('partenaires.edit');
+            Route::put('/partenaires/{partenaire}', [Gestion\PartenaireController::class, 'update'])
+                ->middleware('permission:'.Permission::GererPartenaires->value)
+                ->name('partenaires.update');
+            Route::post('/partenaires/{partenaire}/statut', [Gestion\PartenaireController::class, 'changerStatut'])
+                ->middleware('permission:'.Permission::GererPartenaires->value)
+                ->name('partenaires.statut');
+            Route::post('/partenaires/{partenaire}/operateurs', [Gestion\OperateurController::class, 'store'])
+                ->middleware(['permission:'.Permission::GererOperateursPartenaires->value, 'throttle:activation-carte'])
+                ->name('partenaires.operateurs.store');
+
+            // Comptes (opérateurs ici, agents et admins à l'étape Paramètres) :
+            // la policy UserPolicy::gerer applique les règles anti-élévation.
+            Route::prefix('comptes/{compte}')->name('comptes.')->whereNumber('compte')
+                ->middleware('permission:'.Permission::GererUtilisateurs->value.'|'.Permission::GererOperateursPartenaires->value)
+                ->group(function () {
+                    Route::post('/pin', [Gestion\CompteController::class, 'reinitialiserPin'])
+                        ->middleware(['password.confirm:password.confirm,300', 'throttle:activation-carte'])
+                        ->name('pin');
+                    Route::post('/verrouillage', [Gestion\CompteController::class, 'verrouillage'])->name('verrouillage');
+                    Route::post('/statut', [Gestion\CompteController::class, 'statut'])->name('statut');
+                });
+
+            Route::get('/transactions/rapport', [Gestion\RapportTransactionsController::class, 'index'])
+                ->middleware('permission:'.Permission::VoirRapportTransactions->value)
+                ->name('transactions.rapport');
+            Route::get('/transactions/rapport/donnees', [Gestion\RapportTransactionsController::class, 'donnees'])
+                ->middleware('permission:'.Permission::VoirRapportTransactions->value)
+                ->name('transactions.rapport.donnees');
+
             // Partenaires : transaction pour le compte d'un partenaire (option A).
             Route::prefix('transaction')->name('transaction.')->group(function () use ($parcoursTransaction) {
                 Route::post('/partenaire-courant', [Partenaire\PartenaireCourantController::class, 'store'])

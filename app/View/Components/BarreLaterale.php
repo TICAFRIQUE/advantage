@@ -51,7 +51,9 @@ class BarreLaterale extends Component
                 $this->entree('Rapport des cartes', 'bi-bar-chart-line', 'gestion.cartes.rapport', ['gestion.cartes.rapport'], $user->can(Permission::VoirRapportCartes->value)),
             ],
             'Partenaires' => [
+                $this->entree('Liste des partenaires', 'bi-shop', 'gestion.partenaires.index', ['gestion.partenaires.*'], $user->can(Permission::VoirPartenaires->value)),
                 $this->entree('Transaction', 'bi-upc-scan', 'gestion.transaction.verifier', ['gestion.transaction.*'], $user->can(Permission::EffectuerTransactionPartenaire->value)),
+                $this->entree('Rapport des transactions', 'bi-graph-up', 'gestion.transactions.rapport', ['gestion.transactions.rapport'], $user->can(Permission::VoirRapportTransactions->value)),
             ],
             'Outils de test' => [
                 $this->entree('SMS simulés', 'bi-chat-dots', 'gestion.sms-simules.index', ['gestion.sms-simules.*'],

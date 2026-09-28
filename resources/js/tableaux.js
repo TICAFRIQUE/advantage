@@ -46,7 +46,7 @@ document.querySelectorAll('table[data-source]').forEach((tableau) => {
         responsive: true,
         pageLength: 25,
         // Tri initial sur la première colonne triable (côté serveur).
-        order: [[Math.max(0, colonnes.findIndex((colonne) => colonne.orderable)), 'desc']],
+        order: [[Math.max(0, colonnes.findIndex((colonne) => colonne.orderable)), tableau.dataset.ordre === 'asc' ? 'asc' : 'desc']],
         columns: colonnes,
         language: francais,
         ajax: {

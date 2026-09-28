@@ -377,6 +377,19 @@ $focus-ring-width: 0.25rem;
     }
 }
 
+// PIN affiché une seule fois (création / réinitialisation de compte)
+.pin-genere__code {
+    padding: 0.35rem 1rem;
+    border-radius: 0.6rem;
+    background: #fff;
+    color: #{$nuit};
+    font-family: 'Courier New', monospace;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: 0.3em;
+    user-select: all;
+}
+
 // Sélecteur d'indicatif pays accolé au champ téléphone
 // (Bootstrap force `width: 1%` dans un input-group : l'indicatif choisi était
 // rogné. La liste prend désormais la largeur de son contenu.)

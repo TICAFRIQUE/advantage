@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\Enums\StatutPartenaire;
+use App\Observers\PartenaireObserver;
 use Database\Factories\PartenaireFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Table('partenaires')]
+#[ObservedBy(PartenaireObserver::class)]
 #[Fillable(['nom', 'secteur', 'localisation', 'contact', 'taux_reduction', 'statut'])]
 class Partenaire extends Model
 {
@@ -61,6 +64,21 @@ class Partenaire extends Model
     public function historiqueTaux(): HasMany
     {
         return $this->hasMany(HistoriqueTauxPartenaire::class);
+    }
+
+    /**
+     * Opérateurs du partenaire (comptes au rôle partenaire).
+     *
+     * @return HasMany<User, $this>
+     */
+    public function operateurs(): HasMany
+    {
+        return $this->hasMany(User::class);
+    }
+
+    public function tauxFormate(): string
+    {
+        return rtrim(rtrim((string) $this->taux_reduction, '0'), '.').' %';
     }
 
     public function estActif(): bool
