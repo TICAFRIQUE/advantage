@@ -25,14 +25,27 @@ $body-bg: #f4f5fa;
 $body-color: #1b1f33;
 $link-color: $nuit;
 
-$font-family-sans-serif: 'Montserrat', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-$headings-font-weight: 700;
+// Typographie ERP : Inter, graisses légères, densité confortable.
+$font-family-sans-serif: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+$font-size-base: 0.9375rem;
+$font-weight-normal: 400;
+$font-weight-semibold: 500;
+$font-weight-bold: 600;
+$font-weight-bolder: 700;
+$headings-font-weight: 600;
+$h1-font-size: 1.75rem;
+$h2-font-size: 1.45rem;
+$h3-font-size: 1.3rem;
+$h4-font-size: 1.15rem;
+$h5-font-size: 1.05rem;
+$h6-font-size: 0.95rem;
 
-$border-radius: 0.6rem;
-$border-radius-lg: 0.9rem;
-$btn-padding-y: 0.6rem;
-$btn-padding-x: 1.1rem;
-$input-padding-y: 0.6rem;
+$border-radius: 0.5rem;
+$border-radius-lg: 0.75rem;
+$btn-padding-y: 0.45rem;
+$btn-padding-x: 0.95rem;
+$btn-font-weight: 500;
+$input-padding-y: 0.45rem;
 
 // Contours des champs et listes : bleu nuit adouci (contraste ≥ 3:1 sur
 // blanc), or au focus.
@@ -96,7 +109,7 @@ $focus-ring-width: 0.25rem;
     --bs-btn-active-bg: #{$or-clair};
     --bs-btn-disabled-bg: #{$or};
     --bs-btn-disabled-border-color: #{$or};
-    font-weight: 700;
+    font-weight: 600;
     background-image: var(--adv-degrade-or);
 }
 
@@ -903,3 +916,178 @@ $focus-ring-width: 0.25rem;
 }
 
 .logo-marque { object-fit: contain; background: #fff; }
+
+// =============================================================================
+// Finitions ERP : typographie fine, densité, tableaux et ombres discrets.
+// =============================================================================
+
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'cv11', 'ss01';
+}
+
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+    letter-spacing: -0.012em;
+}
+
+// Marque : Montserrat (titre de l'application, carte).
+#barre-laterale-titre, .police-marque {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+}
+
+// Chiffres des indicateurs : nets mais moins massifs.
+.display-6, .tuile-echeance__valeur { font-weight: 700; }
+
+// Tableaux : en-têtes en petites capitales discrètes, lignes compactes.
+.table {
+    font-size: 0.875rem;
+
+    > thead > tr > th {
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--bs-secondary-color);
+        border-bottom-width: 1px;
+        white-space: nowrap;
+    }
+}
+
+// Cartes : ombre légère et fine bordure (aspect « panneau » d'ERP).
+.card.shadow-sm {
+    box-shadow: 0 1px 2px rgba(16, 24, 64, 0.05), 0 2px 6px rgba(16, 24, 64, 0.06) !important;
+    border: 1px solid rgba(16, 24, 64, 0.06) !important;
+}
+
+// Barre latérale : libellés plus fins.
+.barre-laterale__lien {
+    font-size: 0.875rem;
+    font-weight: 400;
+
+    &.actif { font-weight: 500; }
+}
+
+.barre-laterale__section { font-weight: 600; }
+
+// Exports : pastilles fines aux couleurs épurées (PDF / Excel / CSV).
+// Pastilles centrées, hauteur fixe (la barre DataTables étire ses éléments).
+.exports-tableau {
+    display: inline-flex;
+    align-items: center;
+    align-self: center;
+    gap: 0.35rem;
+
+    > .btn {
+        --bs-btn-padding-y: 0.2rem;
+        --bs-btn-padding-x: 0.6rem;
+        --bs-btn-font-size: 0.75rem;
+        --bs-btn-font-weight: 600;
+        border-radius: 999px !important;
+        border: 1px solid transparent;
+        letter-spacing: 0.02em;
+        display: inline-flex;
+        align-items: center;
+        height: 1.75rem;
+        line-height: 1;
+    }
+
+    .btn-export--pdf { color: #a1271f; background: #fdecea; border-color: #f6cdc9; }
+    .btn-export--xlsx { color: #16653d; background: #e7f5ee; border-color: #c2e5d2; }
+    .btn-export--csv { color: #174d80; background: #e8f1fb; border-color: #c6dcf3; }
+
+    .btn-export--pdf:hover { background: #f9d9d5; color: #8a1f18; }
+    .btn-export--xlsx:hover { background: #d3ecdf; color: #10502f; }
+    .btn-export--csv:hover { background: #d4e5f7; color: #123d66; }
+}
+
+// =============================================================================
+// Mobile : menu du bas (smartphone), en plus du menu latéral.
+// =============================================================================
+
+.menu-bas {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 1030;
+    display: flex;
+    justify-content: space-around;
+    align-items: stretch;
+    padding: 0.25rem 0.25rem calc(0.25rem + env(safe-area-inset-bottom));
+    background: #fff;
+    border-top: 1px solid rgba(16, 24, 64, 0.08);
+    box-shadow: 0 -4px 16px rgba(16, 24, 64, 0.08);
+
+    &__lien {
+        flex: 1 1 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.1rem;
+        min-height: 52px;
+        padding: 0.25rem;
+        border: 0;
+        background: none;
+        border-radius: 0.6rem;
+        color: #5b6178;
+        font-size: 0.68rem;
+        font-weight: 500;
+        text-decoration: none;
+
+        .bi { font-size: 1.3rem; line-height: 1; }
+
+        &.actif { color: #{$nuit}; font-weight: 600; }
+        &.actif .bi { color: #{$or-fonce}; }
+
+        &:focus-visible { outline: 2px solid #{$or}; outline-offset: 2px; }
+    }
+
+    // Action principale au centre (activer une carte / transaction).
+    &__principal {
+        .menu-bas__bulle {
+            display: grid;
+            place-items: center;
+            width: 3rem;
+            height: 3rem;
+            margin-top: -1.35rem;
+            border-radius: 50%;
+            color: #{$nuit};
+            background: var(--adv-degrade-or);
+            box-shadow: 0 4px 12px rgba(140, 90, 27, 0.35);
+        }
+
+        .bi { font-size: 1.35rem; }
+    }
+}
+
+// Place réservée sous le contenu quand le menu du bas est affiché.
+@include media-breakpoint-down(lg) {
+    body.avec-menu-bas .app-erp__principal { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom)); }
+}
+
+// Tableau de bord sur mobile : indicateurs compacts, deux par ligne.
+@include media-breakpoint-down(sm) {
+    .indicateur-tableau .card-body { padding: .75rem .9rem; }
+    .indicateur-tableau .display-6 { font-size: 1.6rem; }
+}
+
+// Densité selon le pointeur : 44 px au doigt (écran tactile), plus compact à
+// la souris (ERP). Les champs de la caisse partenaire gardent leurs grandes tailles.
+@media (pointer: fine) {
+    .btn:not(.btn-lg),
+    .form-control:not(.form-control-lg),
+    .form-select:not(.form-select-lg) {
+        min-height: 38px;
+    }
+}
+
+.exports-tableau > .btn {
+    min-height: 1.75rem;
+
+    @media (pointer: coarse) {
+        height: 2.25rem;
+        min-height: 2.25rem;
+    }
+}

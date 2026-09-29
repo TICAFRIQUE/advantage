@@ -110,7 +110,7 @@ function boutonsExport(tableau, filtres, instance) {
     }
 
     const groupe = document.createElement('div');
-    groupe.className = 'btn-group btn-group-sm ms-2 exports-tableau';
+    groupe.className = 'ms-2 exports-tableau';
     groupe.setAttribute('role', 'group');
     groupe.setAttribute('aria-label', 'Exporter la liste');
 
@@ -118,7 +118,7 @@ function boutonsExport(tableau, filtres, instance) {
         .filter(([format]) => urls[format])
         .forEach(([format, libelle, icone]) => {
             const lien = document.createElement('a');
-            lien.className = 'btn btn-outline-secondary';
+            lien.className = `btn btn-export--${format}`;
             lien.href = urls[format];
             lien.title = `Exporter en ${libelle}`;
 

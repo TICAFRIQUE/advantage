@@ -39,6 +39,26 @@ document.addEventListener('click', (evenement) => {
 });
 
 /**
+ * Barre latérale : le lien de la page courante est toujours visible (la
+ * liste défile jusqu'à lui), au chargement et à l'ouverture du menu mobile.
+ */
+function montrerLienActif() {
+    const nav = document.querySelector('.barre-laterale__nav');
+    const actif = nav?.querySelector('.barre-laterale__lien.actif');
+
+    if (!nav || !actif) {
+        return;
+    }
+
+    // Position du lien dans la liste, quel que soit le parent positionné.
+    const ecart = actif.getBoundingClientRect().top - nav.getBoundingClientRect().top;
+    nav.scrollTop = Math.max(0, nav.scrollTop + ecart - nav.clientHeight / 2 + actif.clientHeight / 2);
+}
+
+montrerLienActif();
+document.getElementById('barre-laterale')?.addEventListener('shown.bs.offcanvas', montrerLienActif);
+
+/**
  * Formulaires sensibles : confirmation SweetAlert avant envoi.
  * - data-confirmer="message"              → simple confirmation
  * - data-motif="Libellé du motif"         → confirmation avec saisie obligatoire d'un motif

@@ -2,7 +2,8 @@
     <h1 class="h3 fw-bold mb-1">Bonjour, {{ auth()->user()->nom }}</h1>
     <p class="text-secondary mb-4">{{ now()->translatedFormat('l d F Y') }}</p>
 
-    <div class="d-flex flex-wrap gap-2 mb-4">
+    {{-- Sur mobile, ces actions sont dans le menu du bas. --}}
+    <div class="d-none d-lg-flex flex-wrap gap-2 mb-4">
         @can('activer-carte')
             <a href="{{ route('gestion.cartes.create') }}" class="btn btn-or btn-lg">
                 <i class="bi bi-credit-card-2-front me-1" aria-hidden="true"></i>Activer une carte
@@ -34,7 +35,7 @@
         <h2 class="h6 fw-bold text-uppercase text-secondary mb-2">{{ $titre }}</h2>
         <div class="row g-3 mb-4">
             @foreach ($indicateurs as [$libelle, $valeur])
-                <div class="col-12 col-sm-4">
+                <div class="col-6 col-sm-4 indicateur-tableau">
                     <div class="card border-0 shadow-sm fond-nuit h-100">
                         <div class="card-body">
                             <p class="small text-white-50 mb-1">{{ $libelle }}</p>

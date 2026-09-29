@@ -7,7 +7,7 @@
     $barreReduite = request()->cookie('barre_reduite') === '1';
 @endphp
 
-<x-layouts.base :titre="$titre" :classe-body="'app-erp'.($barreReduite ? ' barre-reduite' : '')">
+<x-layouts.base :titre="$titre" :classe-body="'app-erp avec-menu-bas'.($barreReduite ? ' barre-reduite' : '')">
     <a href="#contenu-principal" class="visually-hidden-focusable position-absolute top-0 start-0 m-2 btn btn-light z-3">Aller au contenu</a>
 
     <x-barre-laterale :reduite="$barreReduite" />
@@ -104,4 +104,6 @@
             &copy; {{ date('Y') }} {{ App\Services\Parametres::nomOrganisation() }} — {{ App\Services\Parametres::nomApplication() }}
         </footer>
     </div>
+
+    <x-menu-bas />
 </x-layouts.base>

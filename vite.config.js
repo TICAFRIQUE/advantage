@@ -8,8 +8,12 @@ export default defineConfig({
             input: ['resources/scss/app.scss', 'resources/js/app.js', 'resources/js/tableaux.js'],
             refresh: true,
             fonts: [
+                // Interface : Inter (fine et lisible, style ERP). Marque et carte : Montserrat.
+                bunny('Inter', {
+                    weights: [300, 400, 500, 600, 700],
+                }),
                 bunny('Montserrat', {
-                    weights: [400, 500, 600, 700, 800],
+                    weights: [600, 700, 800],
                 }),
             ],
         }),

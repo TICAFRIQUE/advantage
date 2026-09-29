@@ -52,7 +52,7 @@ it('renders the sidebar collapsed when the preference cookie says so', function 
 
     $html = $requete->get(route('gestion.tableau-de-bord'))->getContent();
 
-    expect(str_contains($html, 'class="app-erp barre-reduite"'))->toBe($reduite);
+    expect((bool) preg_match('/<body class="[^"]*\bbarre-reduite\b/', $html))->toBe($reduite);
 })->with([
     'préférence réduite' => ['1', true],
     'préférence étendue' => ['0', false],
