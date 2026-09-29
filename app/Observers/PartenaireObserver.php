@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Partenaire;
 use App\Services\JournaliserAudit;
+use App\Services\StatistiquesTableauDeBord;
 
 class PartenaireObserver
 {
@@ -14,6 +15,8 @@ class PartenaireObserver
 
     public function created(Partenaire $partenaire): void
     {
+        StatistiquesTableauDeBord::oublier();
+
         JournaliserAudit::enregistrer('partenaire.cree', $partenaire, [
             'apres' => array_intersect_key($partenaire->getAttributes(), array_flip(self::CHAMPS_TRACES)),
         ]);
@@ -21,6 +24,8 @@ class PartenaireObserver
 
     public function updated(Partenaire $partenaire): void
     {
+        StatistiquesTableauDeBord::oublier();
+
         $modifies = array_values(array_intersect(array_keys($partenaire->getChanges()), self::CHAMPS_TRACES));
 
         if ($modifies === []) {
@@ -35,11 +40,15 @@ class PartenaireObserver
 
     public function deleted(Partenaire $partenaire): void
     {
+        StatistiquesTableauDeBord::oublier();
+
         JournaliserAudit::enregistrer('partenaire.supprime', $partenaire, ['avant' => ['nom' => $partenaire->nom]]);
     }
 
     public function restored(Partenaire $partenaire): void
     {
+        StatistiquesTableauDeBord::oublier();
+
         JournaliserAudit::enregistrer('partenaire.restaure', $partenaire, ['apres' => ['nom' => $partenaire->nom]]);
     }
 }

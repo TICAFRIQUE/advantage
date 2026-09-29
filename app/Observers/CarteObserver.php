@@ -8,6 +8,7 @@ use App\Models\Carte;
 use App\Models\OperationCarte;
 use App\Services\EcheancesCartes;
 use App\Services\JournaliserAudit;
+use App\Services\StatistiquesTableauDeBord;
 
 /**
  * Journal d'audit (14 jours) + historique permanent des opérations.
@@ -17,6 +18,7 @@ class CarteObserver
     public function created(Carte $carte): void
     {
         EcheancesCartes::oublier();
+        StatistiquesTableauDeBord::oublier();
 
         JournaliserAudit::enregistrer('carte.activee', $carte, [
             'apres' => [
@@ -42,6 +44,7 @@ class CarteObserver
     public function updated(Carte $carte): void
     {
         EcheancesCartes::oublier();
+        StatistiquesTableauDeBord::oublier();
 
         $modifies = array_values(array_diff(array_keys($carte->getChanges()), ['updated_at', 'modifie_par_id']));
 
@@ -67,6 +70,7 @@ class CarteObserver
     public function deleted(Carte $carte): void
     {
         EcheancesCartes::oublier();
+        StatistiquesTableauDeBord::oublier();
 
         JournaliserAudit::enregistrer('carte.supprimee', $carte);
     }

@@ -12,15 +12,6 @@ use App\Models\Partenaire;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Tests\TestCase;
-
-function avecPinRecent(User $user): TestCase
-{
-    return connecter($user)->withSession([
-        'connecte_le' => now()->getTimestamp(),
-        'auth.password_confirmed_at' => now()->getTimestamp(),
-    ]);
-}
 
 describe('création d\'un opérateur', function () {
     it('creates an operator attached to the partner and shows its pin once', function () {

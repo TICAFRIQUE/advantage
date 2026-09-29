@@ -57,3 +57,15 @@ function connecter(User $user): TestCase
 {
     return test()->actingAs($user)->withSession(['connecte_le' => now()->getTimestamp()]);
 }
+
+/**
+ * Connecte l'utilisateur avec un PIN confirmé à l'instant (actions protégées
+ * par password.confirm).
+ */
+function avecPinRecent(User $user): TestCase
+{
+    return connecter($user)->withSession([
+        'connecte_le' => now()->getTimestamp(),
+        'auth.password_confirmed_at' => now()->getTimestamp(),
+    ]);
+}
