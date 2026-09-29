@@ -174,6 +174,11 @@ php artisan queue:failed
 ```
 
 - `about` doit afficher `Environment: production` et `Debug Mode: OFF`.
+- Les pages doivent porter l'en-tête `Content-Security-Policy` (aucun script en ligne) et, en HTTPS, `Strict-Transport-Security` :
+
+```bash
+curl -sI https://votre-domaine.ci/login | grep -iE "content-security|strict-transport"
+```
 - Tester une connexion, puis `php artisan sms:tester <votre numéro>`, puis une vérification de carte avec réception du code par SMS.
 
 ## 6. Commandes d'exploitation

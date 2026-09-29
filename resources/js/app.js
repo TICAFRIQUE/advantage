@@ -1,5 +1,8 @@
 import * as bootstrap from 'bootstrap';
-import Alpine from 'alpinejs';
+// Version CSP d'Alpine : aucune évaluation de code (pas de 'unsafe-eval'). Les
+// expressions des vues restent simples (propriétés, conditions, appels) ; toute
+// logique vit dans les composants Alpine.data ci-dessous.
+import Alpine from '@alpinejs/csp';
 import Swal from 'sweetalert2';
 
 window.bootstrap = bootstrap;
@@ -93,7 +96,11 @@ document.addEventListener('submit', async (evenement) => {
 /**
  * Formulaire d'activation de carte (espace agent).
  */
-Alpine.data('activationCarte', (urlRecherche, anciennesValeurs = {}, listePays = {}, paysDefaut = 'CI') => ({
+Alpine.data('activationCarte', (idConfiguration) => {
+    // Configuration lue dans un bloc <script type="application/json"> (non exécuté).
+    const { urlRecherche, anciennesValeurs = {}, listePays = {}, paysDefaut = 'CI' } = lireConfiguration(idConfiguration);
+
+    return {
     telephone: anciennesValeurs.telephone ?? '',
     pays: anciennesValeurs.pays_telephone ?? paysDefaut,
     nom: anciennesValeurs.nom ?? '',
@@ -260,6 +267,93 @@ Alpine.data('activationCarte', (urlRecherche, anciennesValeurs = {}, listePays =
             formulaire.dataset.confirme = '1';
             formulaire.requestSubmit();
         }
+    },
+    };
+});
+
+/**
+ * @param {string} id  identifiant d'un <script type="application/json">
+ * @returns {object}
+ */
+function lireConfiguration(id) {
+    try {
+        return JSON.parse(document.getElementById(id)?.textContent ?? '{}');
+    } catch {
+        return {};
+    }
+}
+
+/**
+ * Formulaire de connexion : affichage du PIN et clavier complet (mot de passe du superadmin).
+ */
+Alpine.data('connexion', () => ({
+    envoi: false,
+    afficher: false,
+    clavierComplet: false,
+
+    basculerClavier() {
+        this.clavierComplet = !this.clavierComplet;
+        this.$nextTick(() => this.$refs.pin?.focus());
+    },
+}));
+
+/**
+ * PIN généré, affiché une seule fois : copie dans le presse-papiers.
+ */
+Alpine.data('pinGenere', (pin) => ({
+    copie: false,
+
+    copier() {
+        navigator.clipboard?.writeText(String(pin)).then(() => {
+            this.copie = true;
+            setTimeout(() => {
+                this.copie = false;
+            }, 3000);
+        });
+    },
+}));
+
+/**
+ * Saisie de chiffres uniquement, bornée (numéro de carte).
+ */
+Alpine.data('saisieChiffres', (longueur) => ({
+    valeur: '',
+
+    get complet() {
+        return this.valeur.length === longueur;
+    },
+
+    nettoyer() {
+        this.valeur = this.valeur.replace(/\D/g, '').slice(0, longueur);
+    },
+}));
+
+/**
+ * Code de validation (caisse) : comptes à rebours d'expiration et de renvoi.
+ */
+Alpine.data('validationCode', (restant, renvoi) => ({
+    restant,
+    renvoi,
+    code: '',
+
+    get minutes() {
+        return `${String(Math.floor(this.restant / 60)).padStart(2, '0')}:${String(this.restant % 60).padStart(2, '0')}`;
+    },
+
+    init() {
+        setInterval(() => {
+            if (this.restant > 0) {
+                this.restant--;
+            }
+
+            if (this.renvoi > 0) {
+                this.renvoi--;
+            }
+        }, 1000);
+    },
+
+    nettoyerCode() {
+        this.code = this.code.replace(/\D/g, '').slice(0, 6);
     },
 }));
 

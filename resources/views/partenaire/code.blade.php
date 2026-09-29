@@ -7,13 +7,7 @@
         </ol>
 
         <section class="card border-0 shadow-sm"
-                 x-data="{
-                     restant: {{ $utilisable ? max(0, (int) now()->diffInSeconds($demande->expire_le, false)) : 0 }},
-                     renvoi: {{ $renvoiPossibleDans }},
-                     code: '',
-                     get minutes() { return String(Math.floor(this.restant / 60)).padStart(2, '0') + ':' + String(this.restant % 60).padStart(2, '0') },
-                     init() { setInterval(() => { if (this.restant > 0) this.restant--; if (this.renvoi > 0) this.renvoi--; }, 1000) }
-                 }">
+                 x-data="validationCode({{ $utilisable ? max(0, (int) now()->diffInSeconds($demande->expire_le, false)) : 0 }}, {{ (int) $renvoiPossibleDans }})">
             <div class="card-body p-4">
                 <p class="text-secondary mb-1">Carte {{ $demande->carte->numeroFormate() }}</p>
                 <h1 class="h4 fw-bold mb-3">Saisissez le code reçu par le client</h1>
@@ -30,7 +24,7 @@
                         <label for="code" class="visually-hidden">Code à 6 chiffres</label>
                         <input type="text" id="code" name="code" inputmode="numeric" autocomplete="one-time-code"
                                class="form-control form-control-lg champ-code @error('code') is-invalid @enderror"
-                               x-model="code" x-on:input="code = code.replace(/\D/g, '').slice(0, 6)"
+                               x-model="code" x-on:input="nettoyerCode()"
                                required pattern="\d{6}" maxlength="6" placeholder="••••••" autofocus
                                aria-describedby="erreur-code">
                         <div class="invalid-feedback text-center fs-6" id="erreur-code" role="alert">@error('code'){{ $message }}@enderror</div>

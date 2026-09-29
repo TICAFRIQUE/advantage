@@ -11,6 +11,7 @@ use App\Http\Requests\Gestion\FiltrerCartesRequest;
 use App\Models\Carte;
 use App\Services\JournaliserAudit;
 use App\Services\Rapports\IndicateursCartes;
+use App\Services\Telephone;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -53,7 +54,15 @@ class CarteController extends Controller
     {
         Gate::authorize('create', Carte::class);
 
-        return view('gestion.cartes.activer');
+        return view('gestion.cartes.activer', [
+            // Lue par le composant Alpine dans un bloc JSON (compatible CSP).
+            'configuration' => [
+                'urlRecherche' => route('gestion.titulaires.recherche'),
+                'anciennesValeurs' => (object) request()->old(),
+                'listePays' => Telephone::tousLesPays(),
+                'paysDefaut' => Telephone::paysParDefaut(),
+            ],
+        ]);
     }
 
     public function store(ActiverCarteRequest $request, ActiverCarteAction $activer): RedirectResponse

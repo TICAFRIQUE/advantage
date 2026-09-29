@@ -14,7 +14,7 @@
     <span class="badge rounded-pill text-bg-warning fs-6">{{ $partenaire->tauxFormate() }}</span>
     @if ($changeable)
         <button type="button" class="btn btn-sm btn-outline-primary" x-on:click="changer = !changer"
-                x-bind:aria-expanded="changer.toString()" aria-controls="choix-partenaire">
+                x-bind:aria-expanded="changer ? 'true' : 'false'" aria-controls="choix-partenaire">
             <i class="bi bi-arrow-left-right me-1" aria-hidden="true"></i>Changer de partenaire
         </button>
     @endif

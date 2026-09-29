@@ -19,7 +19,7 @@
                         @endif
 
                         <form method="POST" action="{{ route('login.store') }}" novalidate
-                              x-data="{ envoi: false, afficher: false, clavierComplet: false }"
+                              x-data="connexion"
                               x-on:submit="envoi = true">
                             @csrf
 
@@ -36,7 +36,7 @@
                             <div class="mb-2">
                                 <label for="password" class="form-label fw-semibold">PIN</label>
                                 <div class="input-group input-group-lg">
-                                    <input x-bind:type="afficher ? 'text' : 'password'" type="password"
+                                    <input x-bind:type="afficher ? 'text' : 'password'" type="password" x-ref="pin"
                                            id="password" name="password"
                                            class="form-control @error('password') is-invalid @enderror"
                                            x-bind:inputmode="clavierComplet ? 'text' : 'numeric'" inputmode="numeric"
@@ -52,7 +52,7 @@
 
                             <div class="mb-4 text-end">
                                 <button type="button" class="btn btn-link btn-sm p-0 texte-or-fonce"
-                                        x-on:click="clavierComplet = !clavierComplet; $nextTick(() => document.getElementById('password').focus())"
+                                        x-on:click="basculerClavier()"
                                         x-text="clavierComplet ? 'Clavier numérique' : 'Mot de passe (clavier complet)'">
                                     Mot de passe (clavier complet)
                                 </button>

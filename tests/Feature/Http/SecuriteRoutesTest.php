@@ -8,6 +8,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\MassAssignmentException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route as RouteDefinition;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -130,3 +131,31 @@ it('refuses mass assignment of the partner link and the account status', functio
 
     $user->fill(['partenaire_id' => 1]);
 })->throws(MassAssignmentException::class);
+
+it('sends a strict Content-Security-Policy: no inline script, no eval, no framing', function () {
+    $csp = $this->get(route('login'))->headers->get('Content-Security-Policy');
+
+    expect($csp)->toContain("script-src 'self'", "object-src 'none'", "frame-ancestors 'none'", "base-uri 'self'", "form-action 'self'")
+        ->and(str($csp)->after('script-src')->before(';')->toString())->not->toContain('unsafe-inline')->not->toContain('unsafe-eval');
+});
+
+it('keeps views compatible with the CSP (no inline script, Alpine expressions without code)', function () {
+    $interdits = [
+        '/<script(?![^>]*(\bsrc=|type="application\/json"))[^>]*>/i' => 'script en ligne',
+        '/\son[a-z]+\s*=\s*"/i' => 'gestionnaire on…= en ligne',
+        '/(x-[a-z:.-]+|@[a-z.-]+)="[^"]*(=>|\bfunction\b|\bdocument\.|\bwindow\.|\bnavigator\.|setTimeout|\.replace\(\/)[^"]*"/i' => 'expression Alpine avec du code',
+        '/x-data="\{[^"]*\(\)\s*\{/' => 'méthode déclarée dans x-data',
+    ];
+
+    $fautes = [];
+
+    foreach (File::allFiles(resource_path('views')) as $fichier) {
+        foreach ($interdits as $motif => $libelle) {
+            if (preg_match($motif, $fichier->getContents(), $trouve)) {
+                $fautes[] = "{$fichier->getRelativePathname()} : {$libelle} ({$trouve[0]})";
+            }
+        }
+    }
+
+    expect($fautes)->toBe([]);
+});

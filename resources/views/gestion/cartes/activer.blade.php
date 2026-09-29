@@ -13,9 +13,12 @@
                 <div class="alert alert-danger" role="alert">{{ $message }}</div>
             @enderror
 
+            {{-- Configuration du composant (JSON non exécuté : compatible CSP). --}}
+            <script type="application/json" id="config-activation">@json($configuration)</script>
+
             <form method="POST" action="{{ route('gestion.cartes.store') }}" novalidate
                   class="card border-0 shadow-sm"
-                  x-data="activationCarte(@js(route('gestion.titulaires.recherche')), @js(old()), @js(App\Services\Telephone::tousLesPays()), @js(App\Services\Telephone::paysParDefaut()))"
+                  x-data="activationCarte('config-activation')"
                   x-on:submit="soumettre($event)">
                 @csrf
 

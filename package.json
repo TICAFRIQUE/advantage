@@ -16,8 +16,8 @@
         "@laravel/multiplex": "^0.4.1"
     },
     "dependencies": {
+        "@alpinejs/csp": "^3.17.4",
         "@popperjs/core": "^2.11.8",
-        "alpinejs": "^3.17.4",
         "bootstrap": "^5.3.8",
         "bootstrap-icons": "^1.13.1",
         "datatables.net-bs5": "^3.1.2",

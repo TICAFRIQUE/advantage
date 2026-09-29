@@ -6,7 +6,7 @@
 @if (session('pin_genere'))
     @php($pin = session('pin_genere'))
     <section class="alert alert-warning border-2 shadow-sm pin-genere" role="alert" aria-labelledby="titre-pin"
-             x-data="{ copie: false, copier() { navigator.clipboard?.writeText(@js($pin['pin'])).then(() => { this.copie = true; setTimeout(() => this.copie = false, 3000); }); } }">
+             x-data="pinGenere(@js($pin['pin']))">
         <div class="d-flex flex-wrap align-items-center gap-3">
             <i class="bi bi-key-fill fs-2" aria-hidden="true"></i>
             <div class="flex-grow-1">

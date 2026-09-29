@@ -47,19 +47,19 @@
         </ol>
 
         <form method="POST" action="{{ App\Services\EspaceTransaction::route('verifier.store') }}" class="card border-0 shadow-sm mb-3"
-              x-data="{ numero: '' }" novalidate>
+              x-data="saisieChiffres(7)" novalidate>
             @csrf
             <div class="card-body p-4">
                 <label for="numero_carte" class="form-label fw-bold fs-5">Numéro de la carte</label>
                 <input type="text" id="numero_carte" name="numero_carte" inputmode="numeric" autocomplete="off"
                        class="form-control form-control-lg champ-caisse @error('numero_carte') is-invalid @enderror"
-                       x-model="numero" x-on:input="numero = numero.replace(/\D/g, '').slice(0, 7)"
+                       x-model="valeur" x-on:input="nettoyer()"
                        required pattern="\d{7}" maxlength="7" placeholder="0000000" autofocus
                        aria-describedby="aide-numero erreur-numero">
                 <div class="invalid-feedback" id="erreur-numero">@error('numero_carte'){{ $message }}@enderror</div>
                 <div class="form-text" id="aide-numero">Les 7 chiffres imprimés sur la carte du client.</div>
 
-                <button type="submit" class="btn btn-primary btn-lg w-100 mt-3 py-3" x-bind:disabled="numero.length !== 7">
+                <button type="submit" class="btn btn-primary btn-lg w-100 mt-3 py-3" x-bind:disabled="!complet">
                     Vérifier
                 </button>
             </div>
