@@ -111,10 +111,16 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p "$SSH_PORT" "$SERVER_HOST" >> ~/.ssh/known_hosts
+          ssh-keyscan -T 15 -p "$SSH_PORT" "$SERVER_HOST" >> ~/.ssh/known_hosts || true
+          if [ ! -s ~/.ssh/known_hosts ]; then
+            echo "::error::Serveur injoignable sur $SERVER_HOST:$SSH_PORT (adresse, port SSH, ou pare-feu de l'hébergeur qui bloque GitHub)."
+            exit 1
+          fi
           cat > ~/.ssh/config <<EOF
           Host $SERVER_HOST
             Port $SSH_PORT
+            ConnectTimeout 20
+            BatchMode yes
             IdentityFile ~/.ssh/deploy_key
             IdentitiesOnly yes
             PubkeyAcceptedAlgorithms +ssh-rsa
@@ -122,11 +128,31 @@ jobs:
             ServerAliveInterval 30
           EOF
 
+      # Échec : relance en mode détaillé pour afficher la cause exacte.
+      - name: Tester la connexion SSH
+        run: |
+          if ! ssh "$SERVEUR" "echo 'Connexion SSH OK' && $PHP -v | head -n 1 && command -v rsync"; then
+            echo "::error::Connexion SSH refusée ou rsync absent : voir le détail ci-dessous."
+            ssh -v "$SERVEUR" true 2>&1 | grep -vE '^debug1: (Reading|Applying|identity file|Local version|compat_|kex: |Remote protocol|SSH2_MSG|expecting|rekey|channel|client_input|pledge|Sending env|Requesting|Entering|Exit status)' || true
+            exit 1
+          fi
+
       # ── 5. Contrôle de sécurité puis mise en maintenance ─────────────
       # Configuration (.env) non conforme : arrêt avant toute coupure.
+      # Première installation (code absent) : seul le .env est exigé.
       - name: Mise en maintenance
         run: |
-          ssh "$SERVEUR" "cd '$DOSSIER' && $PHP artisan securite:verifier && $PHP artisan down --retry=60"
+          ssh "$SERVEUR" "bash -s" <<EOF
+            set -e
+            cd '$DOSSIER'
+            test -f .env || { echo "::error::.env absent dans $DOSSIER : le créer d'abord (docs/production.md § 2.2)."; exit 1; }
+            if [ -f artisan ]; then
+              $PHP artisan securite:verifier
+              $PHP artisan down --retry=60
+            else
+              echo "Première installation : aucun code en ligne."
+            fi
+          EOF
 
       # ── 6. Envoi des fichiers via rsync ──────────────────────────────
       # Les chemins exclus ne sont jamais supprimés par --delete.

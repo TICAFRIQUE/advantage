@@ -379,7 +379,7 @@ Revenir à une version antérieure : `git revert` du commit fautif sur `main`, p
 
 ### 9.2 Mise en place (une seule fois)
 
-Prérequis : première installation faite (§ 2 : `.env`, clés, superadmin, cron, `public/build` construit) avec une version du code qui contient `securite:verifier`, et `php artisan securite:verifier` conforme sur le serveur : c'est le premier contrôle de chaque déploiement, qui s'arrête sinon. Accès SSH au compte (cPanel → *Accès SSH*). Le dossier `.git` du serveur n'est plus utilisé par les déploiements.
+Prérequis : accès SSH au compte (cPanel → *Accès SSH*), base MySQL créée et `.env` de production déposé dans `SERVER_PATH` (§ 2.2, `chmod 600`). Le premier déploiement peut partir d'un dossier sans code : seul le `.env` est exigé. Lancer ensuite une fois `php artisan db:seed --class=SuperAdminSeeder --force` et ajouter les cron (§ 3). Pour les déploiements suivants, `php artisan securite:verifier` doit être conforme : c'est le premier contrôle, qui arrête le déploiement sinon. Le dossier `.git` du serveur n'est plus utilisé par les déploiements.
 
 > Tant que les secrets ci-dessous ne sont pas renseignés, un push sur `main` lance les tests puis échoue à l'étape de connexion SSH, sans rien toucher : aucun risque.
 
