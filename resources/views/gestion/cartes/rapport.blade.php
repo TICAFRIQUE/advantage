@@ -3,9 +3,12 @@
         @vite('resources/js/tableaux.js')
     @endpush
 
-    <div class="mb-3">
-        <h1 class="h3 fw-bold mb-0">Rapport des cartes</h1>
-        <p class="text-secondary mb-0">Historique des opérations : activations, suspensions, réactivations, révocations, expirations et modifications du titulaire.</p>
+    <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-3">
+        <div>
+            <h1 class="h3 fw-bold mb-0">Rapport des cartes</h1>
+            <p class="text-secondary mb-0">Historique des opérations : activations, suspensions, réactivations, révocations, expirations et modifications du titulaire.</p>
+        </div>
+        <x-menu-export liste="operations-cartes" formulaire="#filtres-rapport-cartes" tableau="#tableau-rapport-cartes" />
     </div>
 
     <form method="GET" action="{{ route('gestion.cartes.rapport') }}" id="filtres-rapport-cartes" data-soumission="page"

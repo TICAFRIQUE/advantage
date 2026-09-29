@@ -4,13 +4,18 @@ namespace App\Http\Requests\Gestion;
 
 use App\Enums\Permission;
 use App\Enums\TypeOperationCarte;
+use App\Http\Requests\Gestion\Concerns\DefinitListe;
+use App\Http\Requests\Gestion\Concerns\RechercheTableau;
+use App\Services\Listes\ListeOperationsCartes;
 use App\Services\Rapports\RapportCartes;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class FiltrerRapportCartesRequest extends FormRequest
+class FiltrerRapportCartesRequest extends FormRequest implements DefinitListe
 {
+    use RechercheTableau;
+
     public function authorize(): bool
     {
         return $this->user()->can(Permission::VoirRapportCartes->value);
@@ -52,5 +57,10 @@ class FiltrerRapportCartesRequest extends FormRequest
         $filtres['mes_operations'] = $this->boolean('mes_operations');
 
         return new RapportCartes($filtres, $this->user());
+    }
+
+    public function liste(): ListeOperationsCartes
+    {
+        return new ListeOperationsCartes([...$this->validated(), 'mes_operations' => $this->boolean('mes_operations')], $this->user(), $this->rechercheTableau());
     }
 }

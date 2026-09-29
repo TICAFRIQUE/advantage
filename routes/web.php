@@ -168,6 +168,13 @@ Route::middleware(['auth', 'compte.actif'])->group(function () use ($parcoursTra
                         ->name('supprimer');
                 });
 
+            // Exports des listes (CSV, Excel, PDF) : permission d'export + droit de
+            // consulter la liste (vérifié par la Form Request de la liste).
+            Route::get('/exports/{liste}/{format}', Gestion\ExportController::class)
+                ->whereIn('liste', array_keys(Gestion\ExportController::LISTES))
+                ->middleware(['permission:'.Permission::ExporterDonnees->value, 'throttle:10,1'])
+                ->name('exports');
+
             // Paramètres › Utilisateurs du back-office
             Route::prefix('parametres/utilisateurs')->name('utilisateurs.')
                 ->middleware('permission:'.Permission::GererUtilisateurs->value)

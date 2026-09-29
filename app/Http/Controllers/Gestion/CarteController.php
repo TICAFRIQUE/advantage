@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Gestion;
 
 use App\Actions\Gestion\ActiverCarteAction;
 use App\Enums\Permission;
-use App\Enums\StatutCarte;
 use App\Exceptions\ActivationImpossibleException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Gestion\ActiverCarteRequest;
@@ -35,11 +34,7 @@ class CarteController extends Controller
 
         $mesActivations = $request->boolean('mes_activations');
 
-        $cartes = Carte::query()
-            ->with(['titulaire', 'activePar.roles', 'modifiePar.roles'])
-            ->when($filtres['recherche'] ?? null, fn (Builder $query, string $recherche) => $this->rechercher($query, $recherche))
-            ->when($filtres['statut'] ?? null, fn (Builder $query, string $statut) => $query->statutEffectif(StatutCarte::from($statut)))
-            ->when($mesActivations, fn (Builder $query) => $query->where('active_par_id', $request->user()->id))
+        $cartes = $request->liste()->requete()
             ->latest('active_le')
             ->latest('id')
             ->paginate(12)
@@ -101,29 +96,5 @@ class CarteController extends Controller
                 : null,
             'nombreTransactions' => $voirTransactions ? $carte->transactions()->count() : 0,
         ]);
-    }
-
-    /**
-     * Numérique : préfixe du numéro de carte ou fragment du téléphone.
-     * Texte : nom ou prénoms du titulaire.
-     *
-     * @param  Builder<Carte>  $query
-     */
-    private function rechercher(Builder $query, string $recherche): void
-    {
-        $chiffres = preg_replace('/\D/', '', $recherche);
-        $texte = addcslashes(trim($recherche), '%_\\');
-
-        if ($chiffres !== '' && $chiffres === preg_replace('/\s/', '', $recherche)) {
-            $query->where(fn (Builder $q) => $q
-                ->where('numero_carte', 'like', $chiffres.'%')
-                ->orWhereHas('titulaire', fn (Builder $t) => $t->where('telephone', 'like', '%'.$chiffres.'%')));
-
-            return;
-        }
-
-        $query->whereHas('titulaire', fn (Builder $t) => $t
-            ->where('nom', 'like', '%'.$texte.'%')
-            ->orWhere('prenom', 'like', '%'.$texte.'%'));
     }
 }

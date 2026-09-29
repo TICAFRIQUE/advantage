@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Gestion;
 
 use App\Actions\Comptes\CreerCompteAction;
-use App\Enums\StatutUtilisateur;
 use App\Exceptions\OperationCompteException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Gestion\CreerUtilisateurRequest;
@@ -11,6 +10,7 @@ use App\Http\Requests\Gestion\FiltrerUtilisateursRequest;
 use App\Models\RoleUtilisateur;
 use App\Models\User;
 use App\Services\Droits\GardeDroits;
+use App\Services\Listes\ListeUtilisateurs;
 use App\Services\Telephone;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -35,32 +35,20 @@ class UtilisateurController extends Controller
 
     public function donnees(FiltrerUtilisateursRequest $request): JsonResponse
     {
-        $filtres = $request->validated();
+        $liste = $request->liste();
 
-        $requete = User::query()->select('users.*')
-            ->whereHas('roles', fn ($q) => $q->where('espace', 'gestion'))
-            ->with(['roles', 'creePar.roles'])
-            ->when($filtres['role'] ?? null, fn ($q, string $role) => $q->role($role))
-            ->when($filtres['etat'] ?? null, fn ($q, string $etat) => match ($etat) {
-                'verrouille' => $q->whereNotNull('users.verrouille_le'),
-                'inactif' => $q->where('users.statut', StatutUtilisateur::Inactif),
-                default => $q->where('users.statut', StatutUtilisateur::Actif)->whereNull('users.verrouille_le'),
-            });
-
-        return DataTables::eloquent($requete)
+        return DataTables::eloquent($liste->requete())
             ->addColumn('identifiant', fn (User $u) => '@'.$u->nom_utilisateur)
             ->addColumn('role', fn (User $u) => $u->rolePrincipal()?->libelle() ?? '—')
-            ->addColumn('etat', fn (User $u) => $this->etat($u))
+            ->addColumn('etat', fn (User $u) => ListeUtilisateurs::etat($u))
             ->editColumn('derniere_connexion_le', fn (User $u) => $u->derniere_connexion_le?->format('d/m/Y H:i') ?? 'Jamais')
             ->addColumn('cree_par', fn (User $u) => $u->creePar?->libelleActeur() ?? 'Système')
             ->addColumn('lien', fn (User $u) => route('gestion.utilisateurs.show', $u))
-            ->filter(function ($query) use ($request): void {
-                $recherche = addcslashes(trim((string) $request->input('search.value')), '%_\\');
+            ->filter(function ($query) use ($request, $liste): void {
+                $recherche = trim((string) $request->input('search.value'));
 
                 if ($recherche !== '') {
-                    $query->where(fn ($q) => $q
-                        ->where('users.nom', 'like', "%{$recherche}%")
-                        ->orWhere('users.nom_utilisateur', 'like', "%{$recherche}%"));
+                    $liste->rechercher($query, $recherche);
                 }
             }, true)
             ->toJson();
@@ -95,15 +83,6 @@ class UtilisateurController extends Controller
         $compte->load(['roles', 'creePar.roles', 'modifiePar.roles'])
             ->loadCount(['cartesActivees', 'transactionsValidees']);
 
-        return view('gestion.utilisateurs.show', ['compte' => $compte, 'etat' => $this->etat($compte)]);
-    }
-
-    private function etat(User $compte): string
-    {
-        return match (true) {
-            $compte->estVerrouille() => 'Verrouillé',
-            $compte->statut !== StatutUtilisateur::Actif => 'Désactivé',
-            default => 'Actif',
-        };
+        return view('gestion.utilisateurs.show', ['compte' => $compte, 'etat' => ListeUtilisateurs::etat($compte)]);
     }
 }

@@ -3,9 +3,12 @@
 
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
         <h1 class="h3 fw-bold mb-0">Cartes</h1>
-        @can('create', App\Models\Carte::class)
-            <a href="{{ route('gestion.cartes.create') }}" class="btn btn-or">Activer une carte</a>
-        @endcan
+        <div class="d-flex flex-wrap gap-2">
+            <x-menu-export liste="cartes" formulaire="#filtres-cartes" />
+            @can('create', App\Models\Carte::class)
+                <a href="{{ route('gestion.cartes.create') }}" class="btn btn-or">Activer une carte</a>
+            @endcan
+        </div>
     </div>
 
     {{-- Indicateurs du parc : chaque tuile de statut filtre la liste. --}}
@@ -39,7 +42,7 @@
         @endforeach
     </div>
 
-    <form method="GET" action="{{ route('gestion.cartes.index') }}" class="card card-body shadow-sm mb-4" role="search">
+    <form method="GET" action="{{ route('gestion.cartes.index') }}" id="filtres-cartes" class="card card-body shadow-sm mb-4" role="search">
         <div class="row g-2 align-items-end">
             <div class="col-12 col-md-5">
                 <label for="recherche" class="form-label fw-semibold">Rechercher</label>

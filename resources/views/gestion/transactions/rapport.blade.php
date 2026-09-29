@@ -3,7 +3,10 @@
         @vite('resources/js/tableaux.js')
     @endpush
 
-    <h1 class="h3 fw-bold mb-3">Rapport des transactions</h1>
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <h1 class="h3 fw-bold mb-0">Rapport des transactions</h1>
+        <x-menu-export liste="transactions" formulaire="#filtres-rapport-transactions" tableau="#tableau-rapport-transactions" />
+    </div>
 
     <form method="GET" action="{{ route('gestion.transactions.rapport') }}" id="filtres-rapport-transactions"
           class="card card-body shadow-sm border-0 mb-4" aria-label="Filtres du rapport">

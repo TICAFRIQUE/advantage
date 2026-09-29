@@ -5,6 +5,7 @@
 
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1">
         <h1 class="h3 fw-bold mb-0">Utilisateurs du back-office</h1>
+        <x-menu-export liste="utilisateurs" formulaire="#filtres-utilisateurs" tableau="#tableau-utilisateurs" class="ms-auto" />
         @if (App\Services\Droits\GardeDroits::rolesGestionAttribuables(auth()->user()) !== [])
             <a href="{{ route('gestion.utilisateurs.create') }}" class="btn btn-or">
                 <i class="bi bi-person-plus me-1" aria-hidden="true"></i>Nouvel utilisateur

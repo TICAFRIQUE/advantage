@@ -27,11 +27,9 @@ class RapportCartesController extends Controller
 
     public function donnees(FiltrerRapportCartesRequest $request): JsonResponse
     {
-        $requete = $request->rapport()->requete()
-            ->with(['carte.titulaire', 'effectueePar.roles'])
-            ->select('operations_cartes.*');
+        $liste = $request->liste();
 
-        return DataTables::eloquent($requete)
+        return DataTables::eloquent($liste->requete())
             ->editColumn('effectuee_le', fn (OperationCarte $o) => $o->effectuee_le->format('d/m/Y H:i'))
             ->addColumn('operation', fn (OperationCarte $o) => $o->type->libelle())
             ->addColumn('numero', fn (OperationCarte $o) => $o->carte->numeroFormate())
@@ -40,23 +38,12 @@ class RapportCartesController extends Controller
             ->addColumn('effectuee_par', fn (OperationCarte $o) => $o->libelleAuteur())
             ->editColumn('motif', fn (OperationCarte $o) => $o->motif ?? '—')
             ->addColumn('lien', fn (OperationCarte $o) => route('gestion.cartes.show', $o->carte_id))
-            ->filter(function ($query) use ($request): void {
+            ->filter(function ($query) use ($request, $liste): void {
                 $recherche = trim((string) $request->input('search.value'));
 
-                if ($recherche === '') {
-                    return;
+                if ($recherche !== '') {
+                    $liste->rechercher($query, $recherche);
                 }
-
-                $texte = addcslashes($recherche, '%_\\');
-                $chiffres = preg_replace('/\D/', '', $recherche);
-
-                $query->whereHas('carte', fn ($c) => $c->withTrashed()->where(fn ($c) => $c
-                    ->when($chiffres !== '', fn ($c) => $c->where('numero_carte', 'like', $chiffres.'%'))
-                    ->orWhereHas('titulaire', fn ($t) => $t
-                        ->where('nom', 'like', "%{$texte}%")
-                        ->orWhere('prenom', 'like', "%{$texte}%")
-                        // Sans chiffre, un LIKE '%%' ramènerait toutes les cartes.
-                        ->when($chiffres !== '', fn ($t) => $t->orWhere('telephone', 'like', "%{$chiffres}%")))));
             }, true)
             ->toJson();
     }

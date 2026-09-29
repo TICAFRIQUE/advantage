@@ -159,6 +159,25 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Exports des listes (CSV, Excel, PDF)
+    |--------------------------------------------------------------------------
+    |
+    | CSV et Excel sont écrits en flux (mémoire constante) ; le PDF est rendu
+    | en mémoire, d'où une limite plus basse. Au-delà : export refusé avec
+    | un message invitant à affiner les filtres.
+    |
+    */
+
+    'exports' => [
+        'lignes_max' => [
+            'csv' => (int) env('EXPORT_LIGNES_MAX_TABLEUR', 100000),
+            'xlsx' => (int) env('EXPORT_LIGNES_MAX_TABLEUR', 100000),
+            'pdf' => (int) env('EXPORT_LIGNES_MAX_PDF', 2000),
+        ],
+    ],
+
     'journal_audit' => [
         'retention_jours' => (int) env('JOURNAL_AUDIT_RETENTION_JOURS', 14),
     ],

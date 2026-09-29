@@ -3,7 +3,10 @@
         @vite('resources/js/tableaux.js')
     @endpush
 
-    <h1 class="h3 fw-bold mb-1">Journal d'audit</h1>
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1">
+        <h1 class="h3 fw-bold mb-0">Journal d'audit</h1>
+        <x-menu-export liste="journal-audit" formulaire="#filtres-journal" tableau="#tableau-journal" />
+    </div>
     <p class="text-secondary mb-3">
         Toutes les actions des utilisateurs (connexions, cartes, transactions, comptes, droits), conservées {{ $retention }} jours
         puis purgées automatiquement chaque nuit. Le journal n'est jamais modifiable ; chaque purge est inscrite au registre.

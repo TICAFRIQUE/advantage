@@ -3,13 +3,18 @@
 namespace App\Http\Requests\Gestion;
 
 use App\Enums\Permission;
+use App\Http\Requests\Gestion\Concerns\DefinitListe;
+use App\Http\Requests\Gestion\Concerns\RechercheTableau;
+use App\Services\Listes\ListeJournalAudit;
 use App\Support\LibellesAudit;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class FiltrerJournalAuditRequest extends FormRequest
+class FiltrerJournalAuditRequest extends FormRequest implements DefinitListe
 {
+    use RechercheTableau;
+
     public function authorize(): bool
     {
         return $this->user()->can(Permission::VoirJournalAudit->value);
@@ -27,5 +32,10 @@ class FiltrerJournalAuditRequest extends FormRequest
             'type_entite' => ['nullable', 'string', Rule::in(array_keys(LibellesAudit::ENTITES))],
             'acteur' => ['nullable', 'string', 'max:50'],
         ];
+    }
+
+    public function liste(): ListeJournalAudit
+    {
+        return new ListeJournalAudit($this->validated(), $this->user(), $this->rechercheTableau());
     }
 }

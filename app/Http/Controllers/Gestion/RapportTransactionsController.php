@@ -32,11 +32,9 @@ class RapportTransactionsController extends Controller
     {
         $peutVoirCartes = $request->user()->can(Permission::VoirCartes->value);
 
-        $requete = $request->rapport()->requete()
-            ->with(['partenaire', 'carte.titulaire', 'validePar.roles'])
-            ->select('transactions.*');
+        $liste = $request->liste();
 
-        return DataTables::eloquent($requete)
+        return DataTables::eloquent($liste->requete())
             ->editColumn('validee_le', fn (Transaction $t) => $t->validee_le->format('d/m/Y H:i'))
             ->addColumn('partenaire', fn (Transaction $t) => $t->partenaire->nom)
             ->addColumn('carte', fn (Transaction $t) => $t->carte->numeroFormate())
@@ -44,25 +42,12 @@ class RapportTransactionsController extends Controller
             ->editColumn('taux_applique', fn (Transaction $t) => rtrim(rtrim((string) $t->taux_applique, '0'), '.').' %')
             ->addColumn('valide_par', fn (Transaction $t) => $t->validePar?->libelleActeur() ?? '—')
             ->addColumn('lien_carte', fn (Transaction $t) => $peutVoirCartes ? route('gestion.cartes.show', $t->carte_id) : null)
-            ->filter(function ($query) use ($request): void {
+            ->filter(function ($query) use ($request, $liste): void {
                 $recherche = trim((string) $request->input('search.value'));
 
-                if ($recherche === '') {
-                    return;
+                if ($recherche !== '') {
+                    $liste->rechercher($query, $recherche);
                 }
-
-                $texte = addcslashes($recherche, '%_\\');
-                $chiffres = preg_replace('/\D/', '', $recherche);
-
-                // Chaque niveau est regroupé entre parenthèses : un OR non groupé dans
-                // un whereHas « fuirait » hors de la condition de jointure.
-                $query->where(fn ($q) => $q
-                    ->whereHas('partenaire', fn ($p) => $p->where('nom', 'like', "%{$texte}%"))
-                    ->orWhereHas('carte', fn ($c) => $c->where(fn ($c) => $c
-                        ->when($chiffres !== '', fn ($c) => $c->where('numero_carte', 'like', $chiffres.'%'))
-                        ->orWhereHas('titulaire', fn ($t) => $t->where(fn ($t) => $t
-                            ->where('nom', 'like', "%{$texte}%")
-                            ->orWhere('prenom', 'like', "%{$texte}%"))))));
             }, true)
             ->toJson();
     }

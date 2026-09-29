@@ -3,12 +3,17 @@
 namespace App\Http\Requests\Gestion;
 
 use App\Enums\Permission;
+use App\Http\Requests\Gestion\Concerns\DefinitListe;
+use App\Http\Requests\Gestion\Concerns\RechercheTableau;
+use App\Services\Listes\ListeTransactions;
 use App\Services\Rapports\RapportTransactions;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class FiltrerRapportTransactionsRequest extends FormRequest
+class FiltrerRapportTransactionsRequest extends FormRequest implements DefinitListe
 {
+    use RechercheTableau;
+
     public function authorize(): bool
     {
         return $this->user()->can(Permission::VoirRapportTransactions->value);
@@ -46,5 +51,10 @@ class FiltrerRapportTransactionsRequest extends FormRequest
     public function rapport(): RapportTransactions
     {
         return new RapportTransactions($this->validated());
+    }
+
+    public function liste(): ListeTransactions
+    {
+        return new ListeTransactions($this->validated(), $this->user(), $this->rechercheTableau());
     }
 }

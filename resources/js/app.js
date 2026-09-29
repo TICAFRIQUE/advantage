@@ -284,3 +284,38 @@ document.querySelectorAll('.doc-commandes pre').forEach((bloc) => {
     });
     bloc.append(bouton);
 });
+
+/**
+ * Menu « Exporter » : le lien reprend les filtres du formulaire de la liste
+ * et le texte de la zone « Rechercher » du tableau, pour exporter exactement
+ * ce qui est affiché. Sans JavaScript, le lien exporte la liste non filtrée.
+ */
+document.addEventListener('click', (evenement) => {
+    const lien = evenement.target.closest('a[data-export]');
+
+    if (!lien) {
+        return;
+    }
+
+    const url = new URL(lien.href, window.location.origin);
+    const formulaire = lien.dataset.formulaire ? document.querySelector(lien.dataset.formulaire) : null;
+
+    if (formulaire) {
+        new FormData(formulaire).forEach((valeur, cle) => {
+            if (valeur !== '') {
+                url.searchParams.append(cle, valeur);
+            }
+        });
+    }
+
+    const recherche = lien.dataset.tableau
+        ? document.querySelector(`${lien.dataset.tableau}_wrapper input[type="search"]`)?.value.trim()
+        : '';
+
+    if (recherche) {
+        url.searchParams.set('recherche_tableau', recherche);
+    }
+
+    evenement.preventDefault();
+    window.location.href = url.toString();
+});

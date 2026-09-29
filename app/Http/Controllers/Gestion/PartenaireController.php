@@ -33,25 +33,17 @@ class PartenaireController extends Controller
 
     public function donnees(FiltrerPartenairesRequest $request): JsonResponse
     {
-        $filtres = $request->validated();
+        $liste = $request->liste();
 
-        // select() AVANT withCount() : sinon les colonnes de comptage sont écrasées.
-        $requete = Partenaire::query()->select('partenaires.*')->withCount(['operateurs', 'transactions'])
-            ->when($filtres['partenaire_id'] ?? null, fn ($q, int|string $id) => $q->whereKey($id))
-            ->when($filtres['statut'] ?? null, fn ($q, string $statut) => $q->where('statut', $statut));
-
-        return DataTables::eloquent($requete)
+        return DataTables::eloquent($liste->requete())
             ->editColumn('taux_reduction', fn (Partenaire $p) => $p->tauxFormate())
             ->addColumn('statut_libelle', fn (Partenaire $p) => $p->statut->libelle())
             ->addColumn('lien', fn (Partenaire $p) => route('gestion.partenaires.show', $p))
-            ->filter(function ($query) use ($request): void {
-                $recherche = addcslashes(trim((string) $request->input('search.value')), '%_\\');
+            ->filter(function ($query) use ($request, $liste): void {
+                $recherche = trim((string) $request->input('search.value'));
 
                 if ($recherche !== '') {
-                    $query->where(fn ($q) => $q
-                        ->where('nom', 'like', "%{$recherche}%")
-                        ->orWhere('secteur', 'like', "%{$recherche}%")
-                        ->orWhere('localisation', 'like', "%{$recherche}%"));
+                    $liste->rechercher($query, $recherche);
                 }
             }, true)
             ->toJson();

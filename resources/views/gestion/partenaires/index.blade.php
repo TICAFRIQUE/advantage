@@ -5,6 +5,7 @@
 
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
         <h1 class="h3 fw-bold mb-0">Partenaires</h1>
+        <x-menu-export liste="partenaires" formulaire="#filtres-partenaires" tableau="#tableau-partenaires" class="ms-auto" />
         @can('create', App\Models\Partenaire::class)
             <a href="{{ route('gestion.partenaires.create') }}" class="btn btn-or">
                 <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Nouveau partenaire

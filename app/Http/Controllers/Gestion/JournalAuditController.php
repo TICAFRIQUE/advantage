@@ -10,6 +10,7 @@ use App\Http\Requests\Gestion\FiltrerJournalAuditRequest;
 use App\Http\Requests\Gestion\PurgerJournalAuditRequest;
 use App\Models\JournalAudit;
 use App\Models\PurgeJournalAudit;
+use App\Services\Listes\ListeJournalAudit;
 use App\Support\LibellesAudit;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -36,26 +37,14 @@ class JournalAuditController extends Controller
 
     public function donnees(FiltrerJournalAuditRequest $request): JsonResponse
     {
-        $f = $request->validated();
         $peutVoirCartes = $request->user()->can(Permission::VoirCartes->value);
         $peutVoirPartenaires = $request->user()->can(Permission::VoirPartenaires->value);
 
-        $requete = JournalAudit::query()->select('journaux_audit.*')->with('acteur.roles')
-            ->when($f['du'] ?? null, fn ($q, string $du) => $q->where('cree_le', '>=', $du.' 00:00:00'))
-            ->when($f['au'] ?? null, fn ($q, string $au) => $q->where('cree_le', '<=', $au.' 23:59:59'))
-            ->when($f['action'] ?? null, fn ($q, string $action) => $q->where('action', $action))
-            ->when($f['type_entite'] ?? null, fn ($q, string $type) => $q->where('type_entite', $type))
-            ->when($f['acteur'] ?? null, function ($q, string $acteur): void {
-                $texte = addcslashes(mb_strtolower(trim($acteur)), '%_\\');
-                $q->whereHas('acteur', fn ($a) => $a->withTrashed()->where(fn ($a) => $a
-                    ->where('nom_utilisateur', 'like', $texte.'%')
-                    ->orWhere('nom', 'like', '%'.$texte.'%')));
-            });
+        $liste = $request->liste();
 
-        return DataTables::eloquent($requete)
+        return DataTables::eloquent($liste->requete())
             ->editColumn('cree_le', fn (JournalAudit $j) => $j->cree_le->format('d/m/Y H:i:s'))
-            ->addColumn('auteur', fn (JournalAudit $j) => $j->acteur?->libelleActeur()
-                ?? ($j->type_acteur === 'systeme' ? 'Système (tâche planifiée)' : 'Anonyme'))
+            ->addColumn('auteur', fn (JournalAudit $j) => ListeJournalAudit::auteur($j))
             ->addColumn('action_libelle', fn (JournalAudit $j) => LibellesAudit::action($j->action))
             ->addColumn('element', function (JournalAudit $j) use ($peutVoirCartes, $peutVoirPartenaires): string {
                 $libelle = LibellesAudit::entite($j->type_entite);
@@ -81,13 +70,11 @@ class JournalAuditController extends Controller
                 : '—')
             // Colonnes HTML : tout contenu y est échappé ci-dessus (e()).
             ->rawColumns(['element', 'details'])
-            ->filter(function ($query) use ($request): void {
-                $recherche = addcslashes(trim((string) $request->input('search.value')), '%_\\');
+            ->filter(function ($query) use ($request, $liste): void {
+                $recherche = trim((string) $request->input('search.value'));
 
                 if ($recherche !== '') {
-                    $query->where(fn ($q) => $q
-                        ->where('action', 'like', "%{$recherche}%")
-                        ->orWhere('adresse_ip', 'like', "{$recherche}%"));
+                    $liste->rechercher($query, $recherche);
                 }
             }, true)
             ->toJson();
