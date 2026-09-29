@@ -848,3 +848,46 @@ $focus-ring-width: 0.25rem;
 
     .btn { white-space: nowrap; }
 }
+
+// Carte visuelle : bandeau d'échéance proche (moins de 3 mois).
+.carte-adv__echeance {
+    position: absolute;
+    left: 4%;
+    bottom: 6%;
+    z-index: 3;
+    padding: .35em .8em;
+    border-radius: 999px;
+    font-size: clamp(.6rem, 3.6cqw, .85rem);
+    font-weight: 700;
+    letter-spacing: .02em;
+    box-shadow: 0 .25rem .6rem rgba(0, 0, 0, .35);
+
+    &--danger { background: #c62828; color: #fff; }
+    &--warning { background: #f6c343; color: #3d2a00; }
+    &--info { background: #e8f4fb; color: #0b4a6e; }
+}
+
+// En-tête : cloche des échéances.
+.cloche-echeances {
+    &__pastille {
+        position: absolute;
+        top: .1rem;
+        right: .05rem;
+        font-size: .65rem;
+        padding: .25em .45em;
+    }
+
+    &__menu {
+        width: min(22rem, calc(100vw - 2rem));
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+}
+
+.tuile-echeance--mini {
+    padding: .45rem .5rem;
+    border-radius: .5rem;
+
+    .tuile-echeance__valeur { font-size: 1.25rem; }
+    .tuile-echeance__libelle { font-size: .72rem; }
+}

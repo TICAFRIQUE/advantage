@@ -90,12 +90,6 @@
                     <div class="card-body">
                         <x-carte-visuelle :carte="$carte" class="mb-3" />
 
-                        @if ($echeance = $carte->echeanceProche())
-                            <span class="badge text-bg-{{ $echeance['niveau'] }} mb-2">
-                                <i class="bi bi-hourglass-split me-1" aria-hidden="true"></i>{{ $echeance['libelle'] }}
-                            </span>
-                        @endif
-
                         <h2 class="h6 fw-bold mb-1" id="carte-{{ $carte->id }}">
                             {{ $carte->titulaire->nomComplet() }}
                         </h2>

@@ -2,6 +2,7 @@
 
 use App\Actions\Cartes\EnvoyerAlertesExpiration;
 use App\Actions\Cartes\MarquerCartesExpirees;
+use App\Actions\Droits\EnregistrerRoleAction;
 use App\Enums\CanalAlerte;
 use App\Enums\PalierAlerte;
 use App\Enums\Role;
@@ -13,6 +14,7 @@ use App\Models\AlerteExpiration;
 use App\Models\Carte;
 use App\Models\MessageSms;
 use App\Models\OperationCarte;
+use App\Models\User;
 use Illuminate\Console\Scheduling\Schedule;
 
 /**
@@ -205,5 +207,59 @@ describe('échéance dans la liste des cartes', function () {
             ->assertSee(route('gestion.cartes.index', ['expire_dans' => 3]), false)
             ->assertSee('Expire dans 20 jours')
             ->assertSee('Voir toutes');
+    });
+});
+
+describe('cloche des échéances dans l\'en-tête', function () {
+    it('shows the count of cards expiring within three months, red when some expire this month', function () {
+        carteExpirantDans(20);
+        carteExpirantDans(50);
+        carteExpirantDans(200);
+
+        $html = connecter(utilisateurAvecRole(Role::Agent))->get(route('gestion.cartes.rapport'))->assertOk()->getContent();
+
+        expect($html)->toContain('cloche-echeances__pastille badge rounded-pill text-bg-danger')
+            ->toContain('aria-label="2 carte(s) arrivent à échéance"')
+            ->toContain(route('gestion.cartes.index', ['expire_dans' => 1]))
+            ->toContain('Expire dans 20 jours');
+    });
+
+    it('stays calm when nothing expires soon', function () {
+        carteExpirantDans(200);
+
+        connecter(utilisateurAvecRole(Role::Admin))->get(route('gestion.tableau-de-bord'))
+            ->assertSee('Aucune carte n&#039;arrive à échéance', false)
+            ->assertDontSee('cloche-echeances__pastille', false);
+    });
+
+    it('is not shown to partners nor to accounts that cannot see cards', function () {
+        carteExpirantDans(20);
+
+        connecter(utilisateurAvecRole(Role::Partenaire))->get(route('partenaire.tableau-de-bord'))
+            ->assertOk()->assertDontSee('cloche-echeances', false);
+
+        $superviseur = User::factory()->create();
+        $role = app(EnregistrerRoleAction::class)->creer('Sans cartes', ['acceder-gestion', 'voir-tableau-de-bord'], utilisateurAvecRole(Role::Superadmin));
+        $superviseur->assignRole($role);
+
+        connecter($superviseur)->get(route('gestion.tableau-de-bord'))->assertOk()->assertDontSee('cloche-echeances', false);
+    });
+
+    it('refreshes its cached count as soon as a card changes', function () {
+        $agent = utilisateurAvecRole(Role::Agent);
+        carteExpirantDans(20);
+        connecter($agent)->get(route('gestion.tableau-de-bord'))->assertSee('aria-label="1 carte(s) arrivent à échéance"', false);
+
+        carteExpirantDans(40);
+
+        connecter($agent)->get(route('gestion.tableau-de-bord'))->assertSee('aria-label="2 carte(s) arrivent à échéance"', false);
+    });
+
+    it('puts the expiry badge on the card visual itself', function () {
+        $carte = carteExpirantDans(20);
+
+        connecter(utilisateurAvecRole(Role::Admin))->get(route('gestion.cartes.show', $carte))
+            ->assertSee('carte-adv__echeance carte-adv__echeance--danger', false)
+            ->assertSee('expire dans 20 jours">', false);
     });
 });

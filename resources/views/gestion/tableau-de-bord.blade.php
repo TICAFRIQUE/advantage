@@ -81,25 +81,22 @@
                     @endforeach
                 </div>
 
-                @if ($expirations['prochaines']->isNotEmpty())
+                @if ($expirations['prochaines'] !== [])
                     <h3 class="h6 fw-bold text-uppercase text-secondary small mb-2">Prochaines échéances</h3>
                     <ul class="list-group list-group-flush">
                         @foreach ($expirations['prochaines'] as $carte)
-                            @php($echeance = $carte->echeanceProche())
                             <li class="list-group-item px-0 d-flex flex-wrap align-items-center justify-content-between gap-2">
                                 <div class="d-flex align-items-center gap-3 min-w-0">
-                                    <span class="avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr($carte->titulaire->prenom, 0, 1).mb_substr($carte->titulaire->nom, 0, 1)) }}</span>
+                                    <span class="avatar" aria-hidden="true">{{ collect(explode(' ', $carte['titulaire']))->filter()->take(2)->map(fn ($mot) => mb_strtoupper(mb_substr($mot, 0, 1)))->implode('') }}</span>
                                     <div class="min-w-0">
-                                        <a href="{{ route('gestion.cartes.show', $carte) }}" class="fw-semibold text-decoration-none d-block text-truncate">
-                                            {{ $carte->titulaire->nomComplet() }}
+                                        <a href="{{ route('gestion.cartes.show', $carte['id']) }}" class="fw-semibold text-decoration-none d-block text-truncate">
+                                            {{ $carte['titulaire'] }}
                                         </a>
-                                        <span class="small text-secondary font-monospace">{{ $carte->numeroFormate() }}</span>
-                                        <span class="small text-secondary"> · le {{ $carte->expire_le->format('d/m/Y') }}</span>
+                                        <span class="small text-secondary font-monospace">{{ $carte['numero'] }}</span>
+                                        <span class="small text-secondary"> · le {{ $carte['expire_le'] }}</span>
                                     </div>
                                 </div>
-                                @if ($echeance)
-                                    <span class="badge rounded-pill text-bg-{{ $echeance['niveau'] }}">{{ $echeance['libelle'] }}</span>
-                                @endif
+                                <span class="badge rounded-pill text-bg-{{ $carte['niveau'] }}">{{ $carte['libelle'] }}</span>
                             </li>
                         @endforeach
                     </ul>

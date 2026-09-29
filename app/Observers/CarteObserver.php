@@ -6,6 +6,7 @@ use App\Enums\StatutCarte;
 use App\Enums\TypeOperationCarte;
 use App\Models\Carte;
 use App\Models\OperationCarte;
+use App\Services\EcheancesCartes;
 use App\Services\JournaliserAudit;
 
 /**
@@ -15,6 +16,8 @@ class CarteObserver
 {
     public function created(Carte $carte): void
     {
+        EcheancesCartes::oublier();
+
         JournaliserAudit::enregistrer('carte.activee', $carte, [
             'apres' => [
                 'numero_carte' => $carte->numeroFormate(),
@@ -38,6 +41,8 @@ class CarteObserver
 
     public function updated(Carte $carte): void
     {
+        EcheancesCartes::oublier();
+
         $modifies = array_values(array_diff(array_keys($carte->getChanges()), ['updated_at', 'modifie_par_id']));
 
         if ($modifies === []) {
@@ -61,6 +66,8 @@ class CarteObserver
 
     public function deleted(Carte $carte): void
     {
+        EcheancesCartes::oublier();
+
         JournaliserAudit::enregistrer('carte.supprimee', $carte);
     }
 

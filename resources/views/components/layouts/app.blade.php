@@ -31,7 +31,11 @@
                 @endif
             </div>
 
-            <div class="dropdown ms-auto">
+            @if ($echeancesEntete ?? null)
+                <x-cloche-echeances :echeances="$echeancesEntete" class="ms-auto me-1" />
+            @endif
+
+            <div @class(['dropdown', 'ms-auto' => ! ($echeancesEntete ?? null)])>
                 <button type="button" class="btn barre-haut__utilisateur dropdown-toggle" data-bs-toggle="dropdown"
                         data-bs-display="static" aria-expanded="false" aria-label="Menu du compte {{ $utilisateur->nom }}">
                     <span class="avatar" aria-hidden="true">{{ $utilisateur->initiales() }}</span>

@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Enums\Permission;
 use App\Enums\Role;
 use App\Models\User;
 use App\Policies\UserPolicy;
+use App\Services\EcheancesCartes;
 use App\Services\PartenaireCourant;
 use App\Services\Sms\PasserelleSms;
 use App\Services\Sms\PasserelleSmsSimulee;
@@ -16,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use InvalidArgumentException;
 use RuntimeException;
@@ -67,6 +70,15 @@ class AppServiceProvider extends ServiceProvider
         // Production : toutes les URL générées en HTTPS (liens, redirections, formulaires),
         // même derrière un proxy qui termine le TLS.
         URL::forceHttps($this->app->isProduction());
+
+        // Cloche des échéances dans l'en-tête du back-office (données en cache).
+        View::composer('components.layouts.app', function ($vue): void {
+            $user = auth()->user();
+
+            $vue->with('echeancesEntete', $user?->estDuBackOffice() && $user->can(Permission::VoirCartes->value)
+                ? EcheancesCartes::resume()
+                : null);
+        });
 
         RateLimiter::for('activation-carte', fn (Request $request) => Limit::perMinute(30)->by('agent:'.$request->user()?->id));
         // Anti-énumération des numéros de carte : par opérateur et par partenaire.
