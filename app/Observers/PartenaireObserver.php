@@ -10,7 +10,7 @@ class PartenaireObserver
     /**
      * @var list<string>
      */
-    private const CHAMPS_TRACES = ['nom', 'secteur', 'localisation', 'contact', 'taux_reduction', 'statut'];
+    private const CHAMPS_TRACES = ['nom', 'secteur', 'localisation', 'contact', 'responsable', 'email', 'taux_reduction', 'statut'];
 
     public function created(Partenaire $partenaire): void
     {
@@ -36,5 +36,10 @@ class PartenaireObserver
     public function deleted(Partenaire $partenaire): void
     {
         JournaliserAudit::enregistrer('partenaire.supprime', $partenaire, ['avant' => ['nom' => $partenaire->nom]]);
+    }
+
+    public function restored(Partenaire $partenaire): void
+    {
+        JournaliserAudit::enregistrer('partenaire.restaure', $partenaire, ['apres' => ['nom' => $partenaire->nom]]);
     }
 }

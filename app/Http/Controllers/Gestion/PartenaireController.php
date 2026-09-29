@@ -125,7 +125,7 @@ class PartenaireController extends Controller
     {
         Gate::authorize('delete', $partenaire);
 
-        $enregistrer->supprimer($partenaire);
+        $enregistrer->supprimer($partenaire, request()->user());
 
         return redirect()->route('gestion.partenaires.index')
             ->with('succes', "Le partenaire {$partenaire->nom} et ses utilisateurs ont été supprimés. Ses transactions restent consultables dans le rapport.");

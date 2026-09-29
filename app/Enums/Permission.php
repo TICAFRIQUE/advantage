@@ -42,6 +42,10 @@ enum Permission: string
     case ExporterDonnees = 'exporter-donnees';
     case VoirSmsSimules = 'voir-sms-simules';
 
+    // Superadmin uniquement (espace « superadmin », jamais attribuable)
+    case RestaurerElements = 'restaurer-elements';
+    case VoirCommandesProduction = 'voir-commandes-production';
+
     // Espace partenaire
     case AccederEspacePartenaire = 'acceder-espace-partenaire';
     case EffectuerTransaction = 'effectuer-transaction';

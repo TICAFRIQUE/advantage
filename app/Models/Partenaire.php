@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -74,6 +75,16 @@ class Partenaire extends Model
     public function operateurs(): HasMany
     {
         return $this->hasMany(User::class);
+    }
+
+    /**
+     * Auteur de la suppression (archivage), null si actif ou restauré.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function supprimePar(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'supprime_par_id')->withTrashed();
     }
 
     public function tauxFormate(): string

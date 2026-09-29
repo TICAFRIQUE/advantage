@@ -89,20 +89,22 @@ class GererCompteAction
             throw new OperationCompteException('Vous n\'avez pas le droit de supprimer ce compte.');
         }
 
-        DB::transaction(fn () => $this->archiver($compte));
+        DB::transaction(fn () => $this->archiver($compte, $auteur));
     }
 
     /**
      * Sans contrôle de droits : réservé aux appelants qui les ont déjà vérifiés
      * (suppression d'un partenaire et de ses utilisateurs).
      */
-    public function archiver(User $compte): void
+    public function archiver(User $compte, ?User $auteur): void
     {
         DemandeOtp::query()
             ->where('demandee_par_id', $compte->id)
             ->where('statut', StatutDemandeOtp::EnAttente)
             ->update(['statut' => StatutDemandeOtp::Expiree, 'updated_at' => now()]);
 
+        // Mise à jour directe : la suppression douce n'enregistre que deleted_at.
+        User::query()->whereKey($compte->id)->update(['supprime_par_id' => $auteur?->id]);
         $compte->delete();
     }
 

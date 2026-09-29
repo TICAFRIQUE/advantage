@@ -55,6 +55,16 @@ class User extends Authenticatable
     }
 
     /**
+     * Auteur de la suppression (archivage), null si actif ou restauré.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function supprimePar(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'supprime_par_id')->withTrashed();
+    }
+
+    /**
      * Cartes activées par cet agent.
      *
      * @return HasMany<Carte, $this>

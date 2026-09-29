@@ -69,19 +69,20 @@ class EnregistrerPartenaireAction
      * aucune connexion ni transaction possible, mais les transactions passées
      * gardent le nom du partenaire. Les codes en attente sont expirés.
      */
-    public function supprimer(Partenaire $partenaire): void
+    public function supprimer(Partenaire $partenaire, User $auteur): void
     {
-        DB::transaction(function () use ($partenaire): void {
+        DB::transaction(function () use ($partenaire, $auteur): void {
             $partenaire = Partenaire::query()->lockForUpdate()->findOrFail($partenaire->id);
             $comptes = app(GererCompteAction::class);
 
-            $partenaire->operateurs()->get()->each(fn (User $operateur) => $comptes->archiver($operateur));
+            $partenaire->operateurs()->get()->each(fn (User $operateur) => $comptes->archiver($operateur, $auteur));
 
             DemandeOtp::query()
                 ->where('partenaire_id', $partenaire->id)
                 ->where('statut', StatutDemandeOtp::EnAttente)
                 ->update(['statut' => StatutDemandeOtp::Expiree, 'updated_at' => now()]);
 
+            Partenaire::query()->whereKey($partenaire->id)->update(['supprime_par_id' => $auteur->id]);
             $partenaire->delete();
         });
     }

@@ -193,6 +193,25 @@ Route::middleware(['auth', 'compte.actif'])->group(function () use ($parcoursTra
                         ->name('sms-simules.store');
                 });
             }
+
+            // Système : réservé au superadmin (rôle ET permission de l'espace
+            // « superadmin », jamais attribuable à un autre rôle).
+            Route::prefix('systeme')->middleware('role:'.Role::Superadmin->value)->group(function () {
+                Route::get('/elements-supprimes', [Gestion\CorbeilleController::class, 'index'])
+                    ->middleware('permission:'.Permission::RestaurerElements->value)
+                    ->name('corbeille.index');
+                Route::post('/elements-supprimes/partenaires/{partenaire}/restaurer', [Gestion\CorbeilleController::class, 'restaurerPartenaire'])
+                    ->whereNumber('partenaire')->withTrashed()
+                    ->middleware(['permission:'.Permission::RestaurerElements->value, 'password.confirm:password.confirm,300'])
+                    ->name('corbeille.partenaires.restaurer');
+                Route::post('/elements-supprimes/comptes/{compte}/restaurer', [Gestion\CorbeilleController::class, 'restaurerCompte'])
+                    ->whereNumber('compte')->withTrashed()
+                    ->middleware(['permission:'.Permission::RestaurerElements->value, 'password.confirm:password.confirm,300'])
+                    ->name('corbeille.comptes.restaurer');
+                Route::get('/mise-en-production', [Gestion\MiseEnProductionController::class, 'show'])
+                    ->middleware('permission:'.Permission::VoirCommandesProduction->value)
+                    ->name('mise-en-production');
+            });
         });
 
     /*

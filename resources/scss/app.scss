@@ -750,3 +750,42 @@ $focus-ring-width: 0.25rem;
     font-size: 0.8rem;
     color: #{$secondary};
 }
+
+// Page « Mise en production » : Markdown rendu (docs/production.md).
+.doc-commandes {
+    max-width: 960px;
+
+    h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 1rem; }
+    h2 { font-size: 1.3rem; font-weight: 700; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--bs-border-color); }
+    h3 { font-size: 1.05rem; font-weight: 700; margin-top: 1.5rem; }
+
+    blockquote {
+        border-left: 4px solid $or;
+        background: var(--bs-light);
+        padding: .75rem 1rem;
+        border-radius: .375rem;
+
+        p:last-child, ul:last-child { margin-bottom: 0; }
+    }
+
+    pre {
+        position: relative;
+        background: $nuit;
+        color: #f1f3fb;
+        padding: 1rem 5.5rem 1rem 1rem;
+        border-radius: .5rem;
+        white-space: pre-wrap;
+        word-break: break-word;
+
+        code { color: inherit; }
+    }
+
+    :not(pre) > code { color: $nuit; background: var(--bs-light); padding: .1rem .3rem; border-radius: .25rem; }
+}
+
+.doc-commandes__copier {
+    position: absolute;
+    top: .5rem;
+    right: .5rem;
+    min-height: 32px;
+}

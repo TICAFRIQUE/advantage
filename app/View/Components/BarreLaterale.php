@@ -59,6 +59,13 @@ class BarreLaterale extends Component
                 $this->entree('SMS simulés', 'bi-chat-dots', 'gestion.sms-simules.index', ['gestion.sms-simules.*'],
                     SmsSimulesController::disponible() && $user->can(Permission::VoirSmsSimules->value)),
             ],
+            // Réservé au superadmin (même double condition que les routes).
+            'Système' => [
+                $this->entree('Éléments supprimés', 'bi-archive', 'gestion.corbeille.index', ['gestion.corbeille.*'],
+                    $user->hasRole(Role::Superadmin) && $user->can(Permission::RestaurerElements->value)),
+                $this->entree('Mise en production', 'bi-rocket-takeoff', 'gestion.mise-en-production', ['gestion.mise-en-production'],
+                    $user->hasRole(Role::Superadmin) && $user->can(Permission::VoirCommandesProduction->value)),
+            ],
         ];
     }
 

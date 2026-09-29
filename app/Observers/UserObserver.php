@@ -12,11 +12,12 @@ use App\Services\JournaliserAudit;
 class UserObserver
 {
     /**
-     * Champs techniques qui ne constituent pas un changement métier.
+     * Champs techniques qui ne constituent pas un changement métier (la
+     * suppression et la restauration ont leurs propres entrées).
      *
      * @var list<string>
      */
-    private const CHAMPS_IGNORES = ['updated_at', 'remember_token', 'tentatives_echouees', 'derniere_connexion_le'];
+    private const CHAMPS_IGNORES = ['updated_at', 'remember_token', 'tentatives_echouees', 'derniere_connexion_le', 'deleted_at', 'supprime_par_id'];
 
     public function created(User $user): void
     {

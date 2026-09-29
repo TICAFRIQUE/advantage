@@ -17,6 +17,11 @@
 | « espace » : gestion (back-office) ou partenaire. Les permissions d'un
 | espace ne sont jamais attribuables à un rôle de l'autre espace.
 |
+| Espace « superadmin » : permissions réservées au superadmin (qui les
+| détient via Gate::before). Aucun rôle n'appartient à cet espace : elles ne
+| sont donc jamais attribuables, et la synchronisation les retire de tout
+| rôle qui les porterait.
+|
 */
 
 return [
@@ -90,6 +95,15 @@ return [
             'espace' => 'gestion',
             'permissions' => [
                 'voir-sms-simules' => ['libelle' => 'Voir les SMS simulés (hors production)', 'roles' => ['admin']],
+            ],
+        ],
+
+        'superadmin' => [
+            'libelle' => 'Réservé au superadmin',
+            'espace' => 'superadmin',
+            'permissions' => [
+                'restaurer-elements' => ['libelle' => 'Restaurer les partenaires et comptes supprimés', 'roles' => []],
+                'voir-commandes-production' => ['libelle' => 'Consulter les commandes de mise en production', 'roles' => []],
             ],
         ],
 

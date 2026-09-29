@@ -265,3 +265,22 @@ Alpine.data('activationCarte', (urlRecherche, anciennesValeurs = {}, listePays =
 
 window.Alpine = Alpine;
 Alpine.start();
+
+/**
+ * Documentation des commandes (page « Mise en production ») : bouton
+ * « Copier » sur chaque bloc de code.
+ */
+document.querySelectorAll('.doc-commandes pre').forEach((bloc) => {
+    const bouton = document.createElement('button');
+    bouton.type = 'button';
+    bouton.className = 'btn btn-sm btn-light doc-commandes__copier';
+    bouton.textContent = 'Copier';
+    bouton.setAttribute('aria-label', 'Copier les commandes');
+    bouton.addEventListener('click', () => {
+        navigator.clipboard?.writeText(bloc.querySelector('code')?.innerText ?? bloc.innerText).then(() => {
+            bouton.textContent = 'Copié ✓';
+            setTimeout(() => (bouton.textContent = 'Copier'), 2500);
+        });
+    });
+    bloc.append(bouton);
+});
