@@ -67,7 +67,7 @@ it('masks a one-time code once really sent by a provider', function () {
 
     expect($otp->fresh()->contenu)->toBe('[contenu masqué après envoi]')
         ->and($otp->fresh()->reference_fournisseur)->toBe('REF-123')
-        ->and($info->fresh()->contenu)->toBe('Votre carte expire bientôt');
+        ->and($info->fresh()->contenu)->toBe('Votre carte expire bientot');
 });
 
 it('never sends the same message twice', function () {

@@ -1,14 +1,18 @@
 <?php
 
+use App\Actions\Partenaire\DemanderOtpAction;
 use App\Enums\StatutLivraison;
 use App\Enums\TypeSms;
 use App\Models\MessageSms;
+use App\Models\Partenaire;
 use App\Services\Sms\EnvoiSms;
 use App\Services\Sms\PasserelleSms;
 use App\Services\Sms\PasserelleSmsTicafrique;
+use App\Services\Sms\TexteSms;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 const URL_TICAFRIQUE = 'https://sms.ticafrique.ci/api/v1/sms/send';
 
@@ -51,7 +55,7 @@ it('reports a refusal with the provider message but never the number', function 
     'solde insuffisant' => [200, ['success' => false, 'message' => 'Solde insuffisant'], 'Refus du fournisseur (HTTP 200) : Solde insuffisant'],
     'clé invalide' => [401, ['success' => false, 'message' => 'Unauthorized'], 'Refus du fournisseur (HTTP 401) : Unauthorized'],
     'erreur serveur sans corps' => [500, [], 'Refus du fournisseur (HTTP 500).'],
-    'succès sans identifiant' => [200, ['success' => true, 'data' => []], 'Refus du fournisseur (HTTP 200).'],
+    'succès déclaré faux' => [200, ['success' => false, 'message' => 'SMS sent successfully'], 'Refus du fournisseur (HTTP 200) : SMS sent successfully'],
 ]);
 
 it('reports an unreachable provider without throwing', function () {
@@ -110,4 +114,42 @@ it('fails clearly when the configuration is incomplete', function () {
     $this->artisan('sms:tester', ['telephone' => '0707123456'])
         ->expectsOutputToContain('Configuration SMS invalide')
         ->assertFailed();
+});
+
+it('never turns a declared success into a failure, whatever the response shape', function (array $corps, ?string $reference) {
+    Http::fake([URL_TICAFRIQUE => Http::response($corps)]);
+    Log::spy();
+
+    $resultat = passerelleTicafrique()->envoyer('+2250707123456', 'Bonjour');
+
+    expect($resultat->succes)->toBeTrue();
+
+    if ($reference !== null) {
+        expect($resultat->reference)->toBe($reference);
+        Log::shouldNotHaveReceived('warning');
+    } else {
+        // Référence locale ; la structure (sans valeurs) est journalisée pour diagnostic.
+        expect($resultat->reference)->toStartWith('TICAFRIQUE-');
+        Log::shouldHaveReceived('warning')->once()->withArgs(fn ($message, $contexte) => ! str_contains(json_encode($contexte), '0707123456'));
+    }
+})->with([
+    'réponse réelle TICAFRIQUE' => [['success' => true, 'message' => 'SMS sent successfully', 'data' => ['message_ids' => ['TIC-REEL-1'], 'recipient' => '+2250707123456', 'parts_sent' => 1, 'total_segments' => 1, 'total_cost' => 1, 'currency' => 'XOF']], 'TIC-REEL-1'],
+    'message seul' => [['message' => 'SMS sent successfully'], null],
+    'succès sans identifiant' => [['success' => true, 'data' => []], null],
+    'succès texte' => [['success' => 'true', 'data' => ['id' => 987]], '987'],
+    'statut success' => [['status' => 'success', 'message_id' => 'M-1'], 'M-1'],
+    'identifiant en liste' => [['success' => 1, 'data' => [['message_id' => 'L-1']]], 'L-1'],
+]);
+
+it('keeps OTP and expiry SMS within one unit, even with an accented partner name', function () {
+    $partenaire = Partenaire::factory()->create(['nom' => 'Hôtel Pâtisserie Brûlée du Plateau Côte']);
+    $methode = new ReflectionMethod(DemanderOtpAction::class, 'message');
+    $otp = $methode->invoke(app(DemanderOtpAction::class), '482913', $partenaire);
+
+    $message = app(EnvoiSms::class)->envoyer('+2250707123456', $otp, TypeSms::Otp);
+    $alerte = strtr((string) config('plateforme.alertes_expiration.message'), [':numero' => '123 456 7', ':date' => '31/12/2026', ':delai' => '3 mois']);
+
+    expect($message->fresh()->contenu)->toContain('Hotel Patisserie Brulée')
+        ->and(TexteSms::segments($message->fresh()->contenu))->toBe(1)
+        ->and(TexteSms::segments(TexteSms::normaliser($alerte)))->toBe(1);
 });
