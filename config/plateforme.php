@@ -127,10 +127,15 @@ return [
     |--------------------------------------------------------------------------
     */
 
+    // Paliers : 3, 2 et 1 mois avant l'échéance (enum PalierAlerte). Un seul SMS
+    // par carte et par palier ; si un palier a été manqué (tâche arrêtée), seul
+    // le plus proche de l'échéance est envoyé.
     'alertes_expiration' => [
-        '3_mois' => 3,
-        '2_mois' => 2,
-        '1_mois' => 1,
+        'sms' => (bool) env('ALERTES_EXPIRATION_SMS', true),
+        // Heure d'envoi quotidienne (jamais la nuit).
+        'heure' => env('ALERTES_EXPIRATION_HEURE', '09:00'),
+        // :numero, :date et :delai sont remplacés ; rester sous 160 caractères.
+        'message' => 'ADVANTAGE : votre carte :numero expire le :date (dans :delai). Rendez-vous en agence fontaine GROUP pour la renouveler.',
     ],
 
     /*

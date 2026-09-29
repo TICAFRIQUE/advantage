@@ -10,6 +10,24 @@
         <div class="col-12 col-lg-5">
             <x-carte-visuelle :carte="$carte" class="mb-4" />
             <x-actions-statut-carte :carte="$carte" class="mb-2" />
+
+            @if ($alertes->isNotEmpty())
+                <section class="card border-0 shadow-sm mt-3" aria-labelledby="titre-alertes">
+                    <div class="card-body">
+                        <h2 class="h6 fw-bold" id="titre-alertes"><i class="bi bi-bell me-1" aria-hidden="true"></i>Alertes d'expiration envoyées</h2>
+                        <ul class="list-unstyled small mb-0">
+                            @foreach ($alertes as $alerte)
+                                <li class="d-flex justify-content-between gap-2 py-1 border-bottom">
+                                    <span>{{ $alerte->canal->libelle() }} · échéance dans {{ $alerte->palier->libelle() }}</span>
+                                    <span class="text-secondary text-nowrap">
+                                        {{ $alerte->envoyee_le?->format('d/m/Y H:i') }} · {{ $alerte->statutLivraison()->libelle() }}
+                                    </span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </section>
+            @endif
         </div>
 
         <div class="col-12 col-lg-7">

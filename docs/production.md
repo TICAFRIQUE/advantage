@@ -134,7 +134,10 @@ Deux entrées cron (cPanel → *Tâches Cron*), exécutées chaque minute :
 * * * * * cd /home/compte/advantage && php artisan queue:work --stop-when-empty --tries=3 --max-time=55 >> /dev/null 2>&1
 ```
 
-- La première lance les tâches planifiées : purge quotidienne du journal d'audit à 02:00 (rétention de 14 jours), et bientôt les alertes d'expiration.
+- La première lance les tâches planifiées :
+  - 00:10 : les cartes échues passent au statut « expirée » ;
+  - 02:00 : purge du journal d'audit (rétention de 14 jours) ;
+  - 09:00 : SMS d'alerte aux titulaires dont la carte expire dans 3, 2 ou 1 mois (une seule fois par palier ; désactivable avec `ALERTES_EXPIRATION_SMS=false`).
 - La seconde traite la file d'attente : envoi des SMS (codes OTP, alertes). `--stop-when-empty` libère le processus dès que la file est vide, ce qui est compatible avec un hébergement mutualisé.
 
 Vérifier la planification :
@@ -183,6 +186,15 @@ php artisan utilisateur:reinitialiser-pin nom.utilisateur
 ```
 
 Le nouveau PIN s'affiche une seule fois dans le terminal.
+
+### Cartes
+
+Lancer à la main les tâches quotidiennes (sans risque de doublon : chaque alerte n'est envoyée qu'une fois par palier) :
+
+```bash
+php artisan cartes:marquer-expirees
+php artisan cartes:alertes-expiration
+```
 
 ### Rôles et permissions
 

@@ -91,6 +91,7 @@ class CarteController extends Controller
             'carte' => $carte,
             'historique' => $historique,
             'nombreOperations' => $carte->operations()->count(),
+            'alertes' => $carte->alertesExpiration()->with('messageSms')->orderBy('envoyee_le')->get(),
             'transactions' => $voirTransactions
                 ? $carte->transactions()->with(['partenaire', 'validePar.roles'])->latest('validee_le')->latest('id')->limit(10)->get()
                 : null,

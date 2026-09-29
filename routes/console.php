@@ -14,3 +14,12 @@ use Illuminate\Support\Facades\Schedule;
 
 // Rétention du journal d'audit (14 jours par défaut), inscrite au registre des purges.
 Schedule::command('journal:purger')->dailyAt('02:00')->withoutOverlapping()->onOneServer();
+
+// Cartes échues : statut « expirée » aligné en base (historique : opération système).
+Schedule::command('cartes:marquer-expirees')->dailyAt('00:10')->withoutOverlapping()->onOneServer();
+
+// Alertes SMS d'expiration (3, 2, 1 mois), en journée uniquement.
+Schedule::command('cartes:alertes-expiration')
+    ->dailyAt((string) config('plateforme.alertes_expiration.heure', '09:00'))
+    ->withoutOverlapping()
+    ->onOneServer();

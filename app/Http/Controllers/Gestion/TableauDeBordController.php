@@ -10,6 +10,7 @@ use App\Models\Carte;
 use App\Models\Partenaire;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 /**
@@ -25,6 +26,7 @@ class TableauDeBordController extends Controller
         return view('gestion.tableau-de-bord', [
             'cartes' => $user->can(Permission::VoirCartes->value) ? $this->indicateursCartes($user->id) : null,
             'transactions' => $user->can(Permission::VoirRapportTransactions->value) ? $this->indicateursTransactions() : null,
+            'expirations' => $user->can(Permission::VoirCartes->value) ? $this->expirationsProches() : null,
             'dernieres' => $user->can(Permission::ActiverCarte->value)
                 ? Carte::query()->with('titulaire')->where('active_par_id', $user->id)->latest('active_le')->limit(3)->get()
                 : collect(),
@@ -46,6 +48,29 @@ class TableauDeBordController extends Controller
             'activations_du_jour' => (int) $resultat->activations_du_jour,
             'mes_activations_du_jour' => (int) $resultat->mes_activations_du_jour,
             'cartes_actives' => (int) $resultat->cartes_actives,
+        ];
+    }
+
+    /**
+     * Cartes actives arrivant à échéance (paliers des alertes : 1, 2, 3 mois)
+     * et les plus proches de l'échéance.
+     *
+     * @return array{paliers: array<int, int>, prochaines: Collection<int, Carte>}
+     */
+    private function expirationsProches(): array
+    {
+        $actives = fn () => Carte::query()->where('statut', StatutCarte::Active)->where('expire_le', '>', now());
+
+        $resultat = $actives()
+            ->selectRaw('SUM(expire_le <= ?) AS un_mois', [now()->addMonth()])
+            ->selectRaw('SUM(expire_le <= ?) AS deux_mois', [now()->addMonths(2)])
+            ->selectRaw('SUM(expire_le <= ?) AS trois_mois', [now()->addMonths(3)])
+            ->first();
+
+        return [
+            'paliers' => [1 => (int) $resultat->un_mois, 2 => (int) $resultat->deux_mois, 3 => (int) $resultat->trois_mois],
+            'prochaines' => $actives()->with('titulaire')->where('expire_le', '<=', now()->addMonths(3))
+                ->orderBy('expire_le')->limit(5)->get(),
         ];
     }
 
