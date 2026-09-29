@@ -131,14 +131,15 @@ Deux entrées cron (cPanel → *Tâches Cron*), exécutées chaque minute :
 
 ```bash
 * * * * * cd /home/compte/advantage && php artisan schedule:run >> /dev/null 2>&1
-* * * * * cd /home/compte/advantage && php artisan queue:work --stop-when-empty --tries=3 --max-time=55 >> /dev/null 2>&1
+* * * * * cd /home/compte/advantage && php artisan queue:work --tries=3 --sleep=1 --max-time=55 >> /dev/null 2>&1
 ```
 
 - La première lance les tâches planifiées :
   - 00:10 : les cartes échues passent au statut « expirée » ;
   - 02:00 : purge du journal d'audit (rétention de 14 jours) ;
+  - 02:30 : purge des codes de validation et des SMS de plus de 90 jours (ceux liés à une transaction sont conservés) ;
   - 09:00 : SMS d'alerte aux titulaires dont la carte expire dans 3, 2 ou 1 mois (une seule fois par palier ; désactivable avec `ALERTES_EXPIRATION_SMS=false`).
-- La seconde traite la file d'attente : envoi des SMS (codes OTP, alertes). `--stop-when-empty` libère le processus dès que la file est vide, ce qui est compatible avec un hébergement mutualisé.
+- La seconde traite la file d'attente : envoi des SMS (codes OTP, alertes). Le processus reste à l'écoute 55 secondes puis s'arrête (`--max-time=55`) avant d'être relancé la minute suivante : un code OTP part en 1 à 2 secondes, et l'hébergement mutualisé n'a jamais de processus permanent. (Avec `--stop-when-empty`, un code pourrait attendre jusqu'à une minute.)
 
 Vérifier la planification :
 

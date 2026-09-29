@@ -166,6 +166,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Rétention des données techniques (commande donnees:purger, chaque nuit)
+    |--------------------------------------------------------------------------
+    |
+    | Les demandes de code liées à une transaction sont toujours conservées.
+    | Le journal d'audit a sa propre rétention ; l'historique des cartes est
+    | permanent.
+    |
+    */
+
+    'retention' => [
+        'demandes_otp_jours' => (int) env('RETENTION_DEMANDES_OTP_JOURS', 90),
+        'messages_sms_jours' => (int) env('RETENTION_MESSAGES_SMS_JOURS', 90),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Exports des listes (CSV, Excel, PDF)
     |--------------------------------------------------------------------------
     |

@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use InvalidArgumentException;
 use RuntimeException;
@@ -62,6 +63,10 @@ class AppServiceProvider extends ServiceProvider
         // autorisé (protection mass assignment rendue visible).
         Model::preventSilentlyDiscardingAttributes(! $this->app->isProduction());
         Model::preventLazyLoading(! $this->app->isProduction());
+
+        // Production : toutes les URL générées en HTTPS (liens, redirections, formulaires),
+        // même derrière un proxy qui termine le TLS.
+        URL::forceHttps($this->app->isProduction());
 
         RateLimiter::for('activation-carte', fn (Request $request) => Limit::perMinute(30)->by('agent:'.$request->user()?->id));
         // Anti-énumération des numéros de carte : par opérateur et par partenaire.

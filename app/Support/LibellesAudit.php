@@ -61,6 +61,7 @@ final class LibellesAudit
         ],
         'Exploitation' => [
             'sms.test' => 'SMS de test (configuration)',
+            'donnees.purgees' => 'Purge des données techniques',
             'export.genere' => "Export d'une liste",
         ],
     ];

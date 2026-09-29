@@ -23,3 +23,6 @@ Schedule::command('cartes:alertes-expiration')
     ->dailyAt((string) config('plateforme.alertes_expiration.heure', '09:00'))
     ->withoutOverlapping()
     ->onOneServer();
+
+// Rétention des codes de validation et des SMS (plateforme.retention).
+Schedule::command('donnees:purger')->dailyAt('02:30')->withoutOverlapping()->onOneServer();
