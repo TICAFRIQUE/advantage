@@ -28,7 +28,7 @@
             <td>
                 <p class="titre">{{ $liste->titre() }}</p>
                 <p class="sous-titre">
-                    ADVANTAGE — fontaine GROUP · {{ $nombre }} ligne(s) · généré le {{ now()->format('d/m/Y à H:i') }}
+                    {{ App\Services\Parametres::nomApplication() }} — {{ App\Services\Parametres::nomOrganisation() }} · {{ $nombre }} ligne(s) · généré le {{ now()->format('d/m/Y à H:i') }}
                     par {{ $auteur->libelleActeur() }}
                 </p>
             </td>

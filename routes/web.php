@@ -212,6 +212,30 @@ Route::middleware(['auth', 'compte.actif'])->group(function () use ($parcoursTra
                         ->name('destroy');
                 });
 
+            // Administration › Paramètres : identité (nom, logo) et sauvegardes (superadmin).
+            Route::prefix('administration/parametres')->name('parametres.')->group(function () {
+                Route::get('/', [Gestion\ParametresController::class, 'index'])
+                    ->middleware('permission:'.Permission::GererParametres->value.'|'.Permission::GererSauvegardes->value)
+                    ->name('index');
+                Route::put('/identite', [Gestion\ParametresController::class, 'identite'])
+                    ->middleware('permission:'.Permission::GererParametres->value)
+                    ->name('identite');
+
+                Route::prefix('sauvegardes')->name('sauvegardes.')
+                    ->middleware(['role:'.Role::Superadmin->value, 'permission:'.Permission::GererSauvegardes->value])
+                    ->group(function () {
+                        Route::post('/', [Gestion\SauvegardeController::class, 'store'])->middleware('throttle:5,1')->name('store');
+                        Route::put('/dossier', [Gestion\SauvegardeController::class, 'dossier'])
+                            ->middleware('password.confirm:password.confirm,300')->name('dossier');
+                        Route::get('/{nom}', [Gestion\SauvegardeController::class, 'telecharger'])
+                            ->middleware('password.confirm:password.confirm,300')->name('telecharger');
+                        Route::post('/{nom}/restaurer', [Gestion\SauvegardeController::class, 'restaurer'])
+                            ->middleware(['password.confirm:password.confirm,300', 'throttle:3,10'])->name('restaurer');
+                        Route::delete('/{nom}', [Gestion\SauvegardeController::class, 'supprimer'])
+                            ->middleware('password.confirm:password.confirm,300')->name('supprimer');
+                    });
+            });
+
             // Paramètres › Journal d'audit (lecture seule ; purge manuelle motivée)
             Route::prefix('parametres/journal')->name('journal.')->group(function () {
                 Route::get('/', [Gestion\JournalAuditController::class, 'index'])

@@ -63,6 +63,11 @@ final class LibellesAudit
             'sms.test' => 'SMS de test (configuration)',
             'donnees.purgees' => 'Purge des données techniques',
             'export.genere' => "Export d'une liste",
+            'sauvegarde.creee' => 'Sauvegarde créée',
+            'sauvegarde.restauree' => 'Sauvegarde restaurée',
+            'sauvegarde.supprimee' => 'Sauvegarde supprimée',
+            'sauvegarde.telechargee' => 'Sauvegarde téléchargée',
+            'parametres.modifies' => 'Paramètres modifiés',
         ],
     ];
 

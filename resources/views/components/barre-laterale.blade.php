@@ -4,11 +4,11 @@
 --}}
 <aside class="offcanvas-lg offcanvas-start barre-laterale" tabindex="-1" id="barre-laterale" aria-labelledby="barre-laterale-titre">
     <div class="barre-laterale__marque">
-        <a href="{{ route('accueil-espace') }}" class="d-flex align-items-center gap-2 text-decoration-none" aria-label="ADVANTAGE — accueil">
-            <img src="{{ asset('images/logo-fg.png') }}" alt="" width="40" height="40" class="rounded flex-shrink-0">
+        <a href="{{ route('accueil-espace') }}" class="d-flex align-items-center gap-2 text-decoration-none" aria-label="{{ App\Services\Parametres::nomApplication() }} — accueil">
+            <img src="{{ App\Services\Parametres::logoUrl() }}" alt="" width="40" height="40" class="rounded flex-shrink-0 logo-marque">
             <span class="barre-laterale__texte lh-1">
-                <span class="d-block texte-or small fw-semibold">fontaine GROUP</span>
-                <span class="d-block text-white fw-bolder fs-5" id="barre-laterale-titre">ADVANTAGE</span>
+                <span class="d-block texte-or small fw-semibold">{{ App\Services\Parametres::nomOrganisation() }}</span>
+                <span class="d-block text-white fw-bolder fs-5" id="barre-laterale-titre">{{ App\Services\Parametres::nomApplication() }}</span>
             </span>
         </a>
         <button type="button" class="btn-close btn-close-white d-lg-none ms-auto" data-bs-dismiss="offcanvas"

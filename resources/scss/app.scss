@@ -891,3 +891,15 @@ $focus-ring-width: 0.25rem;
     .tuile-echeance__valeur { font-size: 1.25rem; }
     .tuile-echeance__libelle { font-size: .72rem; }
 }
+
+// Administration › Paramètres : aperçu de l'identité ; logos de taille libre contenus.
+.apercu-identite {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    padding: 1rem 1.2rem;
+    border-radius: .75rem;
+    background: linear-gradient(135deg, #{$nuit}, #{$nuit-profond});
+}
+
+.logo-marque { object-fit: contain; background: #fff; }

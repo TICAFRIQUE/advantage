@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Policies\UserPolicy;
 use App\Services\EcheancesCartes;
 use App\Services\PartenaireCourant;
+use App\Services\Sauvegardes\MoteurMysql;
+use App\Services\Sauvegardes\MoteurSauvegarde;
 use App\Services\Sms\PasserelleSms;
 use App\Services\Sms\PasserelleSmsSimulee;
 use App\Services\Sms\PasserelleSmsTicafrique;
@@ -30,6 +32,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->bind(MoteurSauvegarde::class, MoteurMysql::class);
+
         // Pilote SMS actif. La simulation n'envoie rien : elle est refusée en
         // production pour qu'aucun code OTP ne soit « envoyé » dans le vide.
         $this->app->bind(PasserelleSms::class, function (Application $app): PasserelleSms {

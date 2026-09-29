@@ -71,13 +71,14 @@ return [
         ],
 
         'parametres' => [
-            'libelle' => 'Paramètres',
+            'libelle' => 'Administration',
             'espace' => 'gestion',
             'permissions' => [
                 'gerer-utilisateurs' => ['libelle' => 'Gérer les utilisateurs du back-office (création, modification)', 'roles' => ['admin']],
                 'reinitialiser-pin' => ['libelle' => "Réinitialiser le PIN d'un compte", 'roles' => ['admin']],
                 'supprimer-comptes' => ['libelle' => 'Supprimer (archiver) un compte utilisateur', 'roles' => ['admin']],
                 'gerer-roles' => ['libelle' => 'Gérer les rôles et permissions', 'roles' => []],
+                'gerer-parametres' => ['libelle' => "Modifier les paramètres (nom et logo de l'application)", 'roles' => ['admin']],
                 'voir-journal-audit' => ['libelle' => "Consulter le journal d'audit", 'roles' => ['admin']],
                 'purger-journal-audit' => ['libelle' => "Supprimer des entrées du journal d'audit", 'roles' => []],
             ],
@@ -104,6 +105,7 @@ return [
             'espace' => 'superadmin',
             'permissions' => [
                 'restaurer-elements' => ['libelle' => 'Restaurer les partenaires et comptes supprimés', 'roles' => []],
+                'gerer-sauvegardes' => ['libelle' => 'Créer, télécharger et restaurer les sauvegardes', 'roles' => []],
                 'tester-sms' => ['libelle' => "Tester l'envoi réel de SMS (consomme des unités)", 'roles' => []],
                 'voir-commandes-production' => ['libelle' => 'Consulter les commandes de mise en production', 'roles' => []],
             ],

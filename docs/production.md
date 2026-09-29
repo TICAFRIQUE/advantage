@@ -250,6 +250,31 @@ php artisan optimize:clear
 
 ## 7. Sauvegardes
 
+Les sauvegardes se gèrent dans **Administration › Paramètres › Sauvegardes** (superadmin) : création, téléchargement, restauration, choix du dossier. Les 10 plus récentes sont conservées et une sauvegarde automatique est faite chaque nuit à 01:30 (cron `schedule:run`).
+
+Réglages dans `.env` (facultatifs) :
+
+```dotenv
+SAUVEGARDES_DOSSIER=/home/compte/sauvegardes-advantage
+SAUVEGARDES_CONSERVER=10
+SAUVEGARDES_AUTOMATIQUE=true
+# Si mysqldump / mysql ne sont pas dans le PATH du serveur :
+SAUVEGARDES_MYSQLDUMP=/usr/bin/mysqldump
+SAUVEGARDES_MYSQL=/usr/bin/mysql
+```
+
+- Le dossier ne doit **jamais** être dans `public/` (refusé par l'application). Placez-le de préférence hors du dossier du projet.
+- Une restauration crée d'abord une sauvegarde de l'état actuel (« avant-restauration »), puis remet à niveau le schéma et les permissions.
+- Copiez régulièrement les sauvegardes hors du serveur (téléchargement depuis l'application).
+
+En ligne de commande :
+
+```bash
+php artisan sauvegarde:creer
+```
+
+### Sauvegarde manuelle de secours (sans l'application)
+
 Sauvegarde quotidienne de la base (à planifier chez l'hébergeur ou en cron) :
 
 ```bash

@@ -3,9 +3,9 @@
         <div class="row justify-content-center">
             <div class="col-12 col-sm-10 col-md-7 col-lg-5 col-xl-4">
                 <div class="text-center mb-4">
-                    <img src="{{ asset('images/logo-fg.png') }}" alt="fontaine GROUP" width="72" height="72" class="rounded mb-3">
-                    <p class="texte-or fw-semibold mb-0">fontaine GROUP</p>
-                    <h1 class="fw-bolder text-white mb-0">ADVANTAGE</h1>
+                    <img src="{{ App\Services\Parametres::logoUrl() }}" alt="{{ App\Services\Parametres::nomOrganisation() }}" width="72" height="72" class="rounded mb-3 logo-marque">
+                    <p class="texte-or fw-semibold mb-0">{{ App\Services\Parametres::nomOrganisation() }}</p>
+                    <h1 class="fw-bolder text-white mb-0">{{ App\Services\Parametres::nomApplication() }}</h1>
                 </div>
 
                 <div class="card border-0 shadow-lg bordure-or">

@@ -101,7 +101,7 @@
         </main>
 
         <footer class="app-erp__pied">
-            &copy; {{ date('Y') }} fontaine GROUP — ADVANTAGE
+            &copy; {{ date('Y') }} {{ App\Services\Parametres::nomOrganisation() }} — {{ App\Services\Parametres::nomApplication() }}
         </footer>
     </div>
 </x-layouts.base>

@@ -36,6 +36,7 @@ enum Permission: string
     case ReinitialiserPin = 'reinitialiser-pin';
     case SupprimerComptes = 'supprimer-comptes';
     case GererRoles = 'gerer-roles';
+    case GererParametres = 'gerer-parametres';
     case VoirJournalAudit = 'voir-journal-audit';
     case PurgerJournalAudit = 'purger-journal-audit';
 
@@ -47,6 +48,7 @@ enum Permission: string
     case RestaurerElements = 'restaurer-elements';
     case VoirCommandesProduction = 'voir-commandes-production';
     case TesterSms = 'tester-sms';
+    case GererSauvegardes = 'gerer-sauvegardes';
 
     // Espace partenaire
     case AccederEspacePartenaire = 'acceder-espace-partenaire';

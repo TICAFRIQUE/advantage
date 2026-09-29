@@ -182,6 +182,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Sauvegardes de la base (Administration › Paramètres › Sauvegardes)
+    |--------------------------------------------------------------------------
+    |
+    | Dossier par défaut (modifiable dans l'application, jamais dans public/),
+    | nombre de sauvegardes conservées, binaires MySQL et sauvegarde nocturne.
+    |
+    */
+
+    'sauvegardes' => [
+        'dossier' => env('SAUVEGARDES_DOSSIER', storage_path('app/sauvegardes')),
+        'conserver' => (int) env('SAUVEGARDES_CONSERVER', 10),
+        'mysqldump' => env('SAUVEGARDES_MYSQLDUMP', 'mysqldump'),
+        'mysql' => env('SAUVEGARDES_MYSQL', 'mysql'),
+        'automatique' => (bool) env('SAUVEGARDES_AUTOMATIQUE', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Exports des listes (CSV, Excel, PDF)
     |--------------------------------------------------------------------------
     |

@@ -7,6 +7,7 @@ use App\Exceptions\ExportTropVolumineuxException;
 use App\Models\User;
 use App\Services\JournaliserAudit;
 use App\Services\Listes\Liste;
+use App\Services\Parametres;
 use Dompdf\Dompdf;
 use Dompdf\Options as OptionsDompdf;
 use Illuminate\Database\Eloquent\Builder;
@@ -150,7 +151,7 @@ class Exporteur
 
     private function logo(): ?string
     {
-        $chemin = public_path('images/logo-fg.png');
+        $chemin = public_path(Parametres::logo());
 
         return is_file($chemin) ? 'data:image/png;base64,'.base64_encode((string) file_get_contents($chemin)) : null;
     }

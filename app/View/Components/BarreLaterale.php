@@ -55,9 +55,11 @@ class BarreLaterale extends Component
                 $this->entree('Transaction', 'bi-upc-scan', 'gestion.transaction.nouvelle', ['gestion.transaction.*'], $user->can(Permission::EffectuerTransactionPartenaire->value)),
                 $this->entree('Rapport des transactions', 'bi-graph-up', 'gestion.transactions.rapport', ['gestion.transactions.rapport'], $user->can(Permission::VoirRapportTransactions->value)),
             ],
-            'Paramètres' => [
+            'Administration' => [
                 $this->entree('Utilisateurs', 'bi-people', 'gestion.utilisateurs.index', ['gestion.utilisateurs.*', 'gestion.comptes.*'], $user->can(Permission::GererUtilisateurs->value)),
                 $this->entree('Rôles et permissions', 'bi-shield-lock', 'gestion.roles.index', ['gestion.roles.*'], $user->can(Permission::GererRoles->value)),
+                $this->entree('Paramètres', 'bi-sliders', 'gestion.parametres.index', ['gestion.parametres.*'],
+                    $user->can(Permission::GererParametres->value) || ($user->hasRole(Role::Superadmin) && $user->can(Permission::GererSauvegardes->value))),
                 $this->entree("Journal d'audit", 'bi-journal-text', 'gestion.journal.index', ['gestion.journal.*'], $user->can(Permission::VoirJournalAudit->value)),
             ],
             'Outils de test' => [
