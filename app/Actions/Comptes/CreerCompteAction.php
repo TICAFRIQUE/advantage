@@ -26,6 +26,11 @@ class CreerCompteAction
      */
     public function __invoke(array $donnees, Role $role, User $auteur, ?Partenaire $partenaire = null): array
     {
+        // Le superadmin a un mot de passe fort issu du .env, jamais un PIN.
+        if ($role === Role::Superadmin) {
+            throw new OperationCompteException('Le compte superadmin se crée uniquement depuis la configuration du serveur.');
+        }
+
         if (! GardeDroits::peutAttribuerRole($auteur, new User, $role)) {
             throw new OperationCompteException("Vous n'avez pas le droit de créer un compte « {$role->libelle()} ».");
         }
@@ -37,11 +42,11 @@ class CreerCompteAction
         $pin = GenerateurPin::generer();
 
         try {
-            $compte = DB::transaction(function () use ($donnees, $role, $partenaire, $pin): User {
+            $compte = DB::transaction(function () use ($donnees, $role, $partenaire, $pin, $auteur): User {
                 $compte = new User;
                 $compte->fill($donnees + ['password' => $pin]);
                 // Champs protégés de l'affectation de masse : renseignés explicitement.
-                $compte->forceFill(['statut' => StatutUtilisateur::Actif, 'partenaire_id' => $partenaire?->id])->save();
+                $compte->forceFill(['statut' => StatutUtilisateur::Actif, 'partenaire_id' => $partenaire?->id, 'cree_par_id' => $auteur->id])->save();
                 $compte->assignRole($role);
 
                 return $compte;

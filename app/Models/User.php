@@ -55,6 +55,26 @@ class User extends Authenticatable
     }
 
     /**
+     * Auteur de la création du compte (null : console ou seeder).
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function creePar(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cree_par_id')->withTrashed();
+    }
+
+    /**
+     * Auteur de la dernière modification de la fiche du compte.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function modifiePar(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'modifie_par_id')->withTrashed();
+    }
+
+    /**
      * Auteur de la suppression (archivage), null si actif ou restauré.
      *
      * @return BelongsTo<User, $this>
@@ -72,6 +92,16 @@ class User extends Authenticatable
     public function cartesActivees(): HasMany
     {
         return $this->hasMany(Carte::class, 'active_par_id');
+    }
+
+    /**
+     * Transactions validées par ce compte (opérateur ou back-office).
+     *
+     * @return HasMany<Transaction, $this>
+     */
+    public function transactionsValidees(): HasMany
+    {
+        return $this->hasMany(Transaction::class, 'valide_par_id');
     }
 
     /**

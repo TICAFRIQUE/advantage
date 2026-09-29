@@ -3,24 +3,57 @@
 namespace App\Http\Controllers\Gestion;
 
 use App\Actions\Comptes\GererCompteAction;
+use App\Actions\Comptes\ModifierCompteAction;
+use App\Enums\Role;
 use App\Enums\StatutUtilisateur;
 use App\Exceptions\OperationCompteException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Gestion\ModifierCompteRequest;
 use App\Models\User;
+use App\Services\Droits\GardeDroits;
+use App\Services\Telephone;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\View\View;
 
 /**
  * Opérations sur un compte (opérateur, agent, admin) : PIN, verrouillage,
- * statut, suppression (archivage). Autorisation par UserPolicy::gerer (GardeDroits), revérifiée dans
+ * statut, suppression (archivage), modification de la fiche. Autorisation par UserPolicy::gerer (GardeDroits), revérifiée dans
  * l'action.
  */
 class CompteController extends Controller
 {
-    public function reinitialiserPin(User $compte, GererCompteAction $gerer): RedirectResponse
+    public function edit(User $compte): View
     {
         Gate::authorize('gerer', $compte);
+
+        return view('gestion.comptes.modifier', [
+            'compte' => $compte,
+            // Le rôle d'un utilisateur de partenaire ne change pas.
+            'roles' => $compte->hasRole(Role::Partenaire) ? [] : array_values(array_unique(
+                [...GardeDroits::rolesGestionAttribuables(auth()->user(), $compte), ...array_filter([$compte->rolePrincipal()])],
+                SORT_REGULAR,
+            )),
+            'pays' => Telephone::tousLesPays(),
+            'retour' => $this->retour($compte),
+        ]);
+    }
+
+    public function update(ModifierCompteRequest $request, User $compte, ModifierCompteAction $modifier): RedirectResponse
+    {
+        try {
+            $modifier($compte, $request->donnees(), $request->role(), $request->user());
+        } catch (OperationCompteException $exception) {
+            return back()->withInput()->with('erreur', $exception->getMessage());
+        }
+
+        return redirect($this->retour($compte))->with('succes', "Le compte {$compte->nom_utilisateur} a été mis à jour.");
+    }
+
+    public function reinitialiserPin(User $compte, GererCompteAction $gerer): RedirectResponse
+    {
+        Gate::authorize('reinitialiserPin', $compte);
 
         return $this->executer(function () use ($compte, $gerer): RedirectResponse {
             $pin = $gerer->reinitialiserPin($compte, auth()->user());
@@ -68,6 +101,16 @@ class CompteController extends Controller
 
             return back()->with('succes', "Le compte {$compte->nom_utilisateur} a été supprimé. Son nom reste visible dans l'historique.");
         });
+    }
+
+    /**
+     * Page d'origine du compte : fiche du partenaire ou fiche utilisateur.
+     */
+    private function retour(User $compte): string
+    {
+        return $compte->partenaire_id !== null
+            ? route('gestion.partenaires.show', $compte->partenaire_id)
+            : route('gestion.utilisateurs.show', $compte);
     }
 
     /**

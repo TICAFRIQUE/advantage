@@ -5,6 +5,7 @@ namespace App\Services\Droits;
 use App\Enums\Permission;
 use App\Enums\Role;
 use App\Models\User;
+use Spatie\Permission\Models\Role as ModeleRole;
 
 /**
  * Règles anti-élévation de privilèges pour la gestion des rôles, des
@@ -40,7 +41,8 @@ class GardeDroits
      * Peut-on attribuer ce rôle à ce compte ?
      * - jamais à soi-même ;
      * - superadmin et admin : uniquement par un superadmin ;
-     * - agent : par quiconque « gère les utilisateurs » ;
+     * - agent : par quiconque « gère les utilisateurs » et détient toutes les
+     *   permissions du rôle (sinon on s'octroierait des droits par ce compte) ;
      * - partenaire : uniquement via la gestion des opérateurs d'un partenaire.
      */
     public static function peutAttribuerRole(User $acteur, User $cible, Role $role): bool
@@ -52,14 +54,19 @@ class GardeDroits
         return match ($role) {
             Role::Superadmin, Role::Admin => $acteur->hasRole(Role::Superadmin),
             Role::Agent => $acteur->hasRole(Role::Superadmin)
-                || ($acteur->can(Permission::GererUtilisateurs->value) && ! $cible->hasAnyRole([Role::Superadmin, Role::Admin])),
+                || ($acteur->can(Permission::GererUtilisateurs->value)
+                    && ! $cible->hasAnyRole([Role::Superadmin, Role::Admin])
+                    && self::detientToutes($acteur, ModeleRole::findByName(Role::Agent->value)->permissions->pluck('name'))),
             Role::Partenaire => $acteur->can(Permission::GererOperateursPartenaires->value),
         };
     }
 
     /**
      * Peut-on modifier (verrouiller, réinitialiser le PIN, désactiver) ce compte ?
-     * Un compte ne peut être géré que par quelqu'un de rang supérieur.
+     * Un compte ne peut être géré que par quelqu'un de rang supérieur. Pour un
+     * compte du back-office, il faut en plus détenir toutes ses permissions :
+     * réinitialiser son PIN permettrait sinon de se connecter à sa place et
+     * d'obtenir des droits que l'on n'a pas.
      */
     public static function peutGererCompte(User $acteur, User $cible): bool
     {
@@ -77,6 +84,35 @@ class GardeDroits
 
         return $cible->hasRole(Role::Partenaire)
             ? $acteur->can(Permission::GererOperateursPartenaires->value)
-            : $acteur->can(Permission::GererUtilisateurs->value);
+            : $acteur->can(Permission::GererUtilisateurs->value)
+                && self::detientToutes($acteur, $cible->getAllPermissions()->pluck('name'));
+    }
+
+    /**
+     * Rôles du back-office que l'acteur peut donner à ce compte (ou à un
+     * nouveau compte). Le superadmin n'est jamais attribué depuis l'interface.
+     *
+     * @return list<Role>
+     */
+    public static function rolesGestionAttribuables(User $acteur, ?User $cible = null): array
+    {
+        return array_values(array_filter(
+            [Role::Agent, Role::Admin],
+            fn (Role $role) => self::peutAttribuerRole($acteur, $cible ?? new User, $role),
+        ));
+    }
+
+    /**
+     * @param  iterable<string>  $permissions
+     */
+    private static function detientToutes(User $acteur, iterable $permissions): bool
+    {
+        foreach ($permissions as $permission) {
+            if (! $acteur->can($permission)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

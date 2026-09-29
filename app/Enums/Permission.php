@@ -33,6 +33,7 @@ enum Permission: string
 
     // Paramètres
     case GererUtilisateurs = 'gerer-utilisateurs';
+    case ReinitialiserPin = 'reinitialiser-pin';
     case SupprimerComptes = 'supprimer-comptes';
     case GererRoles = 'gerer-roles';
     case VoirJournalAudit = 'voir-journal-audit';

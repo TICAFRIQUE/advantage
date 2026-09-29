@@ -1,16 +1,25 @@
-@props(['compte'])
+@props(['compte', 'modifier' => true])
 
 @can('gerer', $compte)
     <div class="d-flex flex-wrap gap-1 justify-content-end">
-        <form method="POST" action="{{ route('gestion.comptes.pin', $compte) }}"
-              data-titre="Réinitialiser le PIN de {{ $compte->nom }} ?"
-              data-confirmer="Un nouveau PIN sera généré et affiché une seule fois. L'ancien ne fonctionnera plus."
-              data-bouton-confirmer="Réinitialiser">
-            @csrf
-            <button type="submit" class="btn btn-sm btn-outline-primary" title="Réinitialiser le PIN" aria-label="Réinitialiser le PIN de {{ $compte->nom }}">
-                <i class="bi bi-key" aria-hidden="true"></i>
-            </button>
-        </form>
+        @if ($modifier)
+            <a href="{{ route('gestion.comptes.edit', $compte) }}" class="btn btn-sm btn-outline-primary"
+               title="Modifier" aria-label="Modifier le compte de {{ $compte->nom }}">
+                <i class="bi bi-pencil" aria-hidden="true"></i>
+            </a>
+        @endif
+
+        @can('reinitialiserPin', $compte)
+            <form method="POST" action="{{ route('gestion.comptes.pin', $compte) }}"
+                  data-titre="Réinitialiser le PIN de {{ $compte->nom }} ?"
+                  data-confirmer="Un nouveau PIN sera généré et affiché une seule fois. L'ancien ne fonctionnera plus."
+                  data-bouton-confirmer="Réinitialiser">
+                @csrf
+                <button type="submit" class="btn btn-sm btn-outline-primary" title="Réinitialiser le PIN" aria-label="Réinitialiser le PIN de {{ $compte->nom }}">
+                    <i class="bi bi-key" aria-hidden="true"></i>
+                </button>
+            </form>
+        @endcan
 
         <form method="POST" action="{{ route('gestion.comptes.verrouillage', $compte) }}"
               data-titre="{{ $compte->estVerrouille() ? 'Déverrouiller' : 'Verrouiller' }} le compte {{ $compte->nom_utilisateur }} ?"

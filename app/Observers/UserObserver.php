@@ -17,7 +17,7 @@ class UserObserver
      *
      * @var list<string>
      */
-    private const CHAMPS_IGNORES = ['updated_at', 'remember_token', 'tentatives_echouees', 'derniere_connexion_le', 'deleted_at', 'supprime_par_id'];
+    private const CHAMPS_IGNORES = ['updated_at', 'remember_token', 'tentatives_echouees', 'derniere_connexion_le', 'deleted_at', 'supprime_par_id', 'modifie_par_id'];
 
     public function created(User $user): void
     {

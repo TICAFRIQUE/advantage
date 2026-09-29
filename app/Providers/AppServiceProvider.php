@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Enums\Role;
 use App\Models\User;
+use App\Policies\UserPolicy;
 use App\Services\PartenaireCourant;
 use App\Services\Sms\PasserelleSms;
 use App\Services\Sms\PasserelleSmsSimulee;
@@ -45,7 +46,10 @@ class AppServiceProvider extends ServiceProvider
     {
         // Le superadmin est autorisé partout, y compris sur les permissions
         // ajoutées ultérieurement. Retourner null laisse les autres règles s'appliquer.
-        Gate::before(fn (User $user) => $user->hasRole(Role::Superadmin) ? true : null);
+        // Exception : les capacités de UserPolicy protègent l'intégrité des comptes
+        // (jamais son propre compte, jamais un superadmin) et s'appliquent à tous.
+        Gate::before(fn (User $user, string $capacite) => $user->hasRole(Role::Superadmin)
+            && ! in_array($capacite, UserPolicy::CAPACITES, true) ? true : null);
 
         // Signale en développement toute tentative d'affecter un attribut non
         // autorisé (protection mass assignment rendue visible).

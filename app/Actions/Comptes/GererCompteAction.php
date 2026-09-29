@@ -34,6 +34,10 @@ class GererCompteAction
             throw new OperationCompteException('Le superadmin utilise un mot de passe fort, pas un PIN.');
         }
 
+        if ($auteur !== null && ! $auteur->can(Permission::ReinitialiserPin->value)) {
+            throw new OperationCompteException('Vous n\'avez pas le droit de réinitialiser un PIN.');
+        }
+
         $pin = GenerateurPin::generer();
 
         $compte->forceFill(['password' => $pin, 'tentatives_echouees' => 0, 'verrouille_le' => null])->save();

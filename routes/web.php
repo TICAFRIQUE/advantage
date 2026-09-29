@@ -157,13 +157,28 @@ Route::middleware(['auth', 'compte.actif'])->group(function () use ($parcoursTra
                 ->middleware('permission:'.Permission::GererUtilisateurs->value.'|'.Permission::GererOperateursPartenaires->value)
                 ->group(function () {
                     Route::post('/pin', [Gestion\CompteController::class, 'reinitialiserPin'])
-                        ->middleware(['password.confirm:password.confirm,300', 'throttle:activation-carte'])
+                        ->middleware(['permission:'.Permission::ReinitialiserPin->value, 'password.confirm:password.confirm,300', 'throttle:activation-carte'])
                         ->name('pin');
+                    Route::get('/modifier', [Gestion\CompteController::class, 'edit'])->name('edit');
+                    Route::put('/', [Gestion\CompteController::class, 'update'])->name('update');
                     Route::post('/verrouillage', [Gestion\CompteController::class, 'verrouillage'])->name('verrouillage');
                     Route::post('/statut', [Gestion\CompteController::class, 'statut'])->name('statut');
                     Route::delete('/', [Gestion\CompteController::class, 'supprimer'])
                         ->middleware(['permission:'.Permission::SupprimerComptes->value, 'password.confirm:password.confirm,300'])
                         ->name('supprimer');
+                });
+
+            // Paramètres › Utilisateurs du back-office
+            Route::prefix('parametres/utilisateurs')->name('utilisateurs.')
+                ->middleware('permission:'.Permission::GererUtilisateurs->value)
+                ->group(function () {
+                    Route::get('/', [Gestion\UtilisateurController::class, 'index'])->name('index');
+                    Route::get('/donnees', [Gestion\UtilisateurController::class, 'donnees'])->name('donnees');
+                    Route::get('/creer', [Gestion\UtilisateurController::class, 'create'])->name('create');
+                    Route::post('/', [Gestion\UtilisateurController::class, 'store'])
+                        ->middleware('throttle:activation-carte')
+                        ->name('store');
+                    Route::get('/{compte}', [Gestion\UtilisateurController::class, 'show'])->whereNumber('compte')->name('show');
                 });
 
             Route::get('/transactions/rapport', [Gestion\RapportTransactionsController::class, 'index'])

@@ -55,6 +55,9 @@ class BarreLaterale extends Component
                 $this->entree('Transaction', 'bi-upc-scan', 'gestion.transaction.nouvelle', ['gestion.transaction.*'], $user->can(Permission::EffectuerTransactionPartenaire->value)),
                 $this->entree('Rapport des transactions', 'bi-graph-up', 'gestion.transactions.rapport', ['gestion.transactions.rapport'], $user->can(Permission::VoirRapportTransactions->value)),
             ],
+            'Paramètres' => [
+                $this->entree('Utilisateurs', 'bi-people', 'gestion.utilisateurs.index', ['gestion.utilisateurs.*', 'gestion.comptes.*'], $user->can(Permission::GererUtilisateurs->value)),
+            ],
             'Outils de test' => [
                 $this->entree('SMS simulés', 'bi-chat-dots', 'gestion.sms-simules.index', ['gestion.sms-simules.*'],
                     SmsSimulesController::disponible() && $user->can(Permission::VoirSmsSimules->value)),

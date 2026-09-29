@@ -74,7 +74,8 @@ return [
             'libelle' => 'Paramètres',
             'espace' => 'gestion',
             'permissions' => [
-                'gerer-utilisateurs' => ['libelle' => 'Gérer les utilisateurs (agents)', 'roles' => ['admin']],
+                'gerer-utilisateurs' => ['libelle' => 'Gérer les utilisateurs du back-office (création, modification)', 'roles' => ['admin']],
+                'reinitialiser-pin' => ['libelle' => "Réinitialiser le PIN d'un compte", 'roles' => ['admin']],
                 'supprimer-comptes' => ['libelle' => 'Supprimer (archiver) un compte utilisateur', 'roles' => ['admin']],
                 'gerer-roles' => ['libelle' => 'Gérer les rôles et permissions', 'roles' => []],
                 'voir-journal-audit' => ['libelle' => "Consulter le journal d'audit", 'roles' => ['admin']],
