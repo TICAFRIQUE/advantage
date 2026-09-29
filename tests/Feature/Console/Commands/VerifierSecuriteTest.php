@@ -73,6 +73,18 @@ it('refuses a backup folder inside the public folder', function () {
     $this->artisan('securite:verifier')->expectsOutputToContain('hors de public/')->assertFailed();
 });
 
+it('refuses a backup folder that the deployment would wipe, but accepts storage/', function () {
+    $this->dossierPublic = configurationDeProductionConforme();
+    $dansLeProjet = str_replace('\\', '/', base_path('sauvegardes-test-'.uniqid()));
+    config(['plateforme.sauvegardes.dossier' => $dansLeProjet]);
+
+    $this->artisan('securite:verifier')->expectsOutputToContain('rsync --delete')->assertFailed();
+    File::deleteDirectory($dansLeProjet);
+
+    config(['plateforme.sauvegardes.dossier' => str_replace('\\', '/', storage_path('app/sauvegardes'))]);
+    $this->artisan('securite:verifier')->assertSuccessful();
+});
+
 it('detects a leftover development server file', function () {
     $this->dossierPublic = configurationDeProductionConforme();
     File::put(public_path('hot'), 'http://localhost:5173');

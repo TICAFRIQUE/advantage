@@ -98,6 +98,10 @@ class VerifierSecuriteCommande extends Command
                 $this->dossierSauvegardesSur($sauvegardes),
                 'Dossier absolu, hors de public/, accessible en écriture (Administration › Paramètres ou SAUVEGARDES_DOSSIER).',
             ],
+            'Sauvegardes épargnées par le déploiement' => [
+                $this->sauvegardesHorsDuDeploiement($sauvegardes->dossier()),
+                'Dossier des sauvegardes hors du projet (ou dans storage/) : le déploiement (rsync --delete) effacerait tout autre dossier du projet.',
+            ],
             'Fichiers CSS / JS construits' => [
                 is_file(public_path('build/manifest.json')),
                 'npm ci && npm run build (ou envoyer public/build).',
@@ -126,6 +130,15 @@ class VerifierSecuriteCommande extends Command
         } catch (SauvegardeException) {
             return false;
         }
+    }
+
+    private function sauvegardesHorsDuDeploiement(string $dossier): bool
+    {
+        $normaliser = fn (string $chemin) => mb_strtolower(rtrim(str_replace('\\', '/', $chemin), '/')).'/';
+        $dossier = $normaliser($dossier);
+
+        return ! str_starts_with($dossier, $normaliser(base_path()))
+            || str_starts_with($dossier, $normaliser(storage_path()));
     }
 
     private function envProtege(): bool
