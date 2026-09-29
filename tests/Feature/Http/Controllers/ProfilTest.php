@@ -1,9 +1,9 @@
 <?php
 
-use App\Enums\Permission;
 use App\Enums\Role;
+use App\Models\JournalAudit;
 
-it('shows my own information and rights, from the account menu', function (Role $role, Permission $droit) {
+it('shows my own information and my recent activity, from the account menu', function (Role $role) {
     $compte = utilisateurAvecRole($role, ['nom' => 'Awa Koné', 'nom_utilisateur' => 'awa.kone', 'telephone' => '+2250707123456']);
 
     connecter($compte)->get(route('profil'))
@@ -11,26 +11,41 @@ it('shows my own information and rights, from the account menu', function (Role 
         ->assertSee('Awa Koné')
         ->assertSee('@awa.kone')
         ->assertSee('+225 07 07 12 34 56')
-        ->assertSee('Mes droits')
-        ->assertSee($droit->libelle())
+        ->assertSee('Mon activité récente')
+        ->assertDontSee('Mes droits')
         ->assertSee('href="'.route('profil').'"', false);
 })->with([
-    'agent' => [Role::Agent, Permission::ActiverCarte],
-    'utilisateur de partenaire' => [Role::Partenaire, Permission::EffectuerTransaction],
+    'agent' => [Role::Agent],
+    'utilisateur de partenaire' => [Role::Partenaire],
 ]);
 
-it('lists only the rights I hold', function () {
-    connecter(utilisateurAvecRole(Role::Agent))->get(route('profil'))
-        ->assertDontSee(Permission::GererRoles->libelle())
-        ->assertDontSee(Permission::PurgerJournalAudit->libelle());
+it('lists my 20 most recent actions only, newest first', function () {
+    $compte = utilisateurAvecRole(Role::Agent);
+    $autre = utilisateurAvecRole(Role::Agent);
+
+    foreach (range(1, 21) as $i) {
+        JournalAudit::create(['acteur_id' => $compte->id, 'type_acteur' => 'utilisateur', 'action' => 'carte.activee', 'donnees' => ['numero_carte' => sprintf('900%04d', $i)]]);
+        $this->travel(1)->minutes();
+    }
+    JournalAudit::create(['acteur_id' => $autre->id, 'type_acteur' => 'utilisateur', 'action' => 'partenaire.cree', 'donnees' => ['nom' => 'Pharmacie voisine']]);
+
+    connecter($compte)->get(route('profil'))
+        ->assertSee('Carte activée')
+        ->assertSeeInOrder(['9000021', '9000020', '9000002'])
+        ->assertDontSee('9000001')
+        ->assertDontSee('Partenaire créé')
+        ->assertDontSee('Pharmacie voisine');
 });
 
-it('tells the superadmin he holds every right and where his password lives', function () {
+it('tells when there is no recent activity', function () {
+    connecter(utilisateurAvecRole(Role::Agent))->get(route('profil'))
+        ->assertSee('Aucune activité enregistrée récemment.');
+});
+
+it('tells the superadmin where his password lives', function () {
     connecter(utilisateurAvecRole(Role::Superadmin))->get(route('profil'))
         ->assertOk()
-        ->assertSee('vous disposez de tous les droits')
-        ->assertSee('SUPERADMIN_MOT_DE_PASSE')
-        ->assertSee(Permission::RestaurerElements->libelle());
+        ->assertSee('SUPERADMIN_MOT_DE_PASSE');
 });
 
 it('requires to be logged in', function () {

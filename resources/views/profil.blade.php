@@ -42,20 +42,29 @@
         </div>
 
         <div class="col-12 col-lg-7">
-            <section class="card border-0 shadow-sm" aria-labelledby="titre-droits">
+            <section class="card border-0 shadow-sm" aria-labelledby="titre-activite">
                 <div class="card-body p-4">
-                    <h2 class="h6 mb-1" id="titre-droits"><i class="bi bi-shield-check me-1" aria-hidden="true"></i>Mes droits</h2>
+                    <h2 class="h6 mb-1" id="titre-activite"><i class="bi bi-clock-history me-1" aria-hidden="true"></i>Mon activité récente</h2>
                     <p class="small text-secondary mb-3">
-                        {{ $superadmin ? 'Super administrateur : vous disposez de tous les droits.' : 'Ce que votre rôle vous permet de faire.' }}
+                        Vos {{ App\Http\Controllers\ProfilController::ACTIVITES }} dernières actions
+                        (journal conservé {{ config('plateforme.journal_audit.retention_jours') }} jours).
                     </p>
-                    @foreach ($groupes as $groupe)
-                        <h3 class="small text-uppercase text-secondary fw-semibold mt-3 mb-2">{{ $groupe['libelle'] }}</h3>
-                        <ul class="list-unstyled small mb-0 liste-droits">
-                            @foreach ($groupe['permissions'] as $permission)
-                                <li><i class="bi bi-check2 text-success me-1" aria-hidden="true"></i>{{ $permission }}</li>
-                            @endforeach
-                        </ul>
-                    @endforeach
+                    <ul class="list-group list-group-flush small">
+                        @forelse ($activites as $activite)
+                            <li class="list-group-item px-0 d-flex justify-content-between align-items-start gap-3">
+                                <div class="min-w-0">
+                                    <span class="fw-semibold">{{ App\Support\LibellesAudit::action($activite->action) }}</span>
+                                    @if ($details = App\Support\LibellesAudit::detailsTexte($activite->donnees))
+                                        <span class="d-block text-secondary text-break">{{ Illuminate\Support\Str::limit($details, 140) }}</span>
+                                    @endif
+                                </div>
+                                <time class="text-secondary text-nowrap" datetime="{{ $activite->cree_le->toIso8601String() }}"
+                                      title="{{ $activite->cree_le->format('d/m/Y à H:i:s') }}">{{ $activite->cree_le->format('d/m/Y H:i') }}</time>
+                            </li>
+                        @empty
+                            <li class="list-group-item px-0 text-secondary">Aucune activité enregistrée récemment.</li>
+                        @endforelse
+                    </ul>
                 </div>
             </section>
         </div>

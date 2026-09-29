@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers\Partenaire;
 
+use App\Enums\FormatExport;
+use App\Exceptions\ExportTropVolumineuxException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Partenaire\FiltrerHistoriqueRequest;
 use App\Models\Transaction;
+use App\Services\Exports\Exporteur;
 use App\Services\PartenaireCourant;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 use Yajra\DataTables\Facades\DataTables;
 
 class TransactionController extends Controller
@@ -40,42 +43,36 @@ class TransactionController extends Controller
      * Données de l'historique (Yajra, traitement côté serveur), limitées au
      * partenaire courant. Les valeurs sont échappées par Yajra.
      */
-    public function donnees(Request $request): JsonResponse
+    public function donnees(FiltrerHistoriqueRequest $request): JsonResponse
     {
-        Gate::authorize('viewAny', Transaction::class);
+        $liste = $request->liste();
 
-        $periode = $request->validate([
-            'du' => ['nullable', 'date_format:Y-m-d'],
-            'au' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:du'],
-        ]);
-
-        $requete = Transaction::query()
-            ->with(['carte.titulaire', 'validePar.roles'])
-            ->where('partenaire_id', PartenaireCourant::pour($request->user())->id)
-            ->when($periode['du'] ?? null, fn (Builder $q, string $du) => $q->where('validee_le', '>=', $du.' 00:00:00'))
-            ->when($periode['au'] ?? null, fn (Builder $q, string $au) => $q->where('validee_le', '<=', $au.' 23:59:59'))
-            ->select('transactions.*');
-
-        return DataTables::eloquent($requete)
+        return DataTables::eloquent($liste->requete())
             ->editColumn('validee_le', fn (Transaction $t) => $t->validee_le->format('d/m/Y H:i'))
             ->addColumn('carte', fn (Transaction $t) => $t->carte->numeroFormate())
             ->addColumn('titulaire', fn (Transaction $t) => $t->carte->titulaire->nomComplet())
             ->editColumn('taux_applique', fn (Transaction $t) => rtrim(rtrim((string) $t->taux_applique, '0'), '.').' %')
             ->addColumn('operateur', fn (Transaction $t) => $t->validePar?->libelleActeur() ?? '—')
-            ->filter(function (Builder $query) use ($request): void {
+            ->filter(function ($query) use ($request, $liste): void {
                 $recherche = trim((string) $request->input('search.value'));
 
-                if ($recherche === '') {
-                    return;
+                if ($recherche !== '') {
+                    $liste->rechercher($query, $recherche);
                 }
-
-                $texte = addcslashes($recherche, '%_\\');
-                $query->whereHas('carte', fn (Builder $c) => $c
-                    ->where('numero_carte', 'like', preg_replace('/\s+/', '', $texte).'%')
-                    ->orWhereHas('titulaire', fn (Builder $t) => $t
-                        ->where('nom', 'like', "%{$texte}%")
-                        ->orWhere('prenom', 'like', "%{$texte}%")));
             }, true)
             ->toJson();
+    }
+
+    /**
+     * Export de l'historique (mêmes filtres et même recherche que l'écran),
+     * limité au partenaire courant et journalisé par l'exporteur.
+     */
+    public function exporter(FiltrerHistoriqueRequest $request, FormatExport $format, Exporteur $exporteur): Response
+    {
+        try {
+            return $exporteur->telecharger($request->liste(), $format, $request->user());
+        } catch (ExportTropVolumineuxException $exception) {
+            return back()->with('erreur', $exception->getMessage());
+        }
     }
 }

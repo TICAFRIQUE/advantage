@@ -25,8 +25,8 @@ use OpenSpout\Writer\XLSX\Writer as WriterXlsx;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Exporte une liste du back-office (mêmes filtres et même recherche que
- * l'écran) en CSV, Excel ou PDF, côté serveur.
+ * Exporte une liste du back-office ou l'historique d'un partenaire (mêmes
+ * filtres et même recherche que l'écran) en CSV, Excel ou PDF, côté serveur.
  *
  * - CSV / Excel : écriture en flux, ligne par ligne (mémoire constante) ;
  * - PDF : borné en nombre de lignes (rendu en mémoire) ;

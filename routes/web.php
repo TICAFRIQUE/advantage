@@ -327,5 +327,8 @@ Route::middleware(['auth', 'compte.actif'])->group(function () use ($parcoursTra
             Route::get('/historique/donnees', [Partenaire\TransactionController::class, 'donnees'])
                 ->middleware('permission:'.Permission::VoirHistoriqueTransactions->value)
                 ->name('historique.donnees');
+            Route::get('/historique/export/{format}', [Partenaire\TransactionController::class, 'exporter'])
+                ->middleware(['permission:'.Permission::ExporterHistorique->value, 'throttle:10,1'])
+                ->name('historique.export');
         });
 });

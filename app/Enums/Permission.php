@@ -54,6 +54,7 @@ enum Permission: string
     case AccederEspacePartenaire = 'acceder-espace-partenaire';
     case EffectuerTransaction = 'effectuer-transaction';
     case VoirHistoriqueTransactions = 'voir-historique-transactions';
+    case ExporterHistorique = 'exporter-historique';
 
     public function libelle(): string
     {

@@ -118,6 +118,7 @@ return [
                 'acceder-espace-partenaire' => ['libelle' => "Accéder à l'espace partenaire", 'roles' => ['partenaire']],
                 'effectuer-transaction' => ['libelle' => 'Effectuer une transaction', 'roles' => ['partenaire']],
                 'voir-historique-transactions' => ['libelle' => 'Voir son historique', 'roles' => ['partenaire']],
+                'exporter-historique' => ['libelle' => 'Exporter son historique (PDF, Excel, CSV)', 'roles' => ['partenaire']],
             ],
         ],
 

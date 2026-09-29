@@ -45,6 +45,17 @@ enum FormatExport: string
      */
     public static function urls(string $liste): array
     {
-        return collect(self::cases())->mapWithKeys(fn (self $format) => [$format->value => route('gestion.exports', [$liste, $format])])->all();
+        return self::urlsRoute('gestion.exports', [$liste]);
+    }
+
+    /**
+     * URL d'une route d'export dans chaque format (format en dernier paramètre).
+     *
+     * @param  list<mixed>  $parametres
+     * @return array<string, string>
+     */
+    public static function urlsRoute(string $route, array $parametres = []): array
+    {
+        return collect(self::cases())->mapWithKeys(fn (self $format) => [$format->value => route($route, [...$parametres, $format])])->all();
     }
 }

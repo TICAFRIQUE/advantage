@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\FormatExport;
 use App\Enums\Role;
 use App\Enums\TypeOperationCarte;
 use App\Http\Controllers\Gestion\ExportController;
@@ -119,4 +120,12 @@ it('renders every page of the partner space', function () {
     }
 
     fumeeTableau(connecter($this->operateur)->getJson(route('partenaire.historique.donnees', ['draw' => 1, 'start' => 0, 'length' => 50])));
+
+    foreach (FormatExport::cases() as $format) {
+        $reponse = connecter($this->operateur)->get(route('partenaire.historique.export', $format));
+        $contenu = $format === FormatExport::Pdf ? $reponse->getContent() : $reponse->streamedContent();
+
+        expect($reponse->getStatusCode())->toBe(200, "Export de l'historique en {$format->value}")
+            ->and(strlen($contenu))->toBeGreaterThan(100);
+    }
 });

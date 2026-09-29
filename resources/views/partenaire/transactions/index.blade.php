@@ -26,7 +26,8 @@
     <div class="card border-0 shadow-sm">
         <div class="card-body">
             <table class="table table-striped align-middle w-100" id="tableau-transactions"
-                   data-source="{{ route('partenaire.historique.donnees') }}" data-filtres="#filtres-transactions">
+                   data-source="{{ route('partenaire.historique.donnees') }}" data-filtres="#filtres-transactions"
+                   @can('exporter-historique') data-exports='@json(App\Enums\FormatExport::urlsRoute('partenaire.historique.export'))' @endcan>
                 <thead>
                     <tr>
                         <th scope="col" data-colonne="validee_le">Date</th>

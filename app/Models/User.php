@@ -104,6 +104,16 @@ class User extends Authenticatable
     }
 
     /**
+     * Actions de ce compte inscrites au journal d'audit (Mon profil).
+     *
+     * @return HasMany<JournalAudit, $this>
+     */
+    public function journauxAudit(): HasMany
+    {
+        return $this->hasMany(JournalAudit::class, 'acteur_id');
+    }
+
+    /**
      * Nom d'utilisateur toujours stocké en minuscules (connexion insensible à la casse).
      *
      * @return Attribute<string, string>
