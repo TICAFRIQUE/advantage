@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Role;
+use App\Http\Requests\Auth\ConnexionRequest;
 use App\Models\Partenaire;
 use App\Models\User;
 use Database\Seeders\RolesEtPermissionsSeeder;
@@ -68,4 +69,13 @@ function avecPinRecent(User $user): TestCase
         'connecte_le' => now()->getTimestamp(),
         'auth.password_confirmed_at' => now()->getTimestamp(),
     ]);
+}
+
+/**
+ * Formulaire de connexion affiché depuis quelques secondes : passe le filtre
+ * anti-robots de ConnexionRequest comme un humain.
+ */
+function formulaireConnexionAffiche(): TestCase
+{
+    return test()->withSession([ConnexionRequest::CLE_AFFICHAGE => now()->subSeconds(5)->getTimestamp()]);
 }

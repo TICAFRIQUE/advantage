@@ -31,7 +31,12 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Fortify::loginView(fn () => view('auth.connexion'));
+        // Heure d'affichage du formulaire : un envoi trop rapide trahit un robot (ConnexionRequest).
+        Fortify::loginView(function () {
+            session()->put(ConnexionRequest::CLE_AFFICHAGE, now()->getTimestamp());
+
+            return view('auth.connexion');
+        });
         Fortify::confirmPasswordView(fn () => view('auth.confirmer-mot-de-passe'));
 
         Fortify::authenticateUsing(app(AuthentifierUtilisateur::class));

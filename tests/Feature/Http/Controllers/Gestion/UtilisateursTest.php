@@ -161,8 +161,8 @@ describe('fiche et modification', function () {
             ->assertSessionHas('succes');
         auth()->logout();
 
-        $this->post(route('login.store'), ['nom_utilisateur' => 'ancien.nom', 'password' => '24680'])->assertSessionHasErrors();
-        $this->post(route('login.store'), ['nom_utilisateur' => 'nouveau.nom', 'password' => '24680'])->assertRedirect(route('accueil-espace'));
+        formulaireConnexionAffiche()->post(route('login.store'), ['nom_utilisateur' => 'ancien.nom', 'password' => '24680'])->assertSessionHasErrors();
+        formulaireConnexionAffiche()->post(route('login.store'), ['nom_utilisateur' => 'nouveau.nom', 'password' => '24680'])->assertRedirect(route('accueil-espace'));
 
         expect($agent->fresh()->modifie_par_id)->toBe($admin->id)
             ->and(JournalAudit::where('action', 'utilisateur.modifie')->where('entite_id', $agent->id)->latest('id')->first()->donnees['apres'])

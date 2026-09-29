@@ -5,6 +5,7 @@ use App\Http\Middleware\EntetesSecurite;
 use App\Http\Middleware\EspaceGestion;
 use App\Http\Middleware\PartenaireActif;
 use App\Http\Middleware\PartenaireCourantRequis;
+use App\Http\Middleware\ProtectionRobots;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -29,7 +30,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'partenaire.courant' => PartenaireCourantRequis::class,
         ]);
 
-        $middleware->web(append: [EntetesSecurite::class]);
+        // Avant la session et la base (après TrustProxies : vraie IP du client).
+        $middleware->append(ProtectionRobots::class);
+
+        $middleware->web(append: [EntetesSecurite::class, 'throttle:navigation']);
 
         // Préférence d'affichage écrite en JavaScript (aucune donnée sensible).
         $middleware->encryptCookies(except: ['barre_reduite']);

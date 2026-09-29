@@ -15,7 +15,8 @@ Commandes à exécuter sur le serveur de production (hébergement mutualisé cPa
 - MySQL **8.0** ou plus. L'utilisateur MySQL doit avoir le privilège **TRIGGER** : le journal d'audit et le registre des purges sont protégés par des triggers créés par les migrations.
 - Si la journalisation binaire est active (fréquent en mutualisé), les triggers exigent `log_bin_trust_function_creators = 1` ou le privilège SUPER : à demander à l'hébergeur si la migration échoue sur `CREATE TRIGGER`.
 - HTTPS actif (certificat SSL) sur le domaine.
-- La racine web du domaine doit pointer vers le dossier `public/` du projet (jamais vers la racine du projet).
+- La racine web du domaine doit pointer vers le dossier `public/` du projet (jamais vers la racine du projet). Filet de sécurité : le `.htaccess` à la racine du projet renvoie tout vers `public/`, donc `.env`, `.git` ou `vendor` ne sont jamais servis, même en cas d'erreur de réglage.
+- Si l'hébergeur le permet : `expose_php = Off` (php.ini) et `ServerTokens Prod` (Apache), pour ne pas annoncer les versions exactes aux robots.
 
 Vérifier la version de PHP en ligne de commande (elle peut différer de celle du site) :
 
@@ -58,6 +59,7 @@ APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://votre-domaine.ci
 LOG_LEVEL=warning
+LOG_STACK=daily
 
 DB_DATABASE=...
 DB_USERNAME=...
@@ -133,6 +135,14 @@ mkdir -p public/uploads && chmod 775 public/uploads
 php artisan optimize
 ```
 
+### 2.7 Contrôle de sécurité
+
+```bash
+php artisan securite:verifier
+```
+
+La commande vérifie la configuration sans afficher aucun secret : environnement, débogage, clés, HTTPS, cookies, journal, fournisseur SMS, dossier des sauvegardes, fichiers construits, droits du `.env`. Elle indique la correction de chaque point non conforme. Ne pas ouvrir la plateforme tant qu'elle signale un point à corriger.
+
 ## 3. Tâches planifiées (cron)
 
 Deux entrées cron (cPanel → *Tâches Cron*), exécutées chaque minute :
@@ -168,6 +178,7 @@ php artisan permissions:synchroniser
 php artisan optimize:clear
 php artisan optimize
 php artisan queue:restart
+php artisan securite:verifier
 php artisan up
 ```
 
@@ -249,6 +260,25 @@ php artisan queue:flush
 
 `queue:flush` supprime définitivement les envois en échec : à n'utiliser qu'après analyse.
 
+### Robots et scanners
+
+La protection est intégrée, sans service externe :
+
+- chemins sondés par les scanners (`.env`, `.git`, `wp-login.php`, `*.php`…) : réponse 404 immédiate, sans session ni accès à la base ;
+- outils de scan connus et requêtes sans navigateur déclaré : refusés ;
+- 10 sondes en 10 minutes depuis une même adresse IP : l'adresse est bloquée 30 minutes (`ROBOTS_SONDES_AVANT_BLOCAGE`, `ROBOTS_DUREE_BLOCAGE_MINUTES`) ;
+- navigation limitée à 120 requêtes par minute et par IP avant connexion, puis 600 par minute et par compte ;
+- connexion : un champ piège invisible et un délai minimal écartent les robots, qui reçoivent le même message qu'un PIN erroné ;
+- aucune page indexée par les moteurs de recherche (`robots.txt`, en-tête `X-Robots-Tag`).
+
+Débloquer une adresse (par exemple le réseau d'une agence bloqué par erreur) :
+
+```bash
+php artisan robots:debloquer 203.0.113.10
+```
+
+Derrière Cloudflare ou un répartiteur, renseigner `TRUSTED_PROXIES` : sinon toutes les requêtes semblent venir du proxy, et le blocage viserait tout le monde.
+
 ### Maintenance et cache
 
 ```bash
@@ -301,6 +331,8 @@ Conserver aussi en lieu sûr, hors du serveur : le fichier `.env`, en particulie
 **Serveur**
 - [ ] Racine web sur `public/`, HTTPS actif, `.env` en `chmod 600`.
 - [ ] `php artisan about` : `Environment: production`, `Debug Mode: OFF`.
+- [ ] `php artisan securite:verifier` : « Configuration de production conforme ».
+- [ ] `https://votre-domaine.ci/.env` et `https://votre-domaine.ci/composer.json` répondent 403 ou 404.
 - [ ] `APP_KEY` et `PLATEFORME_CLE_HMAC` générés **et** copiés hors du serveur.
 - [ ] `SESSION_SECURE_COOKIE=true`, `SESSION_ENCRYPT=true`.
 - [ ] `TRUSTED_PROXIES` renseigné si le site est derrière Cloudflare ou un répartiteur (sinon les limites par IP visent le proxy).

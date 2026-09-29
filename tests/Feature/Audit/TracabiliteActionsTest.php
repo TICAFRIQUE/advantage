@@ -52,7 +52,7 @@ it('records readable data for logins and card activations', function () {
     $agent = utilisateurAvecRole(Role::Agent, ['nom_utilisateur' => 'yao.agent']);
     $agent->forceFill(['password' => '24680'])->save();
 
-    $this->withHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 Chrome/140.0 Safari/537.36')
+    formulaireConnexionAffiche()->withHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 Chrome/140.0 Safari/537.36')
         ->post(route('login.store'), ['nom_utilisateur' => 'yao.agent', 'password' => '24680']);
 
     expect(JournalAudit::where('action', 'connexion.reussie')->sole()->donnees)

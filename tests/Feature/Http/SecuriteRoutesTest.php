@@ -117,7 +117,7 @@ it('confirms the password with the correct pin', function () {
 it('ignores a remember-me request', function () {
     $agent = utilisateurAvecRole(Role::Agent);
 
-    $this->post(route('login.store'), [
+    formulaireConnexionAffiche()->post(route('login.store'), [
         'nom_utilisateur' => $agent->nom_utilisateur,
         'password' => UserFactory::PIN,
         'remember' => 'on',

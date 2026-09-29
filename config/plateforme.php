@@ -221,4 +221,26 @@ return [
         'retention_jours' => (int) env('JOURNAL_AUDIT_RETENTION_JOURS', 14),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Protection contre les robots
+    |--------------------------------------------------------------------------
+    |
+    | Chemins sondés par les scanners (.env, .git, wp-login.php…) : 404 immédiat,
+    | sans session ni base, puis blocage temporaire de l'IP au-delà d'un seuil.
+    | Limites de navigation : par IP pour les visiteurs, par compte une fois
+    | connecté (des caisses partagent souvent une même IP mobile : CGNAT).
+    |
+    */
+
+    'robots' => [
+        'sondes_avant_blocage' => (int) env('ROBOTS_SONDES_AVANT_BLOCAGE', 10),
+        'fenetre_sondes_minutes' => 10,
+        'duree_blocage_minutes' => (int) env('ROBOTS_DUREE_BLOCAGE_MINUTES', 30),
+        'requetes_par_minute_visiteur' => (int) env('ROBOTS_REQUETES_PAR_MINUTE_VISITEUR', 120),
+        'requetes_par_minute_connecte' => (int) env('ROBOTS_REQUETES_PAR_MINUTE_CONNECTE', 600),
+        // Délai minimal (secondes) entre l'affichage du formulaire de connexion et son envoi.
+        'delai_minimal_connexion' => (int) env('ROBOTS_DELAI_MINIMAL_CONNEXION', 1),
+    ],
+
 ];

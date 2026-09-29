@@ -1091,3 +1091,13 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
         min-height: 2.25rem;
     }
 }
+
+// Piège à robots du formulaire de connexion : invisible et hors du parcours
+// clavier (pas de display:none, que certains robots savent ignorer).
+.champ-piege {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}

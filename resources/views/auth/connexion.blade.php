@@ -23,6 +23,14 @@
                               x-on:submit="envoi = true">
                             @csrf
 
+                            {{-- Piège à robots : hors écran et ignoré des lecteurs d'écran, un humain le laisse vide. --}}
+                            <div class="champ-piege" aria-hidden="true">
+                                <label for="{{ \App\Http\Requests\Auth\ConnexionRequest::CHAMP_PIEGE }}">Laissez ce champ vide</label>
+                                <input type="text" id="{{ \App\Http\Requests\Auth\ConnexionRequest::CHAMP_PIEGE }}"
+                                       name="{{ \App\Http\Requests\Auth\ConnexionRequest::CHAMP_PIEGE }}"
+                                       value="" tabindex="-1" autocomplete="off">
+                            </div>
+
                             <div class="mb-3">
                                 <label for="nom_utilisateur" class="form-label fw-semibold">Nom d'utilisateur</label>
                                 <input type="text" id="nom_utilisateur" name="nom_utilisateur"

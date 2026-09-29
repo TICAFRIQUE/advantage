@@ -5,6 +5,11 @@
 
     RewriteEngine On
 
+    # Sécurité : fichiers cachés (.env, .git, .htaccess…) et manifestes de
+    # build jamais servis (seul .well-known reste accessible, ex. certificat SSL).
+    RewriteRule (^|/)\.(?!well-known(/|$)) - [F,L]
+    RewriteRule ^build/.*\.json$ - [F,L]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
@@ -22,4 +27,10 @@
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
+</IfModule>
+
+# Sécurité : la version de PHP n'est jamais annoncée (voir aussi ProtectionRobots).
+<IfModule mod_headers.c>
+    Header always unset X-Powered-By
+    Header unset X-Powered-By
 </IfModule>

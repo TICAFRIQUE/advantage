@@ -189,7 +189,7 @@ describe('sauvegardes', function () {
     it('never serves a file outside the backups', function (string $nom) {
         superadminConfirmePourParametres()->get(route('gestion.parametres.sauvegardes.telecharger', $nom))
             ->assertRedirect()->assertSessionHas('erreur', 'Sauvegarde introuvable.');
-    })->with(['..%2F..%2F.env', 'advantage-inconnue.sql.gz', 'advantage-2026-01-01-000000.sql']);
+    })->with(['composer.json', 'advantage-inconnue.sql.gz', 'advantage-2026-01-01-000000.sql']);
 
     it('accepts an absolute writable folder, never the public folder nor a relative path', function () {
         $nouveau = str_replace('\\', '/', sys_get_temp_dir()).'/advantage-autre-'.uniqid();

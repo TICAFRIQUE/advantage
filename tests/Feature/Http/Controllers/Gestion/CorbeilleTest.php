@@ -139,7 +139,7 @@ describe('restauration', function () {
         superadminConfirme()->post(route('gestion.corbeille.comptes.restaurer', $operateur));
         auth()->logout();
 
-        $this->post(route('login.store'), ['nom_utilisateur' => 'caisse.revenue', 'password' => '24680'])
+        formulaireConnexionAffiche()->post(route('login.store'), ['nom_utilisateur' => 'caisse.revenue', 'password' => '24680'])
             ->assertRedirect(route('accueil-espace'));
     });
 

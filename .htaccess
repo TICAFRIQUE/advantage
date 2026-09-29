@@ -1,0 +1,14 @@
+# Filet de sécurité : la racine web doit pointer vers public/. Si elle pointe
+# par erreur vers ce dossier (hébergement mutualisé, serveur local), toute
+# requête est renvoyée dans public/ : .env, .git, storage, vendor, composer.json…
+# ne sont jamais servis.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Sans mod_rewrite : rien n'est servi depuis ce dossier.
+<IfModule !mod_rewrite.c>
+    Require all denied
+</IfModule>

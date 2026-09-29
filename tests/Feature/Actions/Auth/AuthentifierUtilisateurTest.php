@@ -8,7 +8,7 @@ use Illuminate\Testing\TestResponse;
 
 function tenterConnexion(string $nomUtilisateur, string $secret): TestResponse
 {
-    return test()->from(route('login'))->post(route('login.store'), [
+    return formulaireConnexionAffiche()->from(route('login'))->post(route('login.store'), [
         'nom_utilisateur' => $nomUtilisateur,
         'password' => $secret,
     ]);

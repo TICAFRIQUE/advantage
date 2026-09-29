@@ -32,6 +32,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Filet de sécurité : jamais de page de débogage (code source, requêtes
+        // SQL) en production, même si APP_DEBUG=true est resté dans le .env.
+        // Signalé par « php artisan securite:verifier ».
+        if ($this->app->isProduction() && config('app.debug')) {
+            config(['app.debug' => false, 'plateforme.securite.debug_neutralise' => true]);
+        }
+
         $this->app->bind(MoteurSauvegarde::class, MoteurMysql::class);
 
         // Pilote SMS actif. La simulation n'envoie rien : elle est refusée en
@@ -83,6 +90,12 @@ class AppServiceProvider extends ServiceProvider
                 ? EcheancesCartes::resume()
                 : null);
         });
+
+        // Navigation (groupe web) : par compte une fois connecté, par IP sinon
+        // (plusieurs caisses peuvent partager la même IP mobile).
+        RateLimiter::for('navigation', fn (Request $request) => $request->user()
+            ? Limit::perMinute((int) config('plateforme.robots.requetes_par_minute_connecte'))->by('compte:'.$request->user()->id)
+            : Limit::perMinute((int) config('plateforme.robots.requetes_par_minute_visiteur'))->by('ip:'.$request->ip()));
 
         RateLimiter::for('activation-carte', fn (Request $request) => Limit::perMinute(30)->by('agent:'.$request->user()?->id));
         // Anti-énumération des numéros de carte : par opérateur et par partenaire.

@@ -43,7 +43,7 @@ describe('création d\'un opérateur', function () {
 
         auth()->logout();
 
-        $this->post(route('login.store'), ['nom_utilisateur' => 'caisse.test', 'password' => $pin])
+        formulaireConnexionAffiche()->post(route('login.store'), ['nom_utilisateur' => 'caisse.test', 'password' => $pin])
             ->assertRedirect(route('accueil-espace'));
     });
 
@@ -186,7 +186,7 @@ describe('suppression d\'un compte', function () {
         avecPinRecent(utilisateurAvecRole(Role::Admin))->delete(route('gestion.comptes.supprimer', $operateur));
         auth()->logout();
 
-        $this->post(route('login.store'), ['nom_utilisateur' => 'caisse.archivee', 'password' => '24680'])
+        formulaireConnexionAffiche()->post(route('login.store'), ['nom_utilisateur' => 'caisse.archivee', 'password' => '24680'])
             ->assertSessionHasErrors();
         $this->assertGuest();
 
