@@ -8,6 +8,7 @@ use App\Policies\UserPolicy;
 use App\Services\PartenaireCourant;
 use App\Services\Sms\PasserelleSms;
 use App\Services\Sms\PasserelleSmsSimulee;
+use App\Services\Sms\PasserelleSmsTicafrique;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Eloquent\Model;
@@ -34,6 +35,12 @@ class AppServiceProvider extends ServiceProvider
                 'simulation' => $app->isProduction()
                     ? throw new RuntimeException('Le pilote SMS « simulation » est interdit en production : configurez SMS_DRIVER.')
                     : new PasserelleSmsSimulee,
+                'ticafrique' => new PasserelleSmsTicafrique(
+                    (string) config('services.ticafrique.url'),
+                    (string) config('services.ticafrique.cle'),
+                    (string) (config('services.ticafrique.expediteur') ?: config('plateforme.sms.expediteur')),
+                    (int) config('services.ticafrique.delai_secondes', 10),
+                ),
                 default => throw new InvalidArgumentException("Pilote SMS inconnu : « {$pilote} »."),
             };
         });

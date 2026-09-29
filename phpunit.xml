@@ -29,6 +29,10 @@
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
+        <!-- Jamais d'envoi réel de SMS depuis les tests, quel que soit le .env. -->
+        <env name="SMS_DRIVER" value="simulation"/>
+        <env name="TICAFRIQUE_SMS_API_KEY" value=""/>
+        <env name="TICAFRIQUE_SMS_API_URL" value=""/>
         <env name="PLATEFORME_CLE_HMAC" value="base64:hBXQjVDFxRv1hqljL6VvAvrJ1GBUy3LsFKTZjj3qn5s="/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>

@@ -22,6 +22,14 @@ return [
         'key' => env('RESEND_API_KEY'),
     ],
 
+    // Fournisseur SMS (pilote « ticafrique », SMS_DRIVER=ticafrique).
+    'ticafrique' => [
+        'url' => env('TICAFRIQUE_SMS_API_URL'),
+        'cle' => env('TICAFRIQUE_SMS_API_KEY'),
+        'expediteur' => env('TICAFRIQUE_SMS_SENDER_ID'),
+        'delai_secondes' => (int) env('TICAFRIQUE_SMS_TIMEOUT', 10),
+    ],
+
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),

@@ -70,14 +70,17 @@ SUPERADMIN_NOM_UTILISATEUR=superadmin
 SUPERADMIN_MOT_DE_PASSE=<mot de passe fort, 12 caractères minimum>
 PLATEFORME_CLE_HMAC=<clé générée ci-dessus>
 
-SMS_DRIVER=<pilote du fournisseur réel>
+SMS_DRIVER=ticafrique
 SMS_EXPEDITEUR=ADVANTAGE
+TICAFRIQUE_SMS_API_URL=https://sms.ticafrique.ci/api/v1/sms/send
+TICAFRIQUE_SMS_API_KEY=<clé API TICAFRIQUE>
+TICAFRIQUE_SMS_SENDER_ID=<expéditeur validé par TICAFRIQUE>
 
 # Uniquement derrière un proxy / CDN (Cloudflare, répartiteur…)
 TRUSTED_PROXIES=
 ```
 
-> `SMS_DRIVER=simulation` est **refusé en production** : l'application lève une erreur tant que le pilote du fournisseur SMS n'est pas configuré.
+> `SMS_DRIVER=simulation` est **refusé en production**. Avec `SMS_DRIVER=ticafrique`, l'URL doit être en HTTPS et la clé renseignée, sinon l'envoi échoue avec un message explicite.
 
 Protéger le fichier `.env` :
 
@@ -167,7 +170,7 @@ php artisan queue:failed
 ```
 
 - `about` doit afficher `Environment: production` et `Debug Mode: OFF`.
-- Tester une connexion, une vérification de carte et la réception d'un SMS réel.
+- Tester une connexion, puis `php artisan sms:tester <votre numéro>`, puis une vérification de carte avec réception du code par SMS.
 
 ## 6. Commandes d'exploitation
 
@@ -199,6 +202,14 @@ La purge automatique tourne chaque nuit. Purge manuelle jusqu'à une date, avec 
 
 ```bash
 php artisan journal:purger --avant=2026-01-31 --motif="Motif de la purge"
+```
+
+### SMS
+
+Vérifier les accès au fournisseur en envoyant un SMS de test (sans donnée sensible) à votre propre numéro :
+
+```bash
+php artisan sms:tester 0707123456
 ```
 
 ### File d'attente (SMS)

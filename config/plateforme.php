@@ -140,9 +140,9 @@ return [
     */
 
     'sms' => [
+        // « ticafrique » : envoi réel via TICAFRIQUE SMS (config/services.php).
         // « simulation » : aucun envoi réel, messages consultables dans la boîte
-        // « SMS simulés » (interdit en production). Le pilote du fournisseur
-        // sera ajouté dès que son API sera disponible.
+        // « SMS simulés » (interdit en production).
         'driver' => env('SMS_DRIVER', 'simulation'),
         'expediteur' => env('SMS_EXPEDITEUR', 'ADVANTAGE'),
         'tentatives' => 3,

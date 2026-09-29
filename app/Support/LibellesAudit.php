@@ -59,6 +59,9 @@ final class LibellesAudit
             'otp.valide' => 'Code SMS validé',
             'transaction.creee' => 'Transaction validée',
         ],
+        'Exploitation' => [
+            'sms.test' => 'SMS de test (configuration)',
+        ],
     ];
 
     /**
