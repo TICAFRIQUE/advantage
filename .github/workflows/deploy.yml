@@ -1,0 +1,176 @@
+name: Déploiement
+
+# Push sur main (ou bouton « Run workflow ») : tests, puis build complet
+# (vendor sans dev + CSS/JS) envoyé en rsync sur le serveur. Le .env, storage/
+# et public/uploads/ du serveur ne sont jamais touchés. Voir docs/production.md § 9.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+# Jamais deux déploiements en même temps, jamais d'interruption en cours.
+concurrency:
+  group: deploiement-production
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: advantage_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    # Base advantage_test et SMS simulés : fixés par phpunit.xml.
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_USERNAME: root
+      DB_PASSWORD: root
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, bcmath, pdo_mysql, gd, zip, curl, intl, fileinfo
+          coverage: none
+
+      - name: Installer les dépendances PHP
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Vérifier le style (Pint)
+        run: vendor/bin/pint --test
+
+      - name: Préparer l'environnement de test
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Exécuter les tests
+        run: php artisan test --compact
+
+  deploy:
+    name: Build & Deploy
+    needs: test
+    runs-on: ubuntu-latest
+    environment: PRODUCTION
+    if: github.ref == 'refs/heads/main'
+    env:
+      SERVEUR: ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}
+      DOSSIER: ${{ secrets.SERVER_PATH }}
+      SSH_PORT: ${{ secrets.SSH_PORT || 22 }}
+      # PHP 8.3 en ligne de commande sur le serveur (ex. /opt/cpanel/ea-php83/root/usr/bin/php).
+      PHP: ${{ vars.PHP_BIN || 'php' }}
+    steps:
+      # ── 1. Récupérer le code ─────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 2. PHP + Composer (dépendances de production uniquement) ─────
+      - name: Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_mysql, xml, curl, zip, bcmath, intl, gd
+          coverage: none
+
+      - name: Installer les dépendances Composer (prod only)
+        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-progress
+
+      # ── 3. Node + Vite (public/build, non versionné) ─────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Installer les dépendances JS
+        run: npm ci
+
+      - name: Construire les assets (Vite)
+        run: npm run build
+
+      # ── 4. Connexion SSH ─────────────────────────────────────────────
+      - name: Configurer SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "$SSH_PORT" "$SERVER_HOST" >> ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOF
+          Host $SERVER_HOST
+            Port $SSH_PORT
+            IdentityFile ~/.ssh/deploy_key
+            IdentitiesOnly yes
+            PubkeyAcceptedAlgorithms +ssh-rsa
+            KexAlgorithms +diffie-hellman-group-exchange-sha256
+            ServerAliveInterval 30
+          EOF
+
+      # ── 5. Contrôle de sécurité puis mise en maintenance ─────────────
+      # Configuration (.env) non conforme : arrêt avant toute coupure.
+      - name: Mise en maintenance
+        run: |
+          ssh "$SERVEUR" "cd '$DOSSIER' && $PHP artisan securite:verifier && $PHP artisan down --retry=60"
+
+      # ── 6. Envoi des fichiers via rsync ──────────────────────────────
+      # Les chemins exclus ne sont jamais supprimés par --delete.
+      - name: Déployer via rsync
+        run: |
+          rsync -az --delete --stats \
+            --exclude='/.git/' \
+            --exclude='/.github/' \
+            --exclude='/.env' \
+            --exclude='/node_modules/' \
+            --exclude='/tests/' \
+            --exclude='/storage/' \
+            --exclude='/bootstrap/cache/' \
+            --exclude='/public/uploads/' \
+            --exclude='/public/storage' \
+            --exclude='/public/hot' \
+            --exclude='/.claude/' --exclude='/.agents/' --exclude='/.cursor/' --exclude='/.kilo/' \
+            --exclude='/CLAUDE.md' --exclude='/AGENTS.md' --exclude='/boost.json' \
+            --exclude='/*.pdf' \
+            --exclude='/public/.well-known/' --exclude='/public/cgi-bin/' \
+            --exclude='.user.ini' --exclude='php.ini' --exclude='error_log' \
+            ./ "$SERVEUR:$DOSSIER/"
+
+      # ── 7. Commandes post-déploiement ────────────────────────────────
+      # Un échec laisse le site en maintenance : une base à moitié migrée
+      # ne doit jamais servir (voir docs/production.md § 9).
+      - name: Post-deploy (migrations, permissions, caches)
+        run: |
+          ssh "$SERVEUR" "bash -s" <<EOF
+            set -e
+            cd '$DOSSIER'
+            mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache/data storage/logs bootstrap/cache public/uploads
+            # Caches de l'ancienne version (paquets, config, routes) : supprimés avant
+            # tout appel à artisan, qui planterait sur un paquet retiré de vendor/.
+            find bootstrap/cache -maxdepth 1 -name '*.php' -delete
+            $PHP artisan optimize:clear
+            $PHP artisan migrate --force
+            $PHP artisan permissions:synchroniser
+            $PHP artisan optimize
+            $PHP artisan queue:restart
+            $PHP artisan securite:verifier
+            $PHP artisan up
+          EOF
+
+      - name: Nettoyage
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

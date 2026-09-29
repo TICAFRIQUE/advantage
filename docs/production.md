@@ -168,6 +168,8 @@ php artisan schedule:list
 
 ## 4. Chaque déploiement (mise à jour)
 
+> Ces étapes sont **automatisées par GitHub Actions** à chaque push sur `main` (voir § 9). La procédure manuelle ci-dessous reste valable en secours (sans `git pull` si le serveur est alimenté par rsync).
+
 ```bash
 cd /home/compte/advantage
 php artisan down --retry=60
@@ -356,3 +358,52 @@ Conserver aussi en lieu sûr, hors du serveur : le fichier `.env`, en particulie
 - [ ] Comptes admin et agents créés (PIN transmis en main propre), rôles vérifiés.
 - [ ] Partenaires créés avec leur taux, un opérateur par partenaire.
 - [ ] Parcours complet testé : activation d'une carte → vérification chez un partenaire → code SMS → validation → transaction visible dans le rapport.
+
+## 9. Déploiement automatique (GitHub Actions)
+
+Un seul workflow : `.github/workflows/deploy.yml`, lancé à chaque push sur `main` (ou par *Actions › Déploiement › Run workflow*). Circuit : travailler sur `developpement`, fusionner dans `main` → déploiement automatique.
+
+### 9.1 Déroulement
+
+1. **Tests** : Pint + suite complète sur MySQL 8. Au moindre échec, rien n'est envoyé.
+2. **Build** sur GitHub : `composer install --no-dev` et `npm run build` (ni Node ni Composer nécessaires sur le serveur).
+3. `php artisan securite:verifier` sur le serveur (s'il signale un point à corriger : arrêt, site non touché), puis `php artisan down`.
+4. **rsync** du projet vers le serveur. Jamais touchés : `.env`, `storage/`, `public/uploads/` (logo), `.git/`, et les fichiers de l'hébergeur (`.user.ini`, `php.ini`, `error_log`, `public/.well-known/`, `public/cgi-bin/`). **Tout autre fichier absent du dépôt est supprimé** (`--delete`) : le dossier des sauvegardes doit donc être hors du projet ou dans `storage/` (contrôlé par `securite:verifier`).
+5. Suppression des caches de l'ancienne version (`bootstrap/cache/*.php`), puis `optimize:clear`, `migrate --force`, `permissions:synchroniser`, `optimize`, `queue:restart`, `securite:verifier`, puis `php artisan up`.
+
+Deux déploiements ne tournent jamais en même temps.
+
+**En cas d'échec** à partir de l'étape 3, le site **reste en maintenance** (une base à moitié migrée ne doit jamais servir) : se connecter en SSH, lire l'erreur dans le journal du job, corriger (`php artisan migrate:status`…), puis `php artisan up` — ou pousser un correctif sur `main`.
+
+Revenir à une version antérieure : `git revert` du commit fautif sur `main`, puis push. Une migration déjà passée n'est pas annulée par un revert : prévoir une migration corrective.
+
+### 9.2 Mise en place (une seule fois)
+
+Prérequis : première installation faite (§ 2 : `.env`, clés, superadmin, cron, `public/build` construit) avec une version du code qui contient `securite:verifier`, et `php artisan securite:verifier` conforme sur le serveur : c'est le premier contrôle de chaque déploiement, qui s'arrête sinon. Accès SSH au compte (cPanel → *Accès SSH*). Le dossier `.git` du serveur n'est plus utilisé par les déploiements.
+
+> Tant que les secrets ci-dessous ne sont pas renseignés, un push sur `main` lance les tests puis échoue à l'étape de connexion SSH, sans rien toucher : aucun risque.
+
+**a) Clé SSH de déploiement**, sur le poste de développement :
+
+```bash
+ssh-keygen -t ed25519 -f deploiement_advantage -N "" -C "github-actions-advantage"
+```
+
+- `deploiement_advantage.pub` : cPanel → *Accès SSH › Gérer les clés SSH › Importer*, puis **Autoriser** la clé.
+- `deploiement_advantage` (clé privée) : secret `SSH_PRIVATE_KEY` ci-dessous, puis **supprimer le fichier** du poste.
+
+**b) Environnement GitHub** : dépôt → *Settings › Environments* → `PRODUCTION` (limiter *Deployment branches* à `main` ; *Required reviewers* facultatif pour valider chaque mise en production).
+
+| Secret | Exemple |
+|---|---|
+| `SERVER_HOST` | `serveur.hebergeur.com` |
+| `SERVER_USER` | `compte` (identifiant cPanel) |
+| `SERVER_PATH` | `/home/compte/advantage` (sans `/` final) |
+| `SSH_PORT` | facultatif, `22` par défaut |
+| `SSH_PRIVATE_KEY` | contenu entier de `deploiement_advantage` |
+
+| Variable (facultative) | Exemple |
+|---|---|
+| `PHP_BIN` | `/opt/cpanel/ea-php83/root/usr/bin/php`, si `php -v` en SSH n'affiche pas 8.3 ou plus |
+
+Le `.env` de production reste **uniquement sur le serveur**, jamais dans GitHub.
