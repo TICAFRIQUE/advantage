@@ -45,7 +45,14 @@
                         </div>
                     @else
                         <p class="small text-secondary mb-0">
-                            <i class="bi bi-lock me-1" aria-hidden="true"></i>Vous ne pouvez pas gérer ce compte (rang supérieur ou égal au vôtre, ou droits que vous ne détenez pas).
+                            @if ($compte->is(auth()->user()))
+                                <i class="bi bi-person-circle me-1" aria-hidden="true"></i>C'est votre compte : il ne se modifie pas depuis cette page.
+                                <a href="{{ route('profil') }}">Voir mon profil</a>.
+                            @elseif ($compte->hasRole(App\Enums\Role::Superadmin))
+                                <i class="bi bi-shield-lock me-1" aria-hidden="true"></i>Compte super administrateur : il se gère uniquement depuis la configuration du serveur.
+                            @else
+                                <i class="bi bi-lock me-1" aria-hidden="true"></i>Vous ne pouvez pas gérer ce compte (rang supérieur ou égal au vôtre, ou droits que vous ne détenez pas).
+                            @endif
                         </p>
                     @endcan
                 </div>

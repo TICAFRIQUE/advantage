@@ -5,6 +5,7 @@ use App\Enums\Role;
 use App\Http\Controllers\AccueilEspaceController;
 use App\Http\Controllers\Gestion;
 use App\Http\Controllers\Partenaire;
+use App\Http\Controllers\ProfilController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('accueil');
@@ -58,6 +59,11 @@ $parcoursTransaction = function (string $permission): void {
 
 Route::middleware(['auth', 'compte.actif'])->group(function () use ($parcoursTransaction) {
     Route::get('/espace', AccueilEspaceController::class)->name('accueil-espace');
+
+    // Mon profil : tout compte d'un des deux espaces (lecture seule).
+    Route::get('/profil', ProfilController::class)
+        ->middleware('permission:'.Permission::AccederGestion->value.'|'.Permission::AccederEspacePartenaire->value)
+        ->name('profil');
 
     /*
     |----------------------------------------------------------------------

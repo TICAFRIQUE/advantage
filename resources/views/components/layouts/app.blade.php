@@ -60,6 +60,9 @@
                         </div>
                     </div>
                     <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="{{ route('profil') }}">
+                        <i class="bi bi-person-circle me-2" aria-hidden="true"></i>Mon profil
+                    </a>
                     <a class="dropdown-item" href="{{ route('accueil-espace') }}">
                         <i class="bi bi-grid me-2" aria-hidden="true"></i>Mon espace
                     </a>
