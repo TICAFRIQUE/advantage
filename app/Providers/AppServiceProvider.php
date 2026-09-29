@@ -61,6 +61,7 @@ class AppServiceProvider extends ServiceProvider
         // Signale en développement toute tentative d'affecter un attribut non
         // autorisé (protection mass assignment rendue visible).
         Model::preventSilentlyDiscardingAttributes(! $this->app->isProduction());
+        Model::preventLazyLoading(! $this->app->isProduction());
 
         RateLimiter::for('activation-carte', fn (Request $request) => Limit::perMinute(30)->by('agent:'.$request->user()?->id));
         // Anti-énumération des numéros de carte : par opérateur et par partenaire.
