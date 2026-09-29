@@ -17,8 +17,9 @@ class CarteObserver
     {
         JournaliserAudit::enregistrer('carte.activee', $carte, [
             'apres' => [
-                'numero_carte' => $carte->numero_carte,
-                'titulaire_id' => $carte->titulaire_id,
+                'numero_carte' => $carte->numeroFormate(),
+                'titulaire' => $carte->titulaire?->nomComplet(),
+                'telephone' => $carte->titulaire?->telephoneFormate(),
                 'statut' => $carte->statut->value,
                 'active_le' => $carte->active_le?->toDateTimeString(),
                 'expire_le' => $carte->expire_le?->toDateTimeString(),
@@ -47,6 +48,7 @@ class CarteObserver
             in_array('statut', $modifies, true) ? 'carte.statut_modifie' : 'carte.modifiee',
             $carte,
             [
+                'numero_carte' => $carte->numeroFormate(),
                 'avant' => array_intersect_key($carte->getRawOriginal(), array_flip($modifies)),
                 'apres' => array_intersect_key($carte->getAttributes(), array_flip($modifies)),
             ],

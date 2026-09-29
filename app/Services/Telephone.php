@@ -89,6 +89,14 @@ class Telephone
     }
 
     /**
+     * Numéro partiellement masqué pour les traces : « +22507******93 ».
+     */
+    public static function masquer(string $telephone): string
+    {
+        return mb_substr($telephone, 0, 6).str_repeat('*', max(0, mb_strlen($telephone) - 8)).mb_substr($telephone, -2);
+    }
+
+    /**
      * @return array<string, array{nom: string, indicatif: string, longueur: int, prefixe_national: ?string, groupes: list<int>}>
      */
     public static function tousLesPays(): array

@@ -29,6 +29,7 @@ class FiltrerCartesRequest extends FormRequest implements DefinitListe
             'recherche' => ['nullable', 'string', 'max:100'],
             'statut' => ['nullable', Rule::enum(StatutCarte::class)],
             'mes_activations' => ['nullable', 'boolean'],
+            'expire_dans' => ['nullable', 'integer', 'in:1,2,3'],
         ];
     }
 

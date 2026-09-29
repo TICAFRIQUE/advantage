@@ -179,7 +179,7 @@ Règles métier structurantes à respecter dans les migrations/modèles :
 - Le partenaire ne voit **jamais** le nom/téléphone du titulaire avant validation OTP — uniquement le statut de la carte.
 - Idempotence sur la validation OTP (double soumission réseau ne doit jamais créer deux `transactions`).
 - Contrainte unique en base sur `cartes.numero_carte` pour empêcher toute double activation en cas de concurrence entre agents.
-- `journaux_audit` : jamais modifiable ; suppression uniquement via l'action `PurgerJournalAudit` (verrou de session MySQL levé le temps de la purge, trigger bloquant sinon), chaque purge étant tracée dans `purges_journal_audit`. Tout ce que fait un agent ou un partenaire est journalisé, consultations sensibles comprises.
+- `journaux_audit` : jamais modifiable ; suppression uniquement via l'action `PurgerJournalAudit` (verrou de session MySQL levé le temps de la purge, trigger bloquant sinon), chaque purge étant tracée dans `purges_journal_audit`. Toute action d'un agent ou d'un partenaire est journalisée (créations, modifications, suppressions, connexions, vérifications de carte en caisse), avec des données lisibles (numéro de carte, nom du partenaire…) ; les simples consultations (ouverture d'une fiche, recherches) ne le sont pas (décision du 29/09/2026).
 
 ## 8. Conventions de code
 

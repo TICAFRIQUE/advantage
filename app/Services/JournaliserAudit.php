@@ -51,6 +51,40 @@ class JournaliserAudit
     }
 
     /**
+     * Navigateur et système, abrégés (« Chrome 140 · Windows »), pour les
+     * connexions : aide à repérer un accès inhabituel sans conserver
+     * l'empreinte complète du navigateur.
+     */
+    public static function navigateur(): ?string
+    {
+        $agent = (string) request()->userAgent();
+
+        if ($agent === '') {
+            return null;
+        }
+
+        $navigateur = match (true) {
+            (bool) preg_match('/Edg\/(\d+)/', $agent, $m) => 'Edge '.$m[1],
+            (bool) preg_match('/OPR\/(\d+)/', $agent, $m) => 'Opera '.$m[1],
+            (bool) preg_match('/Chrome\/(\d+)/', $agent, $m) => 'Chrome '.$m[1],
+            (bool) preg_match('/Firefox\/(\d+)/', $agent, $m) => 'Firefox '.$m[1],
+            (bool) preg_match('/Version\/(\d+).*Safari/', $agent, $m) => 'Safari '.$m[1],
+            default => 'Autre navigateur',
+        };
+
+        $systeme = match (true) {
+            str_contains($agent, 'Android') => 'Android',
+            str_contains($agent, 'iPhone') || str_contains($agent, 'iPad') => 'iOS',
+            str_contains($agent, 'Windows') => 'Windows',
+            str_contains($agent, 'Mac OS') => 'macOS',
+            str_contains($agent, 'Linux') => 'Linux',
+            default => null,
+        };
+
+        return $systeme ? "{$navigateur} · {$systeme}" : $navigateur;
+    }
+
+    /**
      * Retire récursivement les champs sensibles.
      *
      * @param  array<mixed>  $donnees

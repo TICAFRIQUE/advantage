@@ -31,7 +31,7 @@ class PartenaireCourantController extends Controller
         $partenaire = Partenaire::query()->findOrFail($request->validated('partenaire_id'));
 
         PartenaireCourant::definir($partenaire);
-        JournaliserAudit::enregistrer('partenaire.choisi', $partenaire);
+        JournaliserAudit::enregistrer('partenaire.choisi', $partenaire, ['partenaire' => $partenaire->nom]);
 
         return redirect()->route('gestion.transaction.verifier')
             ->with('succes', "Vous agissez désormais pour le compte de {$partenaire->nom}.");

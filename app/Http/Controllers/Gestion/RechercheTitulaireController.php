@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Gestion\RechercherTitulaireRequest;
 use App\Models\Carte;
 use App\Models\Titulaire;
-use App\Services\JournaliserAudit;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -21,8 +20,6 @@ class RechercheTitulaireController extends Controller
             ->parTelephone($request->validated('telephone'), $request->validated('pays_telephone'))
             ->with(['cartes' => fn ($query) => $query->latest('active_le')])
             ->first();
-
-        JournaliserAudit::enregistrer('titulaire.recherche', $titulaire, ['trouve' => $titulaire !== null]);
 
         if ($titulaire === null) {
             return response()->json(['existe' => false]);

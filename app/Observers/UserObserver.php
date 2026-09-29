@@ -22,7 +22,14 @@ class UserObserver
     public function created(User $user): void
     {
         JournaliserAudit::enregistrer('utilisateur.cree', $user, [
-            'apres' => $user->only(['nom', 'nom_utilisateur', 'partenaire_id', 'statut']),
+            'apres' => array_filter([
+                'nom' => $user->nom,
+                'nom_utilisateur' => $user->nom_utilisateur,
+                'telephone' => $user->telephone,
+                'email' => $user->email,
+                'partenaire' => $user->partenaire?->nom,
+                'statut' => $user->statut?->value,
+            ]),
         ]);
     }
 
@@ -50,11 +57,11 @@ class UserObserver
 
     public function deleted(User $user): void
     {
-        JournaliserAudit::enregistrer('utilisateur.supprime', $user);
+        JournaliserAudit::enregistrer('utilisateur.supprime', $user, ['avant' => $user->only(['nom', 'nom_utilisateur'])]);
     }
 
     public function restored(User $user): void
     {
-        JournaliserAudit::enregistrer('utilisateur.restaure', $user);
+        JournaliserAudit::enregistrer('utilisateur.restaure', $user, ['apres' => $user->only(['nom', 'nom_utilisateur'])]);
     }
 }

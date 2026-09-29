@@ -60,8 +60,8 @@ class DemanderOtpAction
             $this->envoiSms->envoyer($carte->titulaire->telephone, $this->message($code, $partenaire), TypeSms::Otp);
 
             JournaliserAudit::enregistrer('otp.demande', $demande, [
-                'carte_id' => $carte->id,
-                'partenaire_id' => $partenaire->id,
+                'numero_carte' => $carte->numeroFormate(),
+                'partenaire' => $partenaire->nom,
             ], $operateur);
 
             return $demande;

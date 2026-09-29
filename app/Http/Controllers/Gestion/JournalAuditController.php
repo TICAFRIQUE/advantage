@@ -63,11 +63,7 @@ class JournalAuditController extends Controller
                 return $lien ? '<a href="'.e($lien).'">'.$texte.'</a>' : $texte;
             })
             ->editColumn('adresse_ip', fn (JournalAudit $j) => $j->adresse_ip ?? '—')
-            ->addColumn('details', fn (JournalAudit $j) => $j->donnees
-                ? '<details><summary class="small">Voir</summary><pre class="small mb-0 journal-details">'
-                    .e(json_encode($j->donnees, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
-                    .'</pre></details>'
-                : '—')
+            ->addColumn('details', fn (JournalAudit $j) => self::details($j))
             // Colonnes HTML : tout contenu y est échappé ci-dessus (e()).
             ->rawColumns(['element', 'details'])
             ->filter(function ($query) use ($request, $liste): void {
@@ -78,6 +74,28 @@ class JournalAuditController extends Controller
                 }
             }, true)
             ->toJson();
+    }
+
+    /**
+     * Détail lisible (champ : valeur, ou avant → après), toutes valeurs échappées.
+     */
+    private static function details(JournalAudit $entree): string
+    {
+        $lignes = LibellesAudit::details($entree->donnees);
+
+        if ($lignes === []) {
+            return '—';
+        }
+
+        $html = '<dl class="journal-details mb-0">';
+
+        foreach ($lignes as $ligne) {
+            $html .= '<dt>'.e($ligne[0]).'</dt><dd>'.(count($ligne) === 3
+                ? '<span class="journal-details__avant">'.e($ligne[1]).'</span> <i class="bi bi-arrow-right" aria-label="devient"></i> <span class="journal-details__apres">'.e($ligne[2]).'</span>'
+                : e($ligne[1])).'</dd>';
+        }
+
+        return $html.'</dl>';
     }
 
     public function purger(PurgerJournalAuditRequest $request, PurgerJournalAudit $purger): RedirectResponse

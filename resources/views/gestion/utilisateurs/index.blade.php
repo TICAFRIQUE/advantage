@@ -5,7 +5,6 @@
 
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1">
         <h1 class="h3 fw-bold mb-0">Utilisateurs du back-office</h1>
-        <x-menu-export liste="utilisateurs" formulaire="#filtres-utilisateurs" tableau="#tableau-utilisateurs" class="ms-auto" />
         @if (App\Services\Droits\GardeDroits::rolesGestionAttribuables(auth()->user()) !== [])
             <a href="{{ route('gestion.utilisateurs.create') }}" class="btn btn-or">
                 <i class="bi bi-person-plus me-1" aria-hidden="true"></i>Nouvel utilisateur
@@ -35,8 +34,8 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-12 col-md-3 d-grid">
-                <button type="submit" class="btn btn-primary">Appliquer</button>
+            <div class="col-12 col-md-auto">
+                <x-boutons-filtre :reinitialiser="route('gestion.utilisateurs.index')" />
             </div>
         </div>
     </form>
@@ -44,6 +43,7 @@
     <div class="card border-0 shadow-sm">
         <div class="card-body">
             <table class="table table-striped align-middle w-100" id="tableau-utilisateurs"
+                   @can('exporter-donnees') data-exports='@json(App\Enums\FormatExport::urls('utilisateurs'))' @endcan
                    data-source="{{ route('gestion.utilisateurs.donnees') }}" data-filtres="#filtres-utilisateurs" data-ordre="asc">
                 <thead>
                     <tr>

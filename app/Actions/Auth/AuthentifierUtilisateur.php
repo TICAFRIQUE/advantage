@@ -38,6 +38,7 @@ class AuthentifierUtilisateur
             JournaliserAudit::enregistrer('connexion.echec', donnees: [
                 'nom_utilisateur' => ctype_digit($nomUtilisateur) ? '[masqué]' : $nomUtilisateur,
                 'motif' => 'inconnu',
+                'navigateur' => JournaliserAudit::navigateur(),
             ]);
 
             return null;
@@ -50,7 +51,7 @@ class AuthentifierUtilisateur
         }
 
         if ($user->estVerrouille()) {
-            JournaliserAudit::enregistrer('connexion.refusee', $user, ['motif' => 'verrouille'], $user);
+            JournaliserAudit::enregistrer('connexion.refusee', $user, ['nom_utilisateur' => $user->nom_utilisateur, 'motif' => 'verrouille', 'navigateur' => JournaliserAudit::navigateur()], $user);
 
             throw ValidationException::withMessages([
                 Fortify::username() => __('Ce compte est verrouillé. Contactez un administrateur.'),
@@ -58,7 +59,7 @@ class AuthentifierUtilisateur
         }
 
         if ($user->statut !== StatutUtilisateur::Actif) {
-            JournaliserAudit::enregistrer('connexion.refusee', $user, ['motif' => 'inactif'], $user);
+            JournaliserAudit::enregistrer('connexion.refusee', $user, ['nom_utilisateur' => $user->nom_utilisateur, 'motif' => 'inactif', 'navigateur' => JournaliserAudit::navigateur()], $user);
 
             throw ValidationException::withMessages([
                 Fortify::username() => __('Ce compte est désactivé. Contactez un administrateur.'),
@@ -70,7 +71,7 @@ class AuthentifierUtilisateur
             'derniere_connexion_le' => now(),
         ]);
 
-        JournaliserAudit::enregistrer('connexion.reussie', $user, acteur: $user);
+        JournaliserAudit::enregistrer('connexion.reussie', $user, ['nom_utilisateur' => $user->nom_utilisateur, 'navigateur' => JournaliserAudit::navigateur()], $user);
 
         return $user;
     }

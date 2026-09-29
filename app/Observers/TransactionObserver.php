@@ -11,10 +11,10 @@ class TransactionObserver
     {
         JournaliserAudit::enregistrer('transaction.creee', $transaction, [
             'apres' => [
-                'carte_id' => $transaction->carte_id,
-                'partenaire_id' => $transaction->partenaire_id,
-                'taux_applique' => (string) $transaction->taux_applique,
-                'valide_par_id' => $transaction->valide_par_id,
+                'numero_carte' => $transaction->carte?->numeroFormate(),
+                'partenaire' => $transaction->partenaire?->nom,
+                'taux_applique' => rtrim(rtrim((string) $transaction->taux_applique, '0'), '.').' %',
+                'validee_par' => $transaction->validePar?->libelleActeur(),
             ],
         ]);
     }

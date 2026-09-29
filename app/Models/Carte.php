@@ -145,6 +145,38 @@ class Carte extends Model
     }
 
     /**
+     * Échéance proche d'une carte active (moins de 3 mois, comme les alertes
+     * SMS) : libellé et niveau d'urgence Bootstrap, sinon null.
+     *
+     * @return array{libelle: string, niveau: string, jours: int}|null
+     */
+    public function echeanceProche(): ?array
+    {
+        if ($this->statutEffectif() !== StatutCarte::Active || $this->expire_le === null
+            || $this->expire_le->gt(now()->addMonths(3))) {
+            return null;
+        }
+
+        // Jours calendaires (date à date) : « dans 12 jours » reste vrai toute la journée.
+        $jours = (int) today()->diffInDays($this->expire_le->copy()->startOfDay());
+        $mois = (int) min(3, ceil($jours / 30));
+
+        return [
+            'libelle' => match (true) {
+                $jours === 0 => 'Expire aujourd\'hui',
+                $jours < 30 => 'Expire dans '.$jours.' jour'.($jours > 1 ? 's' : ''),
+                default => "Expire dans {$mois} mois",
+            },
+            'niveau' => match (true) {
+                $jours <= 30 => 'danger',
+                $jours <= 60 => 'warning',
+                default => 'info',
+            },
+            'jours' => $jours,
+        ];
+    }
+
+    /**
      * Statut réellement applicable : une carte « active » dont la date est
      * échue est considérée expirée même avant le passage du job quotidien.
      */

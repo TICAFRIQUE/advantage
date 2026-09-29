@@ -3,12 +3,9 @@
 
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
         <h1 class="h3 fw-bold mb-0">Cartes</h1>
-        <div class="d-flex flex-wrap gap-2">
-            <x-menu-export liste="cartes" formulaire="#filtres-cartes" />
-            @can('create', App\Models\Carte::class)
-                <a href="{{ route('gestion.cartes.create') }}" class="btn btn-or">Activer une carte</a>
-            @endcan
-        </div>
+        @can('create', App\Models\Carte::class)
+            <a href="{{ route('gestion.cartes.create') }}" class="btn btn-or">Activer une carte</a>
+        @endcan
     </div>
 
     {{-- Indicateurs du parc : chaque tuile de statut filtre la liste. --}}
@@ -44,12 +41,12 @@
 
     <form method="GET" action="{{ route('gestion.cartes.index') }}" id="filtres-cartes" class="card card-body shadow-sm mb-4" role="search">
         <div class="row g-2 align-items-end">
-            <div class="col-12 col-md-5">
+            <div class="col-12 col-md-4">
                 <label for="recherche" class="form-label fw-semibold">Rechercher</label>
                 <input type="search" id="recherche" name="recherche" value="{{ $filtres['recherche'] ?? '' }}"
                        class="form-control" maxlength="100" placeholder="N° de carte, téléphone, nom…">
             </div>
-            <div class="col-6 col-md-3">
+            <div class="col-6 col-md-2">
                 <label for="statut" class="form-label fw-semibold">Statut</label>
                 <select id="statut" name="statut" class="form-select">
                     <option value="">Tous</option>
@@ -60,19 +57,31 @@
                 </select>
             </div>
             <div class="col-6 col-md-2">
+                <label for="expire_dans" class="form-label fw-semibold">Échéance</label>
+                <select id="expire_dans" name="expire_dans" class="form-select">
+                    <option value="">Toutes</option>
+                    @foreach ([1, 2, 3] as $mois)
+                        <option value="{{ $mois }}" @selected((int) ($filtres['expire_dans'] ?? 0) === $mois)>Expire sous {{ $mois }} mois</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
                 <div class="form-check mb-2">
                     <input class="form-check-input" type="checkbox" value="1" id="mes_activations" name="mes_activations"
                            @checked(request()->boolean('mes_activations'))>
                     <label class="form-check-label" for="mes_activations">Mes activations</label>
                 </div>
             </div>
-            <div class="col-12 col-md-2 d-grid">
-                <button type="submit" class="btn btn-primary">Filtrer</button>
+            <div class="col-12 col-md-auto">
+                <x-boutons-filtre :reinitialiser="route('gestion.cartes.index')" />
             </div>
         </div>
     </form>
 
-    <p class="text-secondary small" role="status">{{ $cartes->total() }} carte(s)</p>
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <p class="text-secondary small mb-0" role="status">{{ $cartes->total() }} carte(s)</p>
+        <x-menu-export liste="cartes" formulaire="#filtres-cartes" />
+    </div>
 
     <div class="row g-4">
         @forelse ($cartes as $carte)
@@ -80,6 +89,12 @@
                 <article class="card h-100 border-0 shadow-sm" aria-labelledby="carte-{{ $carte->id }}">
                     <div class="card-body">
                         <x-carte-visuelle :carte="$carte" class="mb-3" />
+
+                        @if ($echeance = $carte->echeanceProche())
+                            <span class="badge text-bg-{{ $echeance['niveau'] }} mb-2">
+                                <i class="bi bi-hourglass-split me-1" aria-hidden="true"></i>{{ $echeance['libelle'] }}
+                            </span>
+                        @endif
 
                         <h2 class="h6 fw-bold mb-1" id="carte-{{ $carte->id }}">
                             {{ $carte->titulaire->nomComplet() }}

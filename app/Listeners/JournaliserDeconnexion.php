@@ -11,7 +11,7 @@ class JournaliserDeconnexion
     public function handle(Logout $event): void
     {
         if ($event->user instanceof User) {
-            JournaliserAudit::enregistrer('deconnexion', $event->user, acteur: $event->user);
+            JournaliserAudit::enregistrer('deconnexion', $event->user, ['nom_utilisateur' => $event->user->nom_utilisateur], $event->user);
         }
     }
 }

@@ -800,14 +800,51 @@ $focus-ring-width: 0.25rem;
     .matrice-droits__role { min-width: 150px; }
 }
 
-// Paramètres › Journal d'audit : détail avant / après.
+// Paramètres › Journal d'audit : détail lisible (champ : valeur, avant → après).
 .journal-details {
-    max-width: 420px;
-    max-height: 260px;
-    overflow: auto;
-    white-space: pre-wrap;
-    word-break: break-word;
-    background: var(--bs-light);
-    padding: .5rem;
-    border-radius: .25rem;
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: .15rem .6rem;
+    max-width: 460px;
+    font-size: .8rem;
+
+    dt { font-weight: 600; color: var(--bs-secondary-color); }
+    dd { margin: 0; word-break: break-word; }
+
+    &__avant { text-decoration: line-through; color: var(--bs-secondary-color); }
+    &__apres { font-weight: 600; }
+}
+
+// Tableau de bord : tuiles d'échéance des cartes (cliquables vers la liste filtrée).
+.tuile-echeance {
+    position: relative;
+    padding: 1rem 1.1rem;
+    border-radius: .75rem;
+    border: 1px solid transparent;
+    transition: transform .15s ease, box-shadow .15s ease;
+
+    &:hover, &:focus-visible { transform: translateY(-2px); box-shadow: 0 .5rem 1rem rgba($nuit, .12); }
+
+    &__icone { position: absolute; top: .9rem; right: 1rem; font-size: 1.4rem; opacity: .85; }
+    &__valeur { display: block; font-size: 2.1rem; font-weight: 800; line-height: 1.1; }
+    &__libelle { display: block; font-size: .85rem; font-weight: 600; }
+
+    &--danger { background: #fdecea; border-color: #f5c2bd; color: #8a1c14; }
+    &--warning { background: #fff6e0; border-color: #f3dc9b; color: #6b4a00; }
+    &--info { background: #e8f4fb; border-color: #b7dcf1; color: #0b4a6e; }
+}
+
+.min-w-0 { min-width: 0; }
+
+// Tableaux Yajra : défilement horizontal dans le tableau seulement (mobile,
+// tablette) au lieu d'élargir toute la page ; boutons d'export alignés.
+.dt-container .dt-layout-table > * {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.exports-tableau {
+    vertical-align: middle;
+
+    .btn { white-space: nowrap; }
 }

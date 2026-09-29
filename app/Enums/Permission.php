@@ -46,6 +46,7 @@ enum Permission: string
     // Superadmin uniquement (espace « superadmin », jamais attribuable)
     case RestaurerElements = 'restaurer-elements';
     case VoirCommandesProduction = 'voir-commandes-production';
+    case TesterSms = 'tester-sms';
 
     // Espace partenaire
     case AccederEspacePartenaire = 'acceder-espace-partenaire';

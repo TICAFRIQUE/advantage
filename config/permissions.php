@@ -104,6 +104,7 @@ return [
             'espace' => 'superadmin',
             'permissions' => [
                 'restaurer-elements' => ['libelle' => 'Restaurer les partenaires et comptes supprimés', 'roles' => []],
+                'tester-sms' => ['libelle' => "Tester l'envoi réel de SMS (consomme des unités)", 'roles' => []],
                 'voir-commandes-production' => ['libelle' => 'Consulter les commandes de mise en production', 'roles' => []],
             ],
         ],

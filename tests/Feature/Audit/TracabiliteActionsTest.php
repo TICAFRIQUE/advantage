@@ -4,15 +4,17 @@ use App\Enums\Role;
 use App\Models\Carte;
 use App\Models\JournalAudit;
 
-it('logs every card consultation with its author', function () {
+it('no longer logs mere consultations: card detail, card search, holder lookup', function () {
     $agent = utilisateurAvecRole(Role::Agent);
     $carte = Carte::factory()->create();
+    $avant = JournalAudit::count();
 
     connecter($agent)->get(route('gestion.cartes.show', $carte))->assertOk();
+    connecter($agent)->get(route('gestion.cartes.index', ['recherche' => 'konan', 'statut' => 'active']))->assertOk();
+    connecter($agent)->postJson(route('gestion.titulaires.recherche'), ['telephone' => '0707123456'])->assertOk();
 
-    expect(JournalAudit::where('action', 'carte.consultee')->sole())
-        ->acteur_id->toBe($agent->id)
-        ->entite_id->toBe($carte->id);
+    expect(JournalAudit::count())->toBe($avant)
+        ->and(JournalAudit::whereIn('action', ['carte.consultee', 'cartes.recherchees', 'titulaire.recherche'])->exists())->toBeFalse();
 });
 
 it('does not clutter the card history with consultations', function () {
@@ -24,30 +26,6 @@ it('does not clutter the card history with consultations', function () {
     connecter($agent)->get(route('gestion.cartes.show', $carte))
         ->assertSeeInOrder(['Historique des opérations', 'Activation'])
         ->assertDontSee('Carte consultée');
-});
-
-it('logs card searches with their criteria', function () {
-    connecter(utilisateurAvecRole(Role::Agent))
-        ->get(route('gestion.cartes.index', ['recherche' => 'konan', 'statut' => 'active']));
-
-    expect(JournalAudit::where('action', 'cartes.recherchees')->sole()->donnees)
-        ->toEqual(['recherche' => 'konan', 'statut' => 'active']);
-});
-
-it('does not log a plain listing without criteria', function () {
-    connecter(utilisateurAvecRole(Role::Agent))->get(route('gestion.cartes.index'));
-
-    expect(JournalAudit::where('action', 'cartes.recherchees')->exists())->toBeFalse();
-});
-
-it('logs holder lookups, found or not', function () {
-    $agent = utilisateurAvecRole(Role::Agent);
-
-    connecter($agent)->postJson(route('gestion.titulaires.recherche'), ['telephone' => '0707123456']);
-
-    expect(JournalAudit::where('action', 'titulaire.recherche')->sole())
-        ->acteur_id->toBe($agent->id)
-        ->donnees->toBe(['trouve' => false]);
 });
 
 it('logs logouts', function () {
@@ -68,4 +46,20 @@ it('keeps partner verifications out of the card operations history', function ()
         ->assertDontSee('Carte vérifiée (partenaire)');
 
     expect(JournalAudit::where('action', 'carte.verifiee')->exists())->toBeTrue();
+});
+
+it('records readable data for logins and card activations', function () {
+    $agent = utilisateurAvecRole(Role::Agent, ['nom_utilisateur' => 'yao.agent']);
+    $agent->forceFill(['password' => '24680'])->save();
+
+    $this->withHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 Chrome/140.0 Safari/537.36')
+        ->post(route('login.store'), ['nom_utilisateur' => 'yao.agent', 'password' => '24680']);
+
+    expect(JournalAudit::where('action', 'connexion.reussie')->sole()->donnees)
+        ->toEqual(['nom_utilisateur' => 'yao.agent', 'navigateur' => 'Chrome 140 · Windows']);
+
+    $carte = Carte::factory()->create(['numero_carte' => '1234567']);
+
+    expect(JournalAudit::where('action', 'carte.activee')->where('entite_id', $carte->id)->sole()->donnees['apres'])
+        ->toMatchArray(['numero_carte' => '123 456 7', 'titulaire' => $carte->titulaire->nomComplet()]);
 });

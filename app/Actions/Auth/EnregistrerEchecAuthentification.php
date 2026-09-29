@@ -16,7 +16,7 @@ class EnregistrerEchecAuthentification
     {
         User::query()->whereKey($user->id)->increment('tentatives_echouees');
 
-        JournaliserAudit::enregistrer($contexte.'.echec', $user, ['motif' => 'secret_invalide']);
+        JournaliserAudit::enregistrer($contexte.'.echec', $user, ['nom_utilisateur' => $user->nom_utilisateur, 'motif' => 'secret_invalide', 'navigateur' => JournaliserAudit::navigateur()]);
 
         $verrouille = User::query()
             ->whereKey($user->id)

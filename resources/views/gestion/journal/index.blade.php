@@ -5,7 +5,6 @@
 
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1">
         <h1 class="h3 fw-bold mb-0">Journal d'audit</h1>
-        <x-menu-export liste="journal-audit" formulaire="#filtres-journal" tableau="#tableau-journal" />
     </div>
     <p class="text-secondary mb-3">
         Toutes les actions des utilisateurs (connexions, cartes, transactions, comptes, droits), conservées {{ $retention }} jours
@@ -40,7 +39,7 @@
                         <input type="date" id="au" name="au" value="{{ $filtres['au'] ?? '' }}" class="form-control @error('au') is-invalid @enderror">
                         @error('au')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
-                    <div class="col-12 col-md-3">
+                    <div class="col-12 col-md-2">
                         <label for="action" class="form-label fw-semibold">Action</label>
                         <select id="action" name="action" class="form-select">
                             <option value="">Toutes</option>
@@ -67,8 +66,8 @@
                         <input type="text" id="acteur" name="acteur" value="{{ $filtres['acteur'] ?? '' }}" maxlength="50"
                                autocapitalize="none" placeholder="nom ou identifiant" class="form-control">
                     </div>
-                    <div class="col-12 col-md-1 d-grid">
-                        <button type="submit" class="btn btn-primary" aria-label="Appliquer les filtres"><i class="bi bi-funnel" aria-hidden="true"></i></button>
+                    <div class="col-12 col-md-auto">
+                        <x-boutons-filtre :reinitialiser="route('gestion.journal.index')" />
                     </div>
                 </div>
             </form>
@@ -76,6 +75,7 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-body">
                     <table class="table table-striped align-middle w-100" id="tableau-journal"
+                   @can('exporter-donnees') data-exports='@json(App\Enums\FormatExport::urls('journal-audit'))' @endcan
                            data-source="{{ route('gestion.journal.donnees') }}" data-filtres="#filtres-journal">
                         <thead>
                             <tr>

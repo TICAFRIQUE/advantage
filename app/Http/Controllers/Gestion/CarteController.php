@@ -9,7 +9,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Gestion\ActiverCarteRequest;
 use App\Http\Requests\Gestion\FiltrerCartesRequest;
 use App\Models\Carte;
-use App\Services\JournaliserAudit;
 use App\Services\Rapports\IndicateursCartes;
 use App\Services\Telephone;
 use Illuminate\Database\Eloquent\Builder;
@@ -25,13 +24,6 @@ class CarteController extends Controller
     public function index(FiltrerCartesRequest $request): View
     {
         $filtres = $request->validated();
-
-        if (filled($filtres['recherche'] ?? null) || filled($filtres['statut'] ?? null)) {
-            JournaliserAudit::enregistrer('cartes.recherchees', donnees: array_filter([
-                'recherche' => $filtres['recherche'] ?? null,
-                'statut' => $filtres['statut'] ?? null,
-            ]));
-        }
 
         $mesActivations = $request->boolean('mes_activations');
 
@@ -80,8 +72,6 @@ class CarteController extends Controller
     public function show(Carte $carte): View
     {
         Gate::authorize('view', $carte);
-
-        JournaliserAudit::enregistrer('carte.consultee', $carte);
 
         $carte->load(['titulaire.cartes' => fn ($query) => $query->latest('active_le'), 'activePar.roles', 'modifiePar.roles', 'titulaire.creePar.roles']);
 

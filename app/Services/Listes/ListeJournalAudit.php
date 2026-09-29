@@ -71,7 +71,7 @@ class ListeJournalAudit extends Liste
             LibellesAudit::action($modele->action),
             self::element($modele),
             $modele->adresse_ip,
-            $modele->donnees ? json_encode($modele->donnees, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null,
+            LibellesAudit::detailsTexte($modele->donnees),
         ];
     }
 

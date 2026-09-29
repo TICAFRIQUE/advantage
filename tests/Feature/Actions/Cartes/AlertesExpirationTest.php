@@ -159,3 +159,51 @@ describe('dans l\'application', function () {
             ->assertSee('SMS · échéance dans 1 mois');
     });
 });
+
+describe('échéance dans la liste des cartes', function () {
+    it('labels the remaining time with an urgency level, within three months only', function (int $jours, ?string $libelle, ?string $niveau) {
+        $echeance = carteExpirantDans($jours)->echeanceProche();
+
+        expect($echeance['libelle'] ?? null)->toBe($libelle)
+            ->and($echeance['niveau'] ?? null)->toBe($niveau);
+    })->with([
+        '80 jours' => [80, 'Expire dans 3 mois', 'info'],
+        '45 jours' => [45, 'Expire dans 2 mois', 'warning'],
+        '30 jours' => [30, 'Expire dans 1 mois', 'danger'],
+        '12 jours' => [12, 'Expire dans 12 jours', 'danger'],
+        '1 jour' => [1, 'Expire dans 1 jour', 'danger'],
+        '6 mois' => [180, null, null],
+        'expirée' => [-3, null, null],
+    ]);
+
+    it('shows no badge on a suspended card', function () {
+        expect(carteExpirantDans(20, ['statut' => StatutCarte::Suspendue])->echeanceProche())->toBeNull();
+    });
+
+    it('shows the badge on the card list and filters cards expiring soon', function () {
+        $proche = carteExpirantDans(20);
+        $moyenne = carteExpirantDans(50);
+        carteExpirantDans(200);
+        $admin = utilisateurAvecRole(Role::Admin);
+
+        connecter($admin)->get(route('gestion.cartes.index'))
+            ->assertSee('Expire dans 20 jours')
+            ->assertSee('Expire dans 2 mois');
+
+        $cartes = fn (int $mois) => connecter($admin)->get(route('gestion.cartes.index', ['expire_dans' => $mois]))->viewData('cartes')->pluck('id')->sort()->values()->all();
+
+        expect($cartes(1))->toBe([$proche->id])
+            ->and($cartes(2))->toBe(collect([$proche->id, $moyenne->id])->sort()->values()->all());
+        connecter($admin)->get(route('gestion.cartes.index', ['expire_dans' => 7]))->assertSessionHasErrors('expire_dans');
+    });
+
+    it('links each dashboard tile to the filtered card list', function () {
+        carteExpirantDans(20);
+
+        connecter(utilisateurAvecRole(Role::Agent))->get(route('gestion.tableau-de-bord'))
+            ->assertSee(route('gestion.cartes.index', ['expire_dans' => 1]), false)
+            ->assertSee(route('gestion.cartes.index', ['expire_dans' => 3]), false)
+            ->assertSee('Expire dans 20 jours')
+            ->assertSee('Voir toutes');
+    });
+});

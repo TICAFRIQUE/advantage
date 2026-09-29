@@ -76,6 +76,11 @@ class AppServiceProvider extends ServiceProvider
                 ->by('partenaire:'.($request->user() ? PartenaireCourant::pour($request->user())?->id : 'aucun')),
         ]);
         RateLimiter::for('confirmation-otp', fn (Request $request) => Limit::perMinute(20)->by('operateur:'.$request->user()?->id));
+        // Test d'envoi réel : chaque SMS consomme des unités chez le fournisseur.
+        RateLimiter::for('test-sms', fn (Request $request) => [
+            Limit::perHour(5)->by('test-sms:'.$request->user()?->id),
+            Limit::perDay(20)->by('test-sms:global'),
+        ]);
         RateLimiter::for('recherche-titulaire', fn (Request $request) => Limit::perMinute(60)->by('agent:'.$request->user()?->id));
     }
 }

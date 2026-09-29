@@ -21,7 +21,7 @@ class VerifierCarteService
 
         JournaliserAudit::enregistrer('carte.verifiee', $carte, [
             'numero_carte' => $numeroCarte,
-            'partenaire_id' => $partenaire->id,
+            'partenaire' => $partenaire->nom,
             'valide' => $valide,
         ]);
 

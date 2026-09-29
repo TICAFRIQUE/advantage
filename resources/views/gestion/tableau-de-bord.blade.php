@@ -47,40 +47,64 @@
     @endforeach
 
     @if ($expirations)
-        <section class="card border-0 shadow-sm mb-4" aria-labelledby="titre-expirations">
-            <div class="card-body">
-                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-                    <h2 class="h6 fw-bold text-uppercase text-secondary mb-0" id="titre-expirations">
-                        <i class="bi bi-hourglass-split me-1" aria-hidden="true"></i>Cartes bientôt expirées
-                    </h2>
-                    <span class="small text-secondary">Les titulaires sont prévenus par SMS à 3, 2 et 1 mois.</span>
+        <section class="card border-0 shadow-sm mb-4 bloc-expirations" aria-labelledby="titre-expirations">
+            <div class="card-body p-4">
+                <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-3">
+                    <div>
+                        <h2 class="h5 fw-bold mb-1" id="titre-expirations">
+                            <i class="bi bi-hourglass-split texte-or-fonce me-1" aria-hidden="true"></i>Cartes bientôt expirées
+                        </h2>
+                        <p class="small text-secondary mb-0">
+                            <i class="bi bi-chat-dots me-1" aria-hidden="true"></i>Les titulaires sont prévenus par SMS à 3, 2 et 1 mois de l'échéance.
+                        </p>
+                    </div>
+                    <a href="{{ route('gestion.cartes.index', ['expire_dans' => 3]) }}" class="btn btn-sm btn-outline-primary">
+                        Voir toutes <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
+                    </a>
                 </div>
-                <div class="row g-3 mb-3">
-                    @foreach ([1 => 'Dans le mois', 2 => 'Sous 2 mois', 3 => 'Sous 3 mois'] as $mois => $libelle)
-                        <div class="col-4">
-                            <p class="small text-secondary mb-1">{{ $libelle }}</p>
-                            <p class="h3 fw-bold mb-0 {{ $mois === 1 && $expirations['paliers'][1] > 0 ? 'text-danger' : '' }}">{{ $expirations['paliers'][$mois] }}</p>
+
+                <div class="row g-3 mb-4">
+                    @foreach ([
+                        1 => ['Dans le mois', 'danger', 'bi-exclamation-octagon'],
+                        2 => ['Sous 2 mois', 'warning', 'bi-exclamation-triangle'],
+                        3 => ['Sous 3 mois', 'info', 'bi-calendar-event'],
+                    ] as $mois => [$libelle, $niveau, $icone])
+                        <div class="col-12 col-sm-4">
+                            <a href="{{ route('gestion.cartes.index', ['expire_dans' => $mois]) }}"
+                               class="tuile-echeance tuile-echeance--{{ $niveau }} d-block text-decoration-none h-100"
+                               aria-label="{{ $expirations['paliers'][$mois] }} carte(s) expirant {{ mb_strtolower($libelle) }}">
+                                <span class="tuile-echeance__icone" aria-hidden="true"><i class="bi {{ $icone }}"></i></span>
+                                <span class="tuile-echeance__valeur">{{ $expirations['paliers'][$mois] }}</span>
+                                <span class="tuile-echeance__libelle">{{ $libelle }}</span>
+                            </a>
                         </div>
                     @endforeach
                 </div>
+
                 @if ($expirations['prochaines']->isNotEmpty())
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle mb-0">
-                            <caption class="visually-hidden">Prochaines échéances</caption>
-                            <thead>
-                                <tr><th scope="col">Carte</th><th scope="col">Titulaire</th><th scope="col">Expire le</th></tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($expirations['prochaines'] as $carte)
-                                    <tr>
-                                        <td class="font-monospace"><a href="{{ route('gestion.cartes.show', $carte) }}">{{ $carte->numeroFormate() }}</a></td>
-                                        <td>{{ $carte->titulaire->nomComplet() }}</td>
-                                        <td class="text-nowrap">{{ $carte->expire_le->format('d/m/Y') }} <span class="small text-secondary">({{ $carte->expire_le->diffForHumans() }})</span></td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
+                    <h3 class="h6 fw-bold text-uppercase text-secondary small mb-2">Prochaines échéances</h3>
+                    <ul class="list-group list-group-flush">
+                        @foreach ($expirations['prochaines'] as $carte)
+                            @php($echeance = $carte->echeanceProche())
+                            <li class="list-group-item px-0 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                                <div class="d-flex align-items-center gap-3 min-w-0">
+                                    <span class="avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr($carte->titulaire->prenom, 0, 1).mb_substr($carte->titulaire->nom, 0, 1)) }}</span>
+                                    <div class="min-w-0">
+                                        <a href="{{ route('gestion.cartes.show', $carte) }}" class="fw-semibold text-decoration-none d-block text-truncate">
+                                            {{ $carte->titulaire->nomComplet() }}
+                                        </a>
+                                        <span class="small text-secondary font-monospace">{{ $carte->numeroFormate() }}</span>
+                                        <span class="small text-secondary"> · le {{ $carte->expire_le->format('d/m/Y') }}</span>
+                                    </div>
+                                </div>
+                                @if ($echeance)
+                                    <span class="badge rounded-pill text-bg-{{ $echeance['niveau'] }}">{{ $echeance['libelle'] }}</span>
+                                @endif
+                            </li>
+                        @endforeach
+                    </ul>
+                @else
+                    <p class="text-secondary mb-0"><i class="bi bi-check-circle text-success me-1" aria-hidden="true"></i>Aucune carte n'expire dans les 3 prochains mois.</p>
                 @endif
             </div>
         </section>

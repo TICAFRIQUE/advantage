@@ -57,7 +57,26 @@ describe('droits', function () {
         $admin = utilisateurAvecRole(Role::Admin);
 
         exporter($admin, 'partenaires', 'csv')->assertOk()->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
-        connecter($admin)->get(route('gestion.partenaires.index'))->assertSee('Exporter')->assertSee(route('gestion.exports', ['partenaires', 'xlsx']), false);
+        // Tableau Yajra : URL d'export dans data-exports (boutons PDF / Excel / CSV de la barre du tableau).
+        $html = connecter($admin)->get(route('gestion.partenaires.index'))->getContent();
+        preg_match("/data-exports='([^']+)'/", $html, $exports);
+
+        expect(json_decode(html_entity_decode($exports[1] ?? 'null'), true))->toBe([
+            'csv' => route('gestion.exports', ['partenaires', 'csv']),
+            'xlsx' => route('gestion.exports', ['partenaires', 'xlsx']),
+            'pdf' => route('gestion.exports', ['partenaires', 'pdf']),
+        ]);
+
+        // Liste des cartes (grille) : petits boutons à côté du compteur.
+        connecter($admin)->get(route('gestion.cartes.index'))
+            ->assertSee('title="Exporter en PDF"', false)
+            ->assertSee(route('gestion.exports', ['cartes', 'csv']), false);
+    });
+
+    it('hides the export buttons of tables without the permission', function () {
+        connecter(utilisateurAvecRole(Role::Agent))->get(route('gestion.partenaires.index'))
+            ->assertOk()
+            ->assertDontSee('data-exports', false);
     });
 
     it('refuses exports to accounts without the export permission, and hides the menu', function () {

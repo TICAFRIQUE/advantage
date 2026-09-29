@@ -8,7 +8,6 @@
             <h1 class="h3 fw-bold mb-0">Rapport des cartes</h1>
             <p class="text-secondary mb-0">Historique des opérations : activations, suspensions, réactivations, révocations, expirations et modifications du titulaire.</p>
         </div>
-        <x-menu-export liste="operations-cartes" formulaire="#filtres-rapport-cartes" tableau="#tableau-rapport-cartes" />
     </div>
 
     <form method="GET" action="{{ route('gestion.cartes.rapport') }}" id="filtres-rapport-cartes" data-soumission="page"
@@ -54,7 +53,7 @@
                 </div>
             </div>
             <div class="col-12 d-flex justify-content-end">
-                <button type="submit" class="btn btn-primary px-4">Appliquer</button>
+                <x-boutons-filtre :reinitialiser="route('gestion.cartes.rapport')" />
             </div>
         </div>
     </form>
@@ -62,6 +61,7 @@
     <div class="card border-0 shadow-sm">
         <div class="card-body">
             <table class="table table-striped align-middle w-100" id="tableau-rapport-cartes"
+                   @can('exporter-donnees') data-exports='@json(App\Enums\FormatExport::urls('operations-cartes'))' @endcan
                    data-source="{{ route('gestion.cartes.rapport.donnees') }}" data-filtres="#filtres-rapport-cartes">
                 <thead>
                     <tr>

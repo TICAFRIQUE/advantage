@@ -159,3 +159,12 @@ it('keeps views compatible with the CSP (no inline script, Alpine expressions wi
 
     expect($fautes)->toBe([]);
 });
+
+it('shows the reset filter button only when a filter is active', function () {
+    $admin = utilisateurAvecRole(Role::Admin);
+    $bouton = fn (string $html) => preg_match('/<a href="[^"]*" class="btn btn-outline-secondary( d-none)?" data-reinitialiser/', $html, $m) ? ($m[1] ?? '') : null;
+
+    expect($bouton(connecter($admin)->get(route('gestion.partenaires.index'))->getContent()))->toBe(' d-none')
+        ->and($bouton(connecter($admin)->get(route('gestion.partenaires.index', ['statut' => 'actif']))->getContent()))->toBe('')
+        ->and($bouton(connecter($admin)->get(route('gestion.cartes.index', ['page' => 2]))->getContent()))->toBe(' d-none');
+});

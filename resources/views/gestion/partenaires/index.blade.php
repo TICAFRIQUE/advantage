@@ -5,7 +5,6 @@
 
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
         <h1 class="h3 fw-bold mb-0">Partenaires</h1>
-        <x-menu-export liste="partenaires" formulaire="#filtres-partenaires" tableau="#tableau-partenaires" class="ms-auto" />
         @can('create', App\Models\Partenaire::class)
             <a href="{{ route('gestion.partenaires.create') }}" class="btn btn-or">
                 <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Nouveau partenaire
@@ -34,8 +33,8 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-12 col-md-3 d-grid">
-                <button type="submit" class="btn btn-primary">Appliquer</button>
+            <div class="col-12 col-md-auto">
+                <x-boutons-filtre :reinitialiser="route('gestion.partenaires.index')" />
             </div>
         </div>
     </form>
@@ -43,6 +42,7 @@
     <div class="card border-0 shadow-sm">
         <div class="card-body">
             <table class="table table-striped align-middle w-100" id="tableau-partenaires"
+                   @can('exporter-donnees') data-exports='@json(App\Enums\FormatExport::urls('partenaires'))' @endcan
                    data-source="{{ route('gestion.partenaires.donnees') }}" data-filtres="#filtres-partenaires" data-ordre="asc">
                 <thead>
                     <tr>

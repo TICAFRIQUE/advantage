@@ -11,6 +11,7 @@ enum TypeSms: string
     case Otp = 'otp';
     case AlerteExpiration = 'alerte_expiration';
     case Information = 'information';
+    case Test = 'test';
 
     public function libelle(): string
     {
@@ -18,6 +19,7 @@ enum TypeSms: string
             self::Otp => 'Code de validation',
             self::AlerteExpiration => "Alerte d'expiration",
             self::Information => 'Information',
+            self::Test => "Test d'envoi",
         };
     }
 

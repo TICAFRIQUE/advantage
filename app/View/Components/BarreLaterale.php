@@ -68,6 +68,8 @@ class BarreLaterale extends Component
             'Système' => [
                 $this->entree('Éléments supprimés', 'bi-archive', 'gestion.corbeille.index', ['gestion.corbeille.*'],
                     $user->hasRole(Role::Superadmin) && $user->can(Permission::RestaurerElements->value)),
+                $this->entree("Test d'envoi SMS", 'bi-send-check', 'gestion.sms-test.index', ['gestion.sms-test.*'],
+                    $user->hasRole(Role::Superadmin) && $user->can(Permission::TesterSms->value)),
                 $this->entree('Mise en production', 'bi-rocket-takeoff', 'gestion.mise-en-production', ['gestion.mise-en-production'],
                     $user->hasRole(Role::Superadmin) && $user->can(Permission::VoirCommandesProduction->value)),
             ],

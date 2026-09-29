@@ -37,4 +37,14 @@ enum FormatExport: string
             self::Pdf => 'bi-file-earmark-pdf',
         };
     }
+
+    /**
+     * URL d'export d'une liste dans chaque format (boutons des tableaux).
+     *
+     * @return array<string, string>
+     */
+    public static function urls(string $liste): array
+    {
+        return collect(self::cases())->mapWithKeys(fn (self $format) => [$format->value => route('gestion.exports', [$liste, $format])])->all();
+    }
 }

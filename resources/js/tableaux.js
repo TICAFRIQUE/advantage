@@ -40,11 +40,16 @@ document.querySelectorAll('table[data-source]').forEach((tableau) => {
             : undefined,
     }));
 
-    const table = new DataTable(tableau, {
+    let table;
+    const exports = boutonsExport(tableau, filtres, () => table);
+
+    table = new DataTable(tableau, {
         serverSide: true,
         processing: true,
         responsive: true,
         pageLength: 25,
+        // Boutons d'export à droite du nombre de lignes par page.
+        layout: { topStart: exports ? ['pageLength', exports] : 'pageLength' },
         // Tri initial sur la première colonne triable (côté serveur).
         order: [[Math.max(0, colonnes.findIndex((colonne) => colonne.orderable)), tableau.dataset.ordre === 'asc' ? 'asc' : 'desc']],
         columns: colonnes,
@@ -70,5 +75,81 @@ document.querySelectorAll('table[data-source]').forEach((tableau) => {
 
         evenement.preventDefault();
         table.ajax.reload();
+        synchroniserUrl(filtres);
     });
 });
+
+/**
+ * Filtrage sans rechargement : l'URL reprend les filtres (lien partageable,
+ * retour arrière) et le bouton « réinitialiser » s'affiche s'il y en a.
+ */
+function synchroniserUrl(filtres) {
+    const url = new URL(window.location.href);
+    url.search = '';
+
+    new FormData(filtres).forEach((valeur, cle) => {
+        if (valeur !== '') {
+            url.searchParams.append(cle, valeur);
+        }
+    });
+
+    window.history.replaceState(null, '', url);
+    filtres.querySelector('[data-reinitialiser]')?.classList.toggle('d-none', url.search === '');
+}
+
+/**
+ * Petits boutons PDF / Excel / CSV (data-exports : URL par format, présent
+ * seulement si l'utilisateur peut exporter). L'export reprend les filtres du
+ * formulaire et la recherche du tableau : il contient ce qui est affiché.
+ */
+function boutonsExport(tableau, filtres, instance) {
+    const urls = tableau.dataset.exports ? JSON.parse(tableau.dataset.exports) : null;
+
+    if (!urls) {
+        return null;
+    }
+
+    const groupe = document.createElement('div');
+    groupe.className = 'btn-group btn-group-sm ms-2 exports-tableau';
+    groupe.setAttribute('role', 'group');
+    groupe.setAttribute('aria-label', 'Exporter la liste');
+
+    [['pdf', 'PDF', 'bi-file-earmark-pdf'], ['xlsx', 'Excel', 'bi-file-earmark-excel'], ['csv', 'CSV', 'bi-filetype-csv']]
+        .filter(([format]) => urls[format])
+        .forEach(([format, libelle, icone]) => {
+            const lien = document.createElement('a');
+            lien.className = 'btn btn-outline-secondary';
+            lien.href = urls[format];
+            lien.title = `Exporter en ${libelle}`;
+
+            const pictogramme = document.createElement('i');
+            pictogramme.className = `bi ${icone} me-1`;
+            pictogramme.setAttribute('aria-hidden', 'true');
+            lien.append(pictogramme, libelle);
+
+            lien.addEventListener('click', (evenement) => {
+                evenement.preventDefault();
+                const url = new URL(lien.href, window.location.origin);
+
+                if (filtres) {
+                    new FormData(filtres).forEach((valeur, cle) => {
+                        if (valeur !== '') {
+                            url.searchParams.append(cle, valeur);
+                        }
+                    });
+                }
+
+                const recherche = instance()?.search().trim();
+
+                if (recherche) {
+                    url.searchParams.set('recherche_tableau', recherche);
+                }
+
+                window.location.href = url.toString();
+            });
+
+            groupe.append(lien);
+        });
+
+    return groupe;
+}

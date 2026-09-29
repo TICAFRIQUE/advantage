@@ -32,7 +32,12 @@ class ListeCartes extends Liste
             ->with(['titulaire', 'activePar.roles'])
             ->when($f['recherche'] ?? null, fn (Builder $query, string $recherche) => $this->rechercher($query, $recherche))
             ->when($f['statut'] ?? null, fn (Builder $query, string $statut) => $query->statutEffectif(StatutCarte::from($statut)))
-            ->when($this->mesActivations(), fn (Builder $query) => $query->where('active_par_id', $this->utilisateur->id));
+            ->when($this->mesActivations(), fn (Builder $query) => $query->where('active_par_id', $this->utilisateur->id))
+            // Échéance proche : cartes actives expirant sous N mois (paliers des alertes).
+            ->when($f['expire_dans'] ?? null, fn (Builder $query, int|string $mois) => $query
+                ->where('statut', StatutCarte::Active)
+                ->where('expire_le', '>', now())
+                ->where('expire_le', '<=', now()->addMonths((int) $mois)));
     }
 
     /**
@@ -89,6 +94,7 @@ class ListeCartes extends Liste
             'Recherche' => $this->filtres['recherche'] ?? null,
             'Statut' => ($statut = StatutCarte::tryFrom((string) ($this->filtres['statut'] ?? ''))) ? $statut->libelle() : null,
             'Périmètre' => $this->mesActivations() ? 'Mes activations' : null,
+            'Échéance' => filled($this->filtres['expire_dans'] ?? null) ? 'sous '.$this->filtres['expire_dans'].' mois' : null,
         ]);
     }
 

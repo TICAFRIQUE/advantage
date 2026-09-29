@@ -261,6 +261,12 @@ Route::middleware(['auth', 'compte.actif'])->group(function () use ($parcoursTra
                     ->whereNumber('compte')->withTrashed()
                     ->middleware(['permission:'.Permission::RestaurerElements->value, 'password.confirm:password.confirm,300'])
                     ->name('corbeille.comptes.restaurer');
+                Route::get('/test-sms', [Gestion\TestSmsController::class, 'index'])
+                    ->middleware('permission:'.Permission::TesterSms->value)
+                    ->name('sms-test.index');
+                Route::post('/test-sms', [Gestion\TestSmsController::class, 'store'])
+                    ->middleware(['permission:'.Permission::TesterSms->value, 'throttle:test-sms'])
+                    ->name('sms-test.store');
                 Route::get('/mise-en-production', [Gestion\MiseEnProductionController::class, 'show'])
                     ->middleware('permission:'.Permission::VoirCommandesProduction->value)
                     ->name('mise-en-production');

@@ -6,6 +6,7 @@ use App\Models\Carte;
 use App\Models\JournalAudit;
 use App\Models\PurgeJournalAudit;
 use App\Models\User;
+use App\Support\LibellesAudit;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -58,7 +59,7 @@ describe('consultation', function () {
             ->action_libelle->toBe('Carte activée')
             ->element->toBe('<a href="'.route('gestion.cartes.show', $carte->id).'">Carte #'.$carte->id.'</a>')
             ->adresse_ip->toBe('10.0.0.7')
-            ->details->toContain('&quot;statut&quot;: &quot;active&quot;');
+            ->details->toContain('<dt>Statut</dt><dd>Active</dd>');
     });
 
     it('escapes whatever was logged', function () {
@@ -168,4 +169,17 @@ describe('purge manuelle', function () {
             ->post(route('gestion.journal.purger'), ['avant' => now()->toDateString(), 'motif' => 'Tentative'])
             ->assertForbidden();
     });
+});
+
+it('shows changes as before → after with French field names, in the screen and the export', function () {
+    entreeJournal('partenaire.modifie', utilisateurAvecRole(Role::Admin), attributs: [
+        'type_entite' => 'Partenaire', 'entite_id' => 1,
+        'donnees' => json_encode(['avant' => ['taux_reduction' => '10.00', 'nom' => 'Pharma'], 'apres' => ['taux_reduction' => '15.00', 'nom' => 'Pharmacie']]),
+    ]);
+
+    $ligne = collect(donneesJournal(utilisateurAvecRole(Role::Admin), ['action' => 'partenaire.modifie'])['data'])->sole();
+
+    expect($ligne['details'])->toContain('<dt>Remise</dt>', 'journal-details__avant">10.00</span>', 'journal-details__apres">15.00</span>', '<dt>Nom</dt>')
+        ->and(LibellesAudit::detailsTexte(['avant' => ['nom' => 'Pharma'], 'apres' => ['nom' => 'Pharmacie'], 'valide' => true]))
+        ->toBe('Carte valide : Oui · Nom : Pharma → Pharmacie');
 });
