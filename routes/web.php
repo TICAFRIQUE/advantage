@@ -199,6 +199,19 @@ Route::middleware(['auth', 'compte.actif'])->group(function () use ($parcoursTra
                         ->name('destroy');
                 });
 
+            // Paramètres › Journal d'audit (lecture seule ; purge manuelle motivée)
+            Route::prefix('parametres/journal')->name('journal.')->group(function () {
+                Route::get('/', [Gestion\JournalAuditController::class, 'index'])
+                    ->middleware('permission:'.Permission::VoirJournalAudit->value)
+                    ->name('index');
+                Route::get('/donnees', [Gestion\JournalAuditController::class, 'donnees'])
+                    ->middleware('permission:'.Permission::VoirJournalAudit->value)
+                    ->name('donnees');
+                Route::post('/purger', [Gestion\JournalAuditController::class, 'purger'])
+                    ->middleware(['permission:'.Permission::PurgerJournalAudit->value, 'password.confirm:password.confirm,300', 'throttle:5,1'])
+                    ->name('purger');
+            });
+
             Route::get('/transactions/rapport', [Gestion\RapportTransactionsController::class, 'index'])
                 ->middleware('permission:'.Permission::VoirRapportTransactions->value)
                 ->name('transactions.rapport');

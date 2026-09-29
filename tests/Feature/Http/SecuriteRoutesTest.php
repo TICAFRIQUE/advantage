@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Permission;
 use App\Enums\Role;
 use App\Models\JournalAudit;
 use App\Models\User;
@@ -35,14 +36,18 @@ it('requires a permission middleware on every authenticated route', function () 
     expect($sansPermission)->toBe([]);
 });
 
-it('exposes no route able to modify or delete the audit log', function () {
+it('exposes no route able to modify the audit log, only the guarded manual purge', function () {
     $routes = collect(Route::getRoutes()->getRoutes())
         ->filter(fn (RouteDefinition $route) => array_intersect($route->methods(), ['POST', 'PUT', 'PATCH', 'DELETE']) !== [])
         ->filter(fn (RouteDefinition $route) => str_contains($route->uri(), 'journal') || str_contains($route->uri(), 'audit'))
-        ->map(fn (RouteDefinition $route) => $route->uri())
-        ->all();
+        ->values();
 
-    expect($routes)->toBe([]);
+    // Seule exception : la purge manuelle motivée (PurgerJournalAudit, inscrite au
+    // registre), réservée à sa permission et confirmée par le mot de passe.
+    expect($routes->map(fn (RouteDefinition $route) => $route->getName())->all())->toBe(['gestion.journal.purger'])
+        ->and($routes->first()->methods())->toBe(['POST'])
+        ->and($routes->first()->gatherMiddleware())
+        ->toContain('permission:'.Permission::PurgerJournalAudit->value, 'password.confirm:password.confirm,300');
 });
 
 it('sends security headers on every page', function () {
