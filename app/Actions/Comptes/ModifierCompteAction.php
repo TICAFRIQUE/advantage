@@ -4,6 +4,7 @@ namespace App\Actions\Comptes;
 
 use App\Enums\Role;
 use App\Exceptions\OperationCompteException;
+use App\Models\RoleUtilisateur;
 use App\Models\User;
 use App\Services\Droits\GardeDroits;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -22,16 +23,19 @@ class ModifierCompteAction
      *
      * @throws OperationCompteException
      */
-    public function __invoke(User $compte, array $donnees, ?Role $role, User $auteur): User
+    public function __invoke(User $compte, array $donnees, Role|RoleUtilisateur|string|null $role, User $auteur): User
     {
+        $role = $role === null ? null : RoleUtilisateur::depuis($role);
+
         if (! GardeDroits::peutGererCompte($auteur, $compte)) {
             throw new OperationCompteException('Vous n\'avez pas le droit de modifier ce compte.');
         }
 
         $changerRole = $role !== null && ! $compte->hasRole($role);
 
-        if ($changerRole && ($compte->hasRole(Role::Partenaire) || $role === Role::Partenaire
-            || ! in_array($role, GardeDroits::rolesGestionAttribuables($auteur, $compte), true))) {
+        $attribuables = array_map(fn (RoleUtilisateur $r) => $r->name, GardeDroits::rolesGestionAttribuables($auteur, $compte));
+
+        if ($changerRole && ($compte->hasRole(Role::Partenaire) || ! in_array($role->name, $attribuables, true))) {
             throw new OperationCompteException("Vous n'avez pas le droit de donner le rôle « {$role->libelle()} » à ce compte.");
         }
 

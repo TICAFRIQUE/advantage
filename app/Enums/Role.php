@@ -56,16 +56,6 @@ enum Role: string
     }
 
     /**
-     * Rôles du back-office (admin, agent, superadmin).
-     *
-     * @return list<self>
-     */
-    public static function roleGestion(): array
-    {
-        return [self::Superadmin, self::Admin, self::Agent];
-    }
-
-    /**
      * @return list<string>
      */
     public static function valeurs(): array

@@ -3,8 +3,8 @@
 namespace App\Services\Droits;
 
 use App\Enums\Permission;
+use App\Models\RoleUtilisateur as ModeleRole;
 use Spatie\Permission\Models\Permission as ModelePermission;
-use Spatie\Permission\Models\Role as ModeleRole;
 use Spatie\Permission\PermissionRegistrar;
 
 /**
@@ -14,7 +14,9 @@ use Spatie\Permission\PermissionRegistrar;
  *   permission → rôles par défaut ; nouveau rôle → ses permissions par défaut) ;
  * - ne retire ni ne modifie jamais une attribution existante (les réglages
  *   faits dans Paramètres sont préservés) ;
- * - retire toute permission portée par un rôle de l'autre espace (intégrité) ;
+ * - recopie le libellé et l'espace des rôles système (métadonnées, pas des réglages) ;
+ * - retire toute permission portée par un rôle d'un autre espace, rôles
+ *   personnalisés compris (intégrité) ;
  * - ne supprime les permissions obsolètes que sur demande explicite.
  */
 class SynchroniserPermissions
@@ -41,6 +43,7 @@ class SynchroniserPermissions
 
         foreach (config('permissions.roles') as $nomRole => $definitionRole) {
             $role = ModeleRole::query()->firstOrCreate(['name' => $nomRole, 'guard_name' => self::GARDE]);
+            $role->forceFill(['libelle' => $definitionRole['libelle'], 'espace' => $definitionRole['espace'], 'systeme' => true])->save();
 
             if ($role->wasRecentlyCreated) {
                 $rapport['roles_crees'][] = $nomRole;
@@ -88,15 +91,13 @@ class SynchroniserPermissions
     {
         $retirees = [];
 
-        foreach (config('permissions.roles') as $nomRole => $definitionRole) {
-            $role = ModeleRole::findByName($nomRole, self::GARDE);
-
+        foreach (ModeleRole::query()->where('guard_name', self::GARDE)->with('permissions')->get() as $role) {
             foreach ($role->permissions as $permission) {
                 $espace = $definitions[$permission->name]['espace'] ?? null;
 
-                if ($espace !== null && $espace !== $definitionRole['espace']) {
+                if ($espace !== null && $espace !== $role->espace()) {
                     $role->revokePermissionTo($permission);
-                    $retirees[] = "{$nomRole} : {$permission->name}";
+                    $retirees[] = "{$role->name} : {$permission->name}";
                 }
             }
         }

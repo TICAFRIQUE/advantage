@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Gestion;
 
-use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Gestion\FiltrerRapportCartesRequest;
 use App\Models\OperationCarte;
@@ -22,7 +21,7 @@ class RapportCartesController extends Controller
     {
         return view('gestion.cartes.rapport', [
             'filtres' => $request->validated() + ['mes_operations' => $request->boolean('mes_operations')],
-            'agents' => User::query()->role([Role::Admin->value, Role::Agent->value, Role::Superadmin->value])->orderBy('nom')->get(['id', 'nom']),
+            'agents' => User::query()->whereHas('roles', fn ($q) => $q->where('espace', 'gestion'))->orderBy('nom')->get(['id', 'nom']),
         ]);
     }
 

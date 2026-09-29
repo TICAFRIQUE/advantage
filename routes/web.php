@@ -66,7 +66,7 @@ Route::middleware(['auth', 'compte.actif'])->group(function () use ($parcoursTra
     */
     Route::prefix('gestion')->name('gestion.')
         ->middleware([
-            'role:'.implode('|', array_map(fn (Role $role) => $role->value, Role::roleGestion())),
+            'espace.gestion',
             'permission:'.Permission::AccederGestion->value,
         ])
         ->group(function () use ($parcoursTransaction) {
@@ -179,6 +179,24 @@ Route::middleware(['auth', 'compte.actif'])->group(function () use ($parcoursTra
                         ->middleware('throttle:activation-carte')
                         ->name('store');
                     Route::get('/{compte}', [Gestion\UtilisateurController::class, 'show'])->whereNumber('compte')->name('show');
+                });
+
+            // Paramètres › Rôles et permissions (anti-élévation : GardeDroits)
+            Route::prefix('parametres/roles')->name('roles.')
+                ->middleware('permission:'.Permission::GererRoles->value)
+                ->group(function () {
+                    Route::get('/', [Gestion\RoleController::class, 'index'])->name('index');
+                    Route::get('/creer', [Gestion\RoleController::class, 'create'])->name('create');
+                    Route::post('/', [Gestion\RoleController::class, 'store'])
+                        ->middleware('password.confirm:password.confirm,300')
+                        ->name('store');
+                    Route::get('/{role}/modifier', [Gestion\RoleController::class, 'edit'])->whereNumber('role')->name('edit');
+                    Route::put('/{role}', [Gestion\RoleController::class, 'update'])->whereNumber('role')
+                        ->middleware('password.confirm:password.confirm,300')
+                        ->name('update');
+                    Route::delete('/{role}', [Gestion\RoleController::class, 'destroy'])->whereNumber('role')
+                        ->middleware('password.confirm:password.confirm,300')
+                        ->name('destroy');
                 });
 
             Route::get('/transactions/rapport', [Gestion\RapportTransactionsController::class, 'index'])

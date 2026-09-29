@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\Role;
 use App\Enums\StatutPartenaire;
 use App\Models\Partenaire;
 use App\Models\User;
@@ -32,7 +31,7 @@ class PartenaireCourant
      */
     public static function peutChoisir(User $user): bool
     {
-        return $user->hasAnyRole(Role::roleGestion());
+        return $user->estDuBackOffice();
     }
 
     public static function definir(Partenaire $partenaire): void

@@ -3,7 +3,6 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\Enums\Role;
 use App\Enums\StatutUtilisateur;
 use App\Observers\UserObserver;
 use Database\Factories\UserFactory;
@@ -115,17 +114,22 @@ class User extends Authenticatable
     }
 
     /**
-     * Rôle déterminant l'espace d'accueil (le plus élevé si plusieurs).
+     * Rôle déterminant l'espace d'accueil et le libellé affiché : le rôle
+     * système le plus élevé, sinon le premier rôle personnalisé.
      */
-    public function rolePrincipal(): ?Role
+    public function rolePrincipal(): ?RoleUtilisateur
     {
-        foreach (Role::cases() as $role) {
-            if ($this->hasRole($role)) {
-                return $role;
-            }
-        }
+        /** @var ?RoleUtilisateur */
+        return $this->roles->sortBy(fn (RoleUtilisateur $role) => [$role->rang(), $role->id])->first();
+    }
 
-        return null;
+    /**
+     * Compte du back-office : au moins un rôle de l'espace « gestion »
+     * (rôles système ou personnalisés).
+     */
+    public function estDuBackOffice(): bool
+    {
+        return $this->roles->contains(fn (RoleUtilisateur $role) => $role->espace() === 'gestion');
     }
 
     /**

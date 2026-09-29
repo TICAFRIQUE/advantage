@@ -1,6 +1,6 @@
 {{--
     Champs d'un compte (création d'un utilisateur, modification d'une fiche).
-    Variables : $compte (?User), $roles (list<Role>, vide = rôle non modifiable), $pays.
+    Variables : $compte (?User), $roles (list<RoleUtilisateur>, vide = rôle non modifiable), $pays.
 --}}
 @php
     $telephone = old('telephone', $compte?->telephone ? App\Services\Telephone::formater($compte->telephone) : null);
@@ -50,7 +50,7 @@
             <label for="role" class="form-label fw-semibold">Rôle</label>
             <select id="role" name="role" required class="form-select @error('role') is-invalid @enderror">
                 @foreach ($roles as $role)
-                    <option value="{{ $role->value }}" @selected(old('role', $compte?->rolePrincipal()?->value ?? App\Enums\Role::Agent->value) === $role->value)>
+                    <option value="{{ $role->name }}" @selected(old('role', $compte?->rolePrincipal()?->name ?? App\Enums\Role::Agent->value) === $role->name)>
                         {{ $role->libelle() }}
                     </option>
                 @endforeach

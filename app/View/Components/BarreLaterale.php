@@ -57,6 +57,7 @@ class BarreLaterale extends Component
             ],
             'Paramètres' => [
                 $this->entree('Utilisateurs', 'bi-people', 'gestion.utilisateurs.index', ['gestion.utilisateurs.*', 'gestion.comptes.*'], $user->can(Permission::GererUtilisateurs->value)),
+                $this->entree('Rôles et permissions', 'bi-shield-lock', 'gestion.roles.index', ['gestion.roles.*'], $user->can(Permission::GererRoles->value)),
             ],
             'Outils de test' => [
                 $this->entree('SMS simulés', 'bi-chat-dots', 'gestion.sms-simules.index', ['gestion.sms-simules.*'],

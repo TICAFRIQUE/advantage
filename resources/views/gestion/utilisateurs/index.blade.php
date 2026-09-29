@@ -11,7 +11,7 @@
             </a>
         @endif
     </div>
-    <p class="text-secondary mb-3">Administrateurs et agents. Les utilisateurs des partenaires se gèrent depuis la fiche de chaque partenaire.</p>
+    <p class="text-secondary mb-3">Administrateurs, agents et rôles personnalisés. Les utilisateurs des partenaires se gèrent depuis la fiche de chaque partenaire.</p>
 
     <form method="GET" action="{{ route('gestion.utilisateurs.index') }}" id="filtres-utilisateurs"
           class="card card-body shadow-sm border-0 mb-4" aria-label="Filtres des utilisateurs">
@@ -20,8 +20,8 @@
                 <label for="role" class="form-label fw-semibold">Rôle</label>
                 <select id="role" name="role" class="form-select">
                     <option value="">Tous</option>
-                    @foreach (App\Enums\Role::roleGestion() as $role)
-                        <option value="{{ $role->value }}" @selected(($filtres['role'] ?? null) === $role->value)>{{ $role->libelle() }}</option>
+                    @foreach ($roles as $role)
+                        <option value="{{ $role->name }}" @selected(($filtres['role'] ?? null) === $role->name)>{{ $role->libelle() }}</option>
                     @endforeach
                 </select>
             </div>

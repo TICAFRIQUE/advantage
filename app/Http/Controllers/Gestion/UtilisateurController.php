@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Gestion;
 
 use App\Actions\Comptes\CreerCompteAction;
-use App\Enums\Role;
 use App\Enums\StatutUtilisateur;
 use App\Exceptions\OperationCompteException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Gestion\CreerUtilisateurRequest;
 use App\Http\Requests\Gestion\FiltrerUtilisateursRequest;
+use App\Models\RoleUtilisateur;
 use App\Models\User;
 use App\Services\Droits\GardeDroits;
 use App\Services\Telephone;
@@ -27,7 +27,10 @@ class UtilisateurController extends Controller
 {
     public function index(FiltrerUtilisateursRequest $request): View
     {
-        return view('gestion.utilisateurs.index', ['filtres' => $request->validated()]);
+        return view('gestion.utilisateurs.index', [
+            'filtres' => $request->validated(),
+            'roles' => RoleUtilisateur::query()->deLEspace('gestion')->get()->sortBy(fn (RoleUtilisateur $role) => [$role->rang(), $role->libelle()]),
+        ]);
     }
 
     public function donnees(FiltrerUtilisateursRequest $request): JsonResponse
@@ -35,7 +38,7 @@ class UtilisateurController extends Controller
         $filtres = $request->validated();
 
         $requete = User::query()->select('users.*')
-            ->role(array_map(fn (Role $role) => $role->value, Role::roleGestion()))
+            ->whereHas('roles', fn ($q) => $q->where('espace', 'gestion'))
             ->with(['roles', 'creePar.roles'])
             ->when($filtres['role'] ?? null, fn ($q, string $role) => $q->role($role))
             ->when($filtres['etat'] ?? null, fn ($q, string $etat) => match ($etat) {
@@ -87,7 +90,7 @@ class UtilisateurController extends Controller
 
     public function show(User $compte): View
     {
-        abort_unless($compte->hasAnyRole(Role::roleGestion()), 404);
+        abort_unless($compte->estDuBackOffice(), 404);
 
         $compte->load(['roles', 'creePar.roles', 'modifiePar.roles'])
             ->loadCount(['cartesActivees', 'transactionsValidees']);

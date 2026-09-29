@@ -789,3 +789,13 @@ $focus-ring-width: 0.25rem;
     right: .5rem;
     min-height: 32px;
 }
+
+// Paramètres › Rôles et permissions : matrice, première colonne figée.
+.matrice-droits {
+    max-height: 75vh;
+
+    thead th { position: sticky; top: 0; background: var(--bs-body-bg); z-index: 2; vertical-align: top; }
+    .matrice-droits__permission { position: sticky; left: 0; z-index: 3; min-width: 240px; }
+    tbody th[scope="row"] { position: sticky; left: 0; background: var(--bs-body-bg); z-index: 1; }
+    .matrice-droits__role { min-width: 150px; }
+}

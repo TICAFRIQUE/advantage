@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Gestion;
 
 use App\Enums\Permission;
-use App\Enums\Role;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -23,7 +22,7 @@ class FiltrerUtilisateursRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'role' => ['nullable', Rule::in(array_map(fn (Role $role) => $role->value, Role::roleGestion()))],
+            'role' => ['nullable', Rule::exists('roles', 'name')->where('espace', 'gestion')],
             'etat' => ['nullable', Rule::in(array_keys(self::ETATS))],
         ];
     }

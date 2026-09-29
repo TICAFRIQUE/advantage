@@ -4,6 +4,7 @@ namespace App\Http\Requests\Gestion;
 
 use App\Enums\Role;
 use App\Http\Requests\Gestion\Concerns\ValideCompte;
+use App\Models\RoleUtilisateur;
 use App\Models\User;
 use App\Services\Droits\GardeDroits;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -36,8 +37,8 @@ class ModifierCompteRequest extends FormRequest
         $regles = $this->reglesCompte($this->compte()->id);
 
         if (! $this->compte()->hasRole(Role::Partenaire)) {
-            $roles = array_map(fn (Role $role) => $role->value, GardeDroits::rolesGestionAttribuables($this->user(), $this->compte()));
-            $actuel = $this->compte()->rolePrincipal()?->value;
+            $roles = array_map(fn (RoleUtilisateur $role) => $role->name, GardeDroits::rolesGestionAttribuables($this->user(), $this->compte()));
+            $actuel = $this->compte()->rolePrincipal()?->name;
             $regles['role'] = ['required', 'string', Rule::in(array_unique(array_filter([...$roles, $actuel])))];
         }
 
@@ -52,9 +53,9 @@ class ModifierCompteRequest extends FormRequest
         return $this->messagesCompte() + ['role.in' => 'Vous ne pouvez pas attribuer ce rôle.'];
     }
 
-    public function role(): ?Role
+    public function role(): ?RoleUtilisateur
     {
-        return $this->has('role') && $this->validated('role') !== null ? Role::from($this->validated('role')) : null;
+        return $this->has('role') && $this->validated('role') !== null ? RoleUtilisateur::depuis($this->validated('role')) : null;
     }
 
     public function compte(): User

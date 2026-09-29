@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\CompteActif;
 use App\Http\Middleware\EntetesSecurite;
+use App\Http\Middleware\EspaceGestion;
 use App\Http\Middleware\PartenaireActif;
 use App\Http\Middleware\PartenaireCourantRequis;
 use Illuminate\Foundation\Application;
@@ -23,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => RoleMiddleware::class,
             'permission' => PermissionMiddleware::class,
             'compte.actif' => CompteActif::class,
+            'espace.gestion' => EspaceGestion::class,
             'partenaire.actif' => PartenaireActif::class,
             'partenaire.courant' => PartenaireCourantRequis::class,
         ]);

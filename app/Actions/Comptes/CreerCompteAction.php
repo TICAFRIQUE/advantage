@@ -6,6 +6,7 @@ use App\Enums\Role;
 use App\Enums\StatutUtilisateur;
 use App\Exceptions\OperationCompteException;
 use App\Models\Partenaire;
+use App\Models\RoleUtilisateur;
 use App\Models\User;
 use App\Services\Droits\GardeDroits;
 use App\Services\GenerateurPin;
@@ -24,10 +25,12 @@ class CreerCompteAction
      *
      * @throws OperationCompteException
      */
-    public function __invoke(array $donnees, Role $role, User $auteur, ?Partenaire $partenaire = null): array
+    public function __invoke(array $donnees, Role|RoleUtilisateur|string $role, User $auteur, ?Partenaire $partenaire = null): array
     {
+        $role = RoleUtilisateur::depuis($role);
+
         // Le superadmin a un mot de passe fort issu du .env, jamais un PIN.
-        if ($role === Role::Superadmin) {
+        if ($role->systeme() === Role::Superadmin) {
             throw new OperationCompteException('Le compte superadmin se crée uniquement depuis la configuration du serveur.');
         }
 
@@ -35,7 +38,7 @@ class CreerCompteAction
             throw new OperationCompteException("Vous n'avez pas le droit de créer un compte « {$role->libelle()} ».");
         }
 
-        if (($role === Role::Partenaire) !== ($partenaire !== null)) {
+        if (($role->espace() === 'partenaire') !== ($partenaire !== null)) {
             throw new OperationCompteException('Un opérateur doit être rattaché à un partenaire, et seulement lui.');
         }
 

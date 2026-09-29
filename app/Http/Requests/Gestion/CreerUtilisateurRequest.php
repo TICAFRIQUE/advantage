@@ -3,8 +3,8 @@
 namespace App\Http\Requests\Gestion;
 
 use App\Enums\Permission;
-use App\Enums\Role;
 use App\Http\Requests\Gestion\Concerns\ValideCompte;
+use App\Models\RoleUtilisateur;
 use App\Services\Droits\GardeDroits;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -33,7 +33,7 @@ class CreerUtilisateurRequest extends FormRequest
      */
     public function rules(): array
     {
-        $roles = array_map(fn (Role $role) => $role->value, GardeDroits::rolesGestionAttribuables($this->user()));
+        $roles = array_map(fn (RoleUtilisateur $role) => $role->name, GardeDroits::rolesGestionAttribuables($this->user()));
 
         return $this->reglesCompte() + ['role' => ['required', 'string', Rule::in($roles)]];
     }
@@ -46,8 +46,8 @@ class CreerUtilisateurRequest extends FormRequest
         return $this->messagesCompte() + ['role.in' => 'Vous ne pouvez pas attribuer ce rôle.'];
     }
 
-    public function role(): Role
+    public function role(): RoleUtilisateur
     {
-        return Role::from($this->validated('role'));
+        return RoleUtilisateur::depuis($this->validated('role'));
     }
 }

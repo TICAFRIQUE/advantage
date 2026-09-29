@@ -31,10 +31,8 @@ class CompteController extends Controller
         return view('gestion.comptes.modifier', [
             'compte' => $compte,
             // Le rôle d'un utilisateur de partenaire ne change pas.
-            'roles' => $compte->hasRole(Role::Partenaire) ? [] : array_values(array_unique(
-                [...GardeDroits::rolesGestionAttribuables(auth()->user(), $compte), ...array_filter([$compte->rolePrincipal()])],
-                SORT_REGULAR,
-            )),
+            'roles' => $compte->hasRole(Role::Partenaire) ? [] : collect(GardeDroits::rolesGestionAttribuables(auth()->user(), $compte))
+                ->push($compte->rolePrincipal())->filter()->unique('name')->values()->all(),
             'pays' => Telephone::tousLesPays(),
             'retour' => $this->retour($compte),
         ]);
