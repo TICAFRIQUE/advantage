@@ -10,7 +10,8 @@ Commandes à exécuter sur le serveur de production (hébergement mutualisé cPa
 
 ## 1. Prérequis du serveur
 
-- PHP **8.3** ou plus, avec les extensions `pdo_mysql`, `mbstring`, `openssl`, `intl`, `bcmath`, `fileinfo`, `ctype`, `tokenizer`, `xml`, `curl`.
+- PHP **8.3** ou plus, avec les extensions `pdo_mysql`, `mbstring`, `openssl`, `intl`, `bcmath`, `fileinfo`, `ctype`, `tokenizer`, `xml`, `curl`, `gd` (logo de l'application), `zip` (exports Excel).
+- La fonction PHP `proc_open` autorisée et les clients `mysqldump` / `mysql` installés : ils servent aux sauvegardes et restaurations depuis l'application (voir § 7). En mutualisé, vérifier que `proc_open` n'est pas dans `disable_functions`.
 - MySQL **8.0** ou plus. L'utilisateur MySQL doit avoir le privilège **TRIGGER** : le journal d'audit et le registre des purges sont protégés par des triggers créés par les migrations.
 - Si la journalisation binaire est active (fréquent en mutualisé), les triggers exigent `log_bin_trust_function_creators = 1` ou le privilège SUPER : à demander à l'hébergeur si la migration échoue sur `CREATE TRIGGER`.
 - HTTPS actif (certificat SSL) sur le domaine.
@@ -20,7 +21,9 @@ Vérifier la version de PHP en ligne de commande (elle peut différer de celle d
 
 ```bash
 php -v
-php -m | grep -i -E "pdo_mysql|mbstring|intl|bcmath"
+php -m | grep -i -E "pdo_mysql|mbstring|intl|bcmath|gd|zip"
+php -r "var_dump(function_exists('proc_open'));"
+mysqldump --version
 ```
 
 ## 2. Première installation
@@ -71,15 +74,17 @@ SUPERADMIN_MOT_DE_PASSE=<mot de passe fort, 12 caractères minimum>
 PLATEFORME_CLE_HMAC=<clé générée ci-dessus>
 
 SMS_DRIVER=ticafrique
-SMS_EXPEDITEUR=ADVANTAGE
+SMS_EXPEDITEUR="FONTAINE G"
 TICAFRIQUE_SMS_API_URL=https://sms.ticafrique.ci/api/v1/sms/send
 TICAFRIQUE_SMS_API_KEY=<clé API TICAFRIQUE>
-TICAFRIQUE_SMS_SENDER_ID=<expéditeur validé par TICAFRIQUE>
+TICAFRIQUE_SMS_SENDER_ID="FONTAINE G"
 
 # Uniquement derrière un proxy / CDN (Cloudflare, répartiteur…)
 TRUSTED_PROXIES=
 ```
 
+> L'expéditeur contient un espace : gardez les guillemets. Il doit être celui validé par TICAFRIQUE (11 caractères maximum).
+>
 > `SMS_DRIVER=simulation` est **refusé en production**. Avec `SMS_DRIVER=ticafrique`, l'URL doit être en HTTPS et la clé renseignée, sinon l'envoi échoue avec un message explicite.
 
 Protéger le fichier `.env` :
@@ -117,7 +122,10 @@ Le seeder du superadmin est idempotent : relancé, il ne change jamais le mot de
 
 ```bash
 chmod -R 775 storage bootstrap/cache
+mkdir -p public/uploads && chmod 775 public/uploads
 ```
+
+`public/uploads` reçoit le logo choisi dans Administration › Paramètres (non versionné).
 
 ### 2.6 Mise en cache (performances)
 
@@ -136,6 +144,7 @@ Deux entrées cron (cPanel → *Tâches Cron*), exécutées chaque minute :
 
 - La première lance les tâches planifiées :
   - 00:10 : les cartes échues passent au statut « expirée » ;
+  - 01:30 : sauvegarde automatique de la base (les 10 plus récentes sont conservées ; désactivable avec `SAUVEGARDES_AUTOMATIQUE=false`) ;
   - 02:00 : purge du journal d'audit (rétention de 14 jours) ;
   - 02:30 : purge des codes de validation et des SMS de plus de 90 jours (ceux liés à une transaction sont conservés) ;
   - 09:00 : SMS d'alerte aux titulaires dont la carte expire dans 3, 2 ou 1 mois (une seule fois par palier ; désactivable avec `ALERTES_EXPIRATION_SMS=false`).
@@ -283,4 +292,35 @@ mysqldump --single-transaction --routines --triggers -u UTILISATEUR -p BASE | gz
 
 `--triggers` est indispensable : sans eux, le journal d'audit ne serait plus protégé après une restauration.
 
-Conserver aussi en lieu sûr, hors du serveur : le fichier `.env`, en particulier `APP_KEY` et `PLATEFORME_CLE_HMAC`. Sans eux, les données chiffrées de la base sont illisibles.
+Conserver aussi en lieu sûr, hors du serveur : le fichier `.env`, en particulier `APP_KEY` et `PLATEFORME_CLE_HMAC`, ainsi que le dossier `public/uploads` (logo). Sans eux, les données chiffrées de la base sont illisibles.
+
+## 8. Checklist d'ouverture
+
+À cocher une fois, avant d'ouvrir la plateforme aux agents et aux partenaires.
+
+**Serveur**
+- [ ] Racine web sur `public/`, HTTPS actif, `.env` en `chmod 600`.
+- [ ] `php artisan about` : `Environment: production`, `Debug Mode: OFF`.
+- [ ] `APP_KEY` et `PLATEFORME_CLE_HMAC` générés **et** copiés hors du serveur.
+- [ ] `SESSION_SECURE_COOKIE=true`, `SESSION_ENCRYPT=true`.
+- [ ] `TRUSTED_PROXIES` renseigné si le site est derrière Cloudflare ou un répartiteur (sinon les limites par IP visent le proxy).
+
+**Base de données**
+- [ ] `php artisan migrate:status` : toutes les migrations « Ran » (index de performance compris).
+- [ ] Les 6 triggers existent : `SHOW TRIGGERS;` (journal d'audit, registre des purges, opérations sur les cartes).
+- [ ] `php artisan permissions:synchroniser` exécuté, superadmin créé (`SuperAdminSeeder`).
+
+**Tâches de fond**
+- [ ] Les deux cron actifs ; `php artisan schedule:list` affiche 00:10, 01:30, 02:00, 02:30 et 09:00.
+- [ ] `php artisan sms:tester <votre numéro>` : SMS reçu avec l'expéditeur « FONTAINE G ».
+- [ ] `php artisan queue:failed` vide.
+
+**Sauvegardes**
+- [ ] Dossier des sauvegardes hors de `public/` (idéalement hors du projet), accessible en écriture.
+- [ ] Une sauvegarde créée depuis Administration › Paramètres, puis téléchargée et ouverte (`gunzip -t`).
+
+**Application**
+- [ ] Nom et logo de l'application réglés dans Administration › Paramètres.
+- [ ] Comptes admin et agents créés (PIN transmis en main propre), rôles vérifiés.
+- [ ] Partenaires créés avec leur taux, un opérateur par partenaire.
+- [ ] Parcours complet testé : activation d'une carte → vérification chez un partenaire → code SMS → validation → transaction visible dans le rapport.

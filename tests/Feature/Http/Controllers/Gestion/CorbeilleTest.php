@@ -188,6 +188,14 @@ describe('mise en production', function () {
             ->assertSee('<pre>', false);
     });
 
+    it('renders the opening checklist as checkboxes', function () {
+        connecter(utilisateurAvecRole(Role::Superadmin))->get(route('gestion.mise-en-production'))
+            ->assertOk()
+            ->assertSee('Checklist d'."'".'ouverture', false)
+            ->assertSee('type="checkbox"', false)
+            ->assertSee('SAUVEGARDES_DOSSIER');
+    });
+
     it('is reserved to the superadmin', function (Role $role) {
         connecter(utilisateurAvecRole($role))->get(route('gestion.mise-en-production'))->assertForbidden();
     })->with([Role::Admin, Role::Agent]);
