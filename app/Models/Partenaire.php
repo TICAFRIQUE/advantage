@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\StatutPartenaire;
 use App\Observers\PartenaireObserver;
+use App\Services\Telephone;
 use Database\Factories\PartenaireFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Table('partenaires')]
 #[ObservedBy(PartenaireObserver::class)]
-#[Fillable(['nom', 'secteur', 'localisation', 'contact', 'taux_reduction', 'statut'])]
+#[Fillable(['nom', 'secteur', 'localisation', 'contact', 'responsable', 'email', 'taux_reduction', 'statut'])]
 class Partenaire extends Model
 {
     /** @use HasFactory<PartenaireFactory> */
@@ -90,6 +91,14 @@ class Partenaire extends Model
     public function tauxFormate(): string
     {
         return rtrim(rtrim((string) $this->taux_reduction, '0'), '.').' %';
+    }
+
+    /**
+     * Contact (E.164) lisible : « +225 07 07 12 34 56 ».
+     */
+    public function contactFormate(): ?string
+    {
+        return $this->contact === null ? null : Telephone::formater($this->contact);
     }
 
     public function estActif(): bool

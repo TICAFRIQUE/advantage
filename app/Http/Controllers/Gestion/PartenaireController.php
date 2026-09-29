@@ -58,7 +58,7 @@ class PartenaireController extends Controller
 
     public function store(EnregistrerPartenaireRequest $request, EnregistrerPartenaireAction $enregistrer): RedirectResponse
     {
-        $partenaire = $enregistrer->creer($request->validated(), $request->user());
+        $partenaire = $enregistrer->creer($request->donnees(), $request->user());
 
         return redirect()->route('gestion.partenaires.show', $partenaire)
             ->with('succes', "Le partenaire {$partenaire->nom} a été créé. Ajoutez maintenant ses utilisateurs.");
@@ -93,7 +93,7 @@ class PartenaireController extends Controller
 
     public function update(EnregistrerPartenaireRequest $request, Partenaire $partenaire, EnregistrerPartenaireAction $enregistrer): RedirectResponse
     {
-        $enregistrer->modifier($partenaire, $request->validated(), $request->user());
+        $enregistrer->modifier($partenaire, $request->donnees(), $request->user());
 
         return redirect()->route('gestion.partenaires.show', $partenaire)->with('succes', 'Le partenaire a été mis à jour.');
     }

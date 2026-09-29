@@ -18,7 +18,23 @@
                     <dl class="row small mb-3">
                         <dt class="col-5">Secteur</dt><dd class="col-7">{{ $partenaire->secteur ?? '—' }}</dd>
                         <dt class="col-5">Localisation</dt><dd class="col-7">{{ $partenaire->localisation ?? '—' }}</dd>
-                        <dt class="col-5">Contact</dt><dd class="col-7">{{ $partenaire->contact ?? '—' }}</dd>
+                        <dt class="col-5">Contact</dt>
+                        <dd class="col-7">
+                            @if ($partenaire->contact)
+                                <a href="tel:{{ $partenaire->contact }}">{{ $partenaire->contactFormate() }}</a>
+                            @else
+                                —
+                            @endif
+                        </dd>
+                        <dt class="col-5">Responsable</dt><dd class="col-7">{{ $partenaire->responsable ?? '—' }}</dd>
+                        <dt class="col-5">Email</dt>
+                        <dd class="col-7 text-break">
+                            @if ($partenaire->email)
+                                <a href="mailto:{{ $partenaire->email }}">{{ $partenaire->email }}</a>
+                            @else
+                                —
+                            @endif
+                        </dd>
                         <dt class="col-5">Passages</dt><dd class="col-7">{{ $partenaire->transactions_count }}</dd>
                     </dl>
 

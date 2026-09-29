@@ -91,9 +91,6 @@
                         <p class="small mb-3">
                             Activée le {{ $carte->active_le?->format('d/m/Y à H:i') }}
                             par <strong>{{ $carte->activePar?->libelleActeur() ?? '—' }}</strong>
-                            @if ($carte->modifiePar)
-                                <br>Modifiée par <strong>{{ $carte->modifiePar->libelleActeur() }}</strong> le {{ $carte->updated_at->format('d/m/Y à H:i') }}
-                            @endif
                         </p>
 
                         <x-actions-carte :carte="$carte" />

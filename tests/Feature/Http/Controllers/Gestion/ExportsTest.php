@@ -96,7 +96,7 @@ describe('contenu', function () {
 
         expect($reponse->baseResponse)->toBeInstanceOf(StreamedResponse::class)
             ->and($reponse->headers->get('Content-Disposition'))->toMatch('/attachment; filename=advantage-partenaires-\d{4}-\d{2}-\d{2}-\d{6}\.csv/')
-            ->and($lignes[0])->toBe(['Nom', 'Secteur', 'Localisation', 'Contact', 'Remise', 'Statut', 'Utilisateurs', 'Passages'])
+            ->and($lignes[0])->toBe(['Nom', 'Secteur', 'Localisation', 'Contact', 'Responsable', 'Email', 'Remise', 'Statut', 'Utilisateurs', 'Passages'])
             ->and(array_column(array_slice($lignes, 1), 0))->toBe(['Pharmacie Lagune']);
     });
 
@@ -113,7 +113,7 @@ describe('contenu', function () {
     });
 
     it('neutralises spreadsheet formulas in CSV but keeps phone numbers readable', function () {
-        Partenaire::factory()->create(['nom' => '=cmd|\' /C calc\'!A0', 'contact' => '+225 07 07 12 34 56']);
+        Partenaire::factory()->create(['nom' => '=cmd|\' /C calc\'!A0', 'contact' => '+2250707123456']);
 
         $ligne = lignesCsv(exporter(utilisateurAvecRole(Role::Admin), 'partenaires', 'csv')->streamedContent())[1];
 
@@ -140,7 +140,7 @@ describe('contenu', function () {
 
         expect($reponse->headers->get('Content-Type'))->toBe('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
             ->and($lignes[1][0])->toBe('=HYPERLINK("http://pirate")')
-            ->and($lignes[1][6])->toBe(0)
+            ->and($lignes[1][8])->toBe(0)
             ->and($feuille)->toContain('HYPERLINK')->not->toContain('<f>');
     });
 

@@ -21,7 +21,9 @@ function formulairePartenaire(array $surcharge = []): array
         'nom' => 'Pharmacie du Plateau',
         'secteur' => 'Santé',
         'localisation' => 'Plateau, Abidjan',
-        'contact' => 'Dr Koné',
+        'contact' => '07 07 12 34 56',
+        'responsable' => 'Dr Koné',
+        'email' => 'Pharmacie@Plateau.ci',
         'taux_reduction' => '10',
     ], $surcharge);
 }
@@ -81,7 +83,54 @@ describe('création et modification', function () {
         'taux au-delà de 100' => [['taux_reduction' => '101'], 'taux_reduction'],
         'trois décimales' => [['taux_reduction' => '10.555'], 'taux_reduction'],
         'taux non numérique' => [['taux_reduction' => 'dix'], 'taux_reduction'],
+        'contact absent' => [['contact' => ''], 'contact'],
+        'contact en texte' => [['contact' => 'Dr Koné'], 'contact'],
+        'contact trop court' => [['contact' => '07 07 12'], 'contact'],
+        'longueur fausse pour le Sénégal' => [['pays_contact' => 'SN', 'contact' => '0707123456'], 'contact'],
+        'pays inconnu' => [['pays_contact' => 'ZZ'], 'pays_contact'],
+        'email invalide' => [['email' => 'pas-un-email'], 'email'],
     ]);
+
+    it('stores the contact with its country prefix, the manager and the email', function (array $surcharge, string $attendu) {
+        connecter(utilisateurAvecRole(Role::Admin))
+            ->post(route('gestion.partenaires.store'), formulairePartenaire($surcharge))
+            ->assertSessionHasNoErrors();
+
+        expect(Partenaire::sole())
+            ->contact->toBe($attendu)
+            ->responsable->toBe('Dr Koné')
+            ->email->toBe('pharmacie@plateau.ci');
+    })->with([
+        'Côte d\'Ivoire par défaut' => [[], '+2250707123456'],
+        'Sénégal choisi' => [['pays_contact' => 'SN', 'contact' => '77 123 45 67'], '+221771234567'],
+        'international saisi' => [['contact' => '+233 24 123 4567'], '+233241234567'],
+    ]);
+
+    it('keeps the manager and the email optional', function () {
+        connecter(utilisateurAvecRole(Role::Admin))
+            ->post(route('gestion.partenaires.store'), formulairePartenaire(['responsable' => ' ', 'email' => '']))
+            ->assertSessionHasNoErrors();
+
+        expect(Partenaire::sole())->responsable->toBeNull()->email->toBeNull();
+    });
+
+    it('prefills the edit form with the country and the national number', function () {
+        $partenaire = Partenaire::factory()->create(['contact' => '+221771234567']);
+
+        connecter(utilisateurAvecRole(Role::Admin))->get(route('gestion.partenaires.edit', $partenaire))
+            ->assertOk()
+            ->assertSee('value="771234567"', false)
+            ->assertSee('value="SN" title="Sénégal" selected', false);
+    });
+
+    it('shows the formatted contact, the manager and the email', function () {
+        $partenaire = Partenaire::factory()->create(['contact' => '+2250707123456', 'responsable' => 'Awa Koné', 'email' => 'awa@exemple.ci']);
+
+        connecter(utilisateurAvecRole(Role::Admin))->get(route('gestion.partenaires.show', $partenaire))
+            ->assertSee('+225 07 07 12 34 56')
+            ->assertSee('Awa Koné')
+            ->assertSee('mailto:awa@exemple.ci', false);
+    });
 
     it('deactivates a partner so that its operators can no longer work', function () {
         $operateur = utilisateurAvecRole(Role::Partenaire);

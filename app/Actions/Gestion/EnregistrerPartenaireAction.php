@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\DB;
 class EnregistrerPartenaireAction
 {
     /**
-     * @param  array{nom: string, secteur?: ?string, localisation?: ?string, contact?: ?string, taux_reduction: string|float}  $donnees
+     * @param  array{nom: string, secteur?: ?string, localisation?: ?string, contact?: ?string, responsable?: ?string, email?: ?string, taux_reduction: string|float}  $donnees
      */
     public function creer(array $donnees, User $auteur): Partenaire
     {
@@ -33,7 +33,7 @@ class EnregistrerPartenaireAction
     }
 
     /**
-     * @param  array{nom: string, secteur?: ?string, localisation?: ?string, contact?: ?string, taux_reduction: string|float}  $donnees
+     * @param  array{nom: string, secteur?: ?string, localisation?: ?string, contact?: ?string, responsable?: ?string, email?: ?string, taux_reduction: string|float}  $donnees
      */
     public function modifier(Partenaire $partenaire, array $donnees, User $auteur): Partenaire
     {

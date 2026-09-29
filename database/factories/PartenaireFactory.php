@@ -20,7 +20,9 @@ class PartenaireFactory extends Factory
             'nom' => fake()->company(),
             'secteur' => fake()->randomElement(['Restauration', 'Santé', 'Mode', 'Hôtellerie', 'Beauté', 'Supermarché']),
             'localisation' => fake()->randomElement(['Cocody', 'Plateau', 'Marcory', 'Yopougon', 'Treichville']).', Abidjan',
-            'contact' => fake()->numerify('07########'),
+            'contact' => fake()->numerify('+22507########'),
+            'responsable' => fake()->name(),
+            'email' => fake()->unique()->safeEmail(),
             'taux_reduction' => fake()->randomElement([5, 10, 15, 20]),
             'statut' => StatutPartenaire::Actif,
         ];

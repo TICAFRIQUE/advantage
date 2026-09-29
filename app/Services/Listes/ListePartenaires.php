@@ -51,7 +51,7 @@ class ListePartenaires extends Liste
 
     public function colonnes(): array
     {
-        return ['Nom', 'Secteur', 'Localisation', 'Contact', 'Remise', 'Statut', 'Utilisateurs', 'Passages'];
+        return ['Nom', 'Secteur', 'Localisation', 'Contact', 'Responsable', 'Email', 'Remise', 'Statut', 'Utilisateurs', 'Passages'];
     }
 
     /**
@@ -63,7 +63,9 @@ class ListePartenaires extends Liste
             $modele->nom,
             $modele->secteur,
             $modele->localisation,
-            $modele->contact,
+            $modele->contactFormate(),
+            $modele->responsable,
+            $modele->email,
             $modele->tauxFormate(),
             $modele->statut->libelle(),
             (int) $modele->operateurs_count,
