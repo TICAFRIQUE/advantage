@@ -51,6 +51,8 @@ class VerifierSecuriteCommande extends Command
      */
     private function controles(GestionSauvegardes $sauvegardes): array
     {
+        $erreurDossier = $this->erreurDossierSauvegardes($sauvegardes);
+
         return [
             'Environnement de production' => [
                 app()->isProduction(),
@@ -95,12 +97,8 @@ class VerifierSecuriteCommande extends Command
                 'SMS_DRIVER=ticafrique, TICAFRIQUE_SMS_API_KEY et une URL en HTTPS.',
             ],
             'Dossier des sauvegardes sûr' => [
-                $this->dossierSauvegardesSur($sauvegardes),
-                'Dossier absolu, hors de public/, accessible en écriture (Administration › Paramètres ou SAUVEGARDES_DOSSIER).',
-            ],
-            'Sauvegardes épargnées par le déploiement' => [
-                $this->sauvegardesHorsDuDeploiement($sauvegardes->dossier()),
-                'Dossier des sauvegardes hors du projet (ou dans storage/) : le déploiement (rsync --delete) effacerait tout autre dossier du projet.',
+                $erreurDossier === null,
+                $erreurDossier.' (Administration › Paramètres › Sauvegardes)',
             ],
             'Fichiers CSS / JS construits' => [
                 is_file(public_path('build/manifest.json')),
@@ -121,24 +119,19 @@ class VerifierSecuriteCommande extends Command
         ];
     }
 
-    private function dossierSauvegardesSur(GestionSauvegardes $sauvegardes): bool
+    /**
+     * Mêmes règles que le choix du dossier dans Paramètres (hors de public/,
+     * épargné par les déploiements, accessible en écriture).
+     */
+    private function erreurDossierSauvegardes(GestionSauvegardes $sauvegardes): ?string
     {
         try {
             GestionSauvegardes::verifierDossier($sauvegardes->dossier());
 
-            return true;
-        } catch (SauvegardeException) {
-            return false;
+            return null;
+        } catch (SauvegardeException $exception) {
+            return $exception->getMessage();
         }
-    }
-
-    private function sauvegardesHorsDuDeploiement(string $dossier): bool
-    {
-        $normaliser = fn (string $chemin) => mb_strtolower(rtrim(str_replace('\\', '/', $chemin), '/')).'/';
-        $dossier = $normaliser($dossier);
-
-        return ! str_starts_with($dossier, $normaliser(base_path()))
-            || str_starts_with($dossier, $normaliser(storage_path()));
     }
 
     private function envProtege(): bool

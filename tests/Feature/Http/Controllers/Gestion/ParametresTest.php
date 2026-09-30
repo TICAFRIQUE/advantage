@@ -198,6 +198,10 @@ describe('sauvegardes', function () {
             ->assertSessionHas('erreur');
         superadminConfirmePourParametres()->put(route('gestion.parametres.sauvegardes.dossier'), ['dossier' => 'storage/sauvegardes'])
             ->assertSessionHas('erreur');
+        // Effacé par le prochain déploiement (rsync --delete) : refusé.
+        superadminConfirmePourParametres()->put(route('gestion.parametres.sauvegardes.dossier'), ['dossier' => base_path('sauvegardes')])
+            ->assertSessionHas('erreur', fn (string $message) => str_contains($message, 'storage/app/'));
+        expect(is_dir(base_path('sauvegardes')))->toBeFalse();
         superadminConfirmePourParametres()->put(route('gestion.parametres.sauvegardes.dossier'), ['dossier' => $nouveau])
             ->assertSessionHas('succes');
 

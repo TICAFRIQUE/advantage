@@ -70,16 +70,16 @@ it('refuses a backup folder inside the public folder', function () {
     $this->dossierPublic = configurationDeProductionConforme();
     config(['plateforme.sauvegardes.dossier' => str_replace('\\', '/', public_path('sauvegardes'))]);
 
-    $this->artisan('securite:verifier')->expectsOutputToContain('hors de public/')->assertFailed();
+    $this->artisan('securite:verifier')->expectsOutputToContain('dans le dossier public')->assertFailed();
 });
 
-it('refuses a backup folder that the deployment would wipe, but accepts storage/', function () {
+it('refuses a backup folder that the deployment would wipe, but accepts storage/app/', function () {
     $this->dossierPublic = configurationDeProductionConforme();
-    $dansLeProjet = str_replace('\\', '/', base_path('sauvegardes-test-'.uniqid()));
-    config(['plateforme.sauvegardes.dossier' => $dansLeProjet]);
 
-    $this->artisan('securite:verifier')->expectsOutputToContain('rsync --delete')->assertFailed();
-    File::deleteDirectory($dansLeProjet);
+    foreach ([base_path('sauvegardes'), storage_path('framework/sauvegardes')] as $efface) {
+        config(['plateforme.sauvegardes.dossier' => str_replace('\\', '/', $efface)]);
+        $this->artisan('securite:verifier')->expectsOutputToContain('seul storage/app/')->assertFailed();
+    }
 
     config(['plateforme.sauvegardes.dossier' => str_replace('\\', '/', storage_path('app/sauvegardes'))]);
     $this->artisan('securite:verifier')->assertSuccessful();

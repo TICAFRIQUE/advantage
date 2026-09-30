@@ -184,7 +184,7 @@ jobs:
           ssh "$SERVEUR" "bash -s" <<EOF
             set -e
             cd '$DOSSIER'
-            mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache/data storage/logs bootstrap/cache public/uploads
+            mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache/data storage/logs storage/app/sauvegardes bootstrap/cache public/uploads
             # Caches de l'ancienne version (paquets, config, routes) : supprimés avant
             # tout appel à artisan, qui planterait sur un paquet retiré de vendor/.
             find bootstrap/cache -maxdepth 1 -name '*.php' -delete

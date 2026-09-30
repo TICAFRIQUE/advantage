@@ -103,7 +103,11 @@
                                 <input type="text" id="dossier" name="dossier" value="{{ old('dossier', $dossier) }}" required maxlength="255"
                                        class="form-control form-control-sm font-monospace @error('dossier') is-invalid @enderror">
                                 @error('dossier')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                                <div class="form-text">Jamais dans le dossier public. Il est créé s'il n'existe pas.</div>
+                                <div class="form-text">
+                                    Par défaut : <span class="font-monospace text-break">{{ $dossierParDefaut }}</span>.
+                                    Hors du projet, ou dans <span class="font-monospace">storage/app/</span> : le reste du projet est remplacé à chaque déploiement.
+                                    Jamais dans le dossier public. Il est créé s'il n'existe pas.
+                                </div>
                                 <button type="submit" class="btn btn-outline-primary btn-sm mt-2">Changer de dossier</button>
                             </div>
                         </form>

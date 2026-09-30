@@ -30,6 +30,7 @@ class ParametresController extends Controller
             'peutSauvegarder' => $peutSauvegarder,
             'sauvegardes' => $peutSauvegarder ? $sauvegardes->lister() : [],
             'dossier' => $peutSauvegarder ? $sauvegardes->dossier() : null,
+            'dossierParDefaut' => $peutSauvegarder ? GestionSauvegardes::dossierParDefaut() : null,
             'conserver' => (int) config('plateforme.sauvegardes.conserver', 10),
             'automatique' => (bool) config('plateforme.sauvegardes.automatique'),
             'onglet' => $request->query('onglet') === 'sauvegardes' && $peutSauvegarder ? 'sauvegardes' : ($user->can(Permission::GererParametres->value) ? 'identite' : 'sauvegardes'),

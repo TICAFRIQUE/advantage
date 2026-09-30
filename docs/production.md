@@ -296,7 +296,8 @@ Les sauvegardes se gèrent dans **Administration › Paramètres › Sauvegardes
 Réglages dans `.env` (facultatifs) :
 
 ```dotenv
-SAUVEGARDES_DOSSIER=/home/compte/sauvegardes-advantage
+# Dossier initial ; par défaut storage/app/sauvegardes (créé automatiquement)
+# SAUVEGARDES_DOSSIER=/home/compte/sauvegardes-advantage
 SAUVEGARDES_CONSERVER=10
 SAUVEGARDES_AUTOMATIQUE=true
 # Si mysqldump / mysql ne sont pas dans le PATH du serveur :
@@ -304,7 +305,8 @@ SAUVEGARDES_MYSQLDUMP=/usr/bin/mysqldump
 SAUVEGARDES_MYSQL=/usr/bin/mysql
 ```
 
-- Le dossier ne doit **jamais** être dans `public/` (refusé par l'application). Placez-le de préférence hors du dossier du projet.
+- **Dossier par défaut** : `storage/app/sauvegardes` dans le projet, créé à chaque déploiement et conservé par lui. Il se change dans **Paramètres › Sauvegardes** (le choix fait dans l'application prime sur `SAUVEGARDES_DOSSIER`).
+- Dossiers refusés par l'application : dans `public/` (les sauvegardes seraient téléchargeables), ou dans le projet ailleurs que sous `storage/app/` (le déploiement remplace tout le reste du projet et les effacerait).
 - Une restauration crée d'abord une sauvegarde de l'état actuel (« avant-restauration »), puis remet à niveau le schéma et les permissions.
 - Copiez régulièrement les sauvegardes hors du serveur (téléchargement depuis l'application).
 
@@ -350,7 +352,7 @@ Conserver aussi en lieu sûr, hors du serveur : le fichier `.env`, en particulie
 - [ ] `php artisan queue:failed` vide.
 
 **Sauvegardes**
-- [ ] Dossier des sauvegardes hors de `public/` (idéalement hors du projet), accessible en écriture.
+- [ ] Dossier des sauvegardes : `storage/app/sauvegardes` par défaut, ou un dossier choisi dans Paramètres › Sauvegardes (hors de `public/`, hors du projet ou sous `storage/app/`).
 - [ ] Une sauvegarde créée depuis Administration › Paramètres, puis téléchargée et ouverte (`gunzip -t`).
 
 **Application**

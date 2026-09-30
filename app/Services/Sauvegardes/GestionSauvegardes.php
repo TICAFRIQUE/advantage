@@ -33,9 +33,15 @@ class GestionSauvegardes
         return rtrim((string) (Parametres::get('sauvegardes.dossier') ?: config('plateforme.sauvegardes.dossier')), '\\/');
     }
 
+    public static function dossierParDefaut(): string
+    {
+        return str_replace('\\', '/', storage_path('app/sauvegardes'));
+    }
+
     /**
-     * Dossier choisi : absolu, hors du dossier public, créé s'il n'existe pas
-     * et accessible en écriture.
+     * Dossier choisi : absolu, hors du dossier public, épargné par les
+     * déploiements (hors du projet ou dans storage/app/), créé s'il n'existe
+     * pas et accessible en écriture.
      *
      * @throws SauvegardeException
      */
@@ -47,10 +53,13 @@ class GestionSauvegardes
             throw new SauvegardeException('Indiquez un chemin absolu (ex. /home/compte/sauvegardes ou C:/sauvegardes), sans « .. ».');
         }
 
-        $public = rtrim(str_replace('\\', '/', public_path()), '/');
-
-        if (str_starts_with(mb_strtolower($dossier.'/'), mb_strtolower($public.'/'))) {
+        if (self::estDans($dossier, public_path())) {
             throw new SauvegardeException('Le dossier ne doit pas être dans le dossier public : les sauvegardes seraient téléchargeables par tous.');
+        }
+
+        // Le déploiement (rsync --delete) remplace tout le projet sauf storage/.
+        if (self::estDans($dossier, base_path()) && ! self::estDans($dossier, storage_path('app'))) {
+            throw new SauvegardeException('Dans le dossier du projet, seul storage/app/ est conservé à chaque déploiement : choisissez un dossier dans storage/app/ (par défaut '.self::dossierParDefaut().') ou hors du projet.');
         }
 
         if (! is_dir($dossier) && ! @mkdir($dossier, 0750, true)) {
@@ -62,6 +71,13 @@ class GestionSauvegardes
         }
 
         return $dossier;
+    }
+
+    private static function estDans(string $dossier, string $parent): bool
+    {
+        $normaliser = fn (string $chemin): string => mb_strtolower(rtrim(str_replace('\\', '/', $chemin), '/')).'/';
+
+        return str_starts_with($normaliser($dossier), $normaliser($parent));
     }
 
     /**
