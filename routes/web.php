@@ -4,6 +4,7 @@ use App\Enums\Permission;
 use App\Enums\Role;
 use App\Http\Controllers\AccueilEspaceController;
 use App\Http\Controllers\Gestion;
+use App\Http\Controllers\MotDePasseController;
 use App\Http\Controllers\Partenaire;
 use App\Http\Controllers\ProfilController;
 use Illuminate\Support\Facades\Route;
@@ -64,6 +65,14 @@ Route::middleware(['auth', 'compte.actif'])->group(function () use ($parcoursTra
     Route::get('/profil', ProfilController::class)
         ->middleware('permission:'.Permission::AccederGestion->value.'|'.Permission::AccederEspacePartenaire->value)
         ->name('profil');
+
+    // Le superadmin gère lui-même son mot de passe (actuel confirmé < 5 min).
+    Route::prefix('/profil/mot-de-passe')->name('profil.mot-de-passe.')
+        ->middleware(['role:'.Role::Superadmin->value, 'permission:'.Permission::AccederGestion->value, 'password.confirm:password.confirm,300', 'throttle:5,1'])
+        ->group(function () {
+            Route::put('/', [MotDePasseController::class, 'modifier'])->name('modifier');
+            Route::post('/generer', [MotDePasseController::class, 'generer'])->name('generer');
+        });
 
     /*
     |----------------------------------------------------------------------

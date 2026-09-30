@@ -42,12 +42,16 @@ it('tells when there is no recent activity', function () {
         ->assertSee('Aucune activité enregistrée récemment.');
 });
 
-it('tells the superadmin how to reset their pin', function () {
-    $superadmin = utilisateurAvecRole(Role::Superadmin);
-
-    connecter($superadmin)->get(route('profil'))
+it('offers the password forms to the superadmin only', function () {
+    connecter(utilisateurAvecRole(Role::Superadmin))->get(route('profil'))
         ->assertOk()
-        ->assertSee('utilisateur:reinitialiser-pin '.$superadmin->nom_utilisateur);
+        ->assertSee(route('profil.mot-de-passe.modifier'))
+        ->assertSee(route('profil.mot-de-passe.generer'));
+
+    connecter(utilisateurAvecRole(Role::Admin))->get(route('profil'))
+        ->assertOk()
+        ->assertDontSee(route('profil.mot-de-passe.modifier'))
+        ->assertSee('adressez-vous à un administrateur');
 });
 
 it('requires to be logged in', function () {

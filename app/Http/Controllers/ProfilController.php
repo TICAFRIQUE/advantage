@@ -10,7 +10,7 @@ use Illuminate\View\View;
  * Mon profil (back-office et espace partenaire) : informations du compte
  * connecté et ses dernières actions (journal d'audit), en lecture seule. Le
  * PIN et la fiche se modifient par un administrateur (jamais sur son propre
- * compte).
+ * compte), sauf le mot de passe du superadmin (MotDePasseController).
  */
 class ProfilController extends Controller
 {

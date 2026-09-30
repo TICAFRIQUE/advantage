@@ -42,16 +42,16 @@
                             </div>
 
                             <div class="mb-4">
-                                <label for="password" class="form-label fw-semibold">PIN</label>
+                                <label for="password" class="form-label fw-semibold">Mot de passe</label>
                                 <div class="input-group input-group-lg">
                                     <input x-bind:type="afficher ? 'text' : 'password'" type="password" x-ref="pin"
                                            id="password" name="password"
                                            class="form-control @error('password') is-invalid @enderror"
-                                           inputmode="numeric" autocomplete="current-password" required maxlength="5">
+                                           inputmode="numeric" autocomplete="current-password" required maxlength="72">
                                     <button type="button" class="btn btn-outline-secondary"
                                             x-on:click="afficher = !afficher"
-                                            x-bind:aria-label="afficher ? 'Masquer le PIN' : 'Afficher le PIN'"
-                                            aria-label="Afficher le PIN" aria-controls="password">
+                                            x-bind:aria-label="afficher ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+                                            aria-label="Afficher le mot de passe" aria-controls="password">
                                         <span x-text="afficher ? 'Masquer' : 'Afficher'">Afficher</span>
                                     </button>
                                 </div>
@@ -68,7 +68,7 @@
 
                 <div class="text-center mt-4">
                     <img src="{{ asset('images/papillon-or.png') }}" alt="" width="90" aria-hidden="true">
-                    <p class="small text-white-50 mt-2 mb-0">PIN oublié ou compte verrouillé&nbsp;? Contactez votre administrateur.</p>
+                    <p class="small text-white-50 mt-2 mb-0">Mot de passe oublié ou compte verrouillé&nbsp;? Contactez votre administrateur.</p>
                 </div>
             </div>
         </div>

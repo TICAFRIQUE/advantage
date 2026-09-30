@@ -56,18 +56,20 @@ it('returns the same generic error for an unknown user and a wrong pin', functio
     $inconnu = tenterConnexion('personne', '12345');
     $mauvaisPin = tenterConnexion($user->nom_utilisateur, '00000');
 
-    $inconnu->assertSessionHasErrors(['nom_utilisateur' => 'Identifiants incorrects.']);
-    $mauvaisPin->assertSessionHasErrors(['nom_utilisateur' => 'Identifiants incorrects.']);
+    $inconnu->assertSessionHasErrors(['nom_utilisateur' => 'Mot de passe incorrect.']);
+    $mauvaisPin->assertSessionHasErrors(['nom_utilisateur' => 'Mot de passe incorrect.']);
     $this->assertGuest();
 });
 
-it('only accepts a five-digit pin, for every account', function (string $saisie) {
+it('never reveals the expected password format', function (string $saisie) {
     $superadmin = utilisateurAvecRole(Role::Superadmin);
 
-    tenterConnexion($superadmin->nom_utilisateur, $saisie)->assertSessionHasErrors('password');
+    tenterConnexion($superadmin->nom_utilisateur, $saisie)
+        ->assertSessionHasErrors(['nom_utilisateur' => 'Mot de passe incorrect.'])
+        ->assertSessionDoesntHaveErrors('password');
 
     $this->assertGuest();
-    expect($superadmin->fresh()->tentatives_echouees)->toBe(0);
+    expect($superadmin->fresh()->tentatives_echouees)->toBe(1);
 })->with([
     'trop court' => ['4815'],
     'trop long' => ['481573'],
@@ -107,7 +109,7 @@ it('does not reveal that an account is locked to someone with a wrong pin', func
     $user = utilisateurAvecRole(Role::Agent, ['verrouille_le' => now()]);
 
     tenterConnexion($user->nom_utilisateur, '00000')
-        ->assertSessionHasErrors(['nom_utilisateur' => 'Identifiants incorrects.']);
+        ->assertSessionHasErrors(['nom_utilisateur' => 'Mot de passe incorrect.']);
 });
 
 it('refuses a deactivated account with the correct pin', function () {
@@ -124,7 +126,7 @@ it('treats a deleted account as unknown', function () {
     $user->delete();
 
     tenterConnexion($user->nom_utilisateur, UserFactory::PIN)
-        ->assertSessionHasErrors(['nom_utilisateur' => 'Identifiants incorrects.']);
+        ->assertSessionHasErrors(['nom_utilisateur' => 'Mot de passe incorrect.']);
 });
 
 it('throttles repeated attempts on the same username', function () {

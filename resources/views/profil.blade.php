@@ -29,16 +29,57 @@
                         @endif
                     </dl>
 
-                    <div class="alert alert-light border small mt-4 mb-0" role="note">
-                        <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
-                        @if ($superadmin)
-                            Votre PIN se réinitialise sur le serveur : <code>php artisan utilisateur:reinitialiser-pin {{ $compte->nom_utilisateur }}</code>.
-                        @else
-                            Pour modifier vos informations ou obtenir un nouveau PIN, adressez-vous à un administrateur.
-                        @endif
-                    </div>
+                    @unless ($superadmin)
+                        <div class="alert alert-light border small mt-4 mb-0" role="note">
+                            <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+                            Pour modifier vos informations ou obtenir un nouveau mot de passe, adressez-vous à un administrateur.
+                        </div>
+                    @endunless
                 </div>
             </section>
+
+            @if ($superadmin)
+                <section class="card border-0 shadow-sm mt-4" aria-labelledby="titre-mot-de-passe">
+                    <div class="card-body p-4">
+                        <h2 class="h6 mb-1" id="titre-mot-de-passe"><i class="bi bi-key me-1" aria-hidden="true"></i>Mot de passe</h2>
+                        <p class="small text-secondary mb-3">5 chiffres, ni suite (12345) ni chiffre répété. Votre mot de passe actuel vous sera redemandé.</p>
+
+                        <form method="POST" action="{{ route('profil.mot-de-passe.modifier') }}" novalidate>
+                            @csrf
+                            @method('PUT')
+                            <div class="row g-2">
+                                <div class="col-12 col-sm-6">
+                                    <label for="mot_de_passe" class="form-label small">Nouveau mot de passe</label>
+                                    <input type="password" id="mot_de_passe" name="mot_de_passe" required
+                                           inputmode="numeric" maxlength="5" autocomplete="new-password"
+                                           class="form-control @error('mot_de_passe') is-invalid @enderror"
+                                           @error('mot_de_passe') aria-describedby="erreur-mot-de-passe" @enderror>
+                                    @error('mot_de_passe')<div class="invalid-feedback" id="erreur-mot-de-passe">{{ $message }}</div>@enderror
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <label for="mot_de_passe_confirmation" class="form-label small">Confirmation</label>
+                                    <input type="password" id="mot_de_passe_confirmation" name="mot_de_passe_confirmation" required
+                                           inputmode="numeric" maxlength="5" autocomplete="new-password"
+                                           class="form-control @error('mot_de_passe_confirmation') is-invalid @enderror">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm mt-3">Modifier le mot de passe</button>
+                        </form>
+
+                        <hr class="my-4">
+
+                        <form method="POST" action="{{ route('profil.mot-de-passe.generer') }}"
+                              data-titre="Générer un nouveau mot de passe ?"
+                              data-confirmer="Il sera affiché une seule fois : notez-le. L'actuel ne fonctionnera plus."
+                              data-bouton-confirmer="Générer">
+                            @csrf
+                            <button type="submit" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>Générer un nouveau mot de passe
+                            </button>
+                        </form>
+                    </div>
+                </section>
+            @endif
         </div>
 
         <div class="col-12 col-lg-7">

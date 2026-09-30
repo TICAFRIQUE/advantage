@@ -112,7 +112,7 @@ php artisan permissions:synchroniser
 php artisan db:seed --class=SuperAdminSeeder --force
 ```
 
-Le superadmin se connecte, comme tous les comptes, avec un **PIN à 5 chiffres** : celui de `SUPERADMIN_PIN`, ou à défaut le PIN généré et affiché une seule fois par la commande (le noter). Retirer ensuite `SUPERADMIN_PIN` du `.env`. PIN oublié : `php artisan utilisateur:reinitialiser-pin superadmin`.
+Le superadmin se connecte, comme tous les comptes, avec un **PIN à 5 chiffres** : celui de `SUPERADMIN_PIN`, ou à défaut le PIN généré et affiché une seule fois par la commande (le noter). Retirer ensuite `SUPERADMIN_PIN` du `.env`. Le superadmin change ou régénère son mot de passe dans **Mon profil › Mot de passe** ; oublié : `php artisan utilisateur:reinitialiser-pin superadmin`.
 
 Le seeder du superadmin est idempotent : relancé, il ne change jamais le mot de passe d'un compte existant.
 

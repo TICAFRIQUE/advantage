@@ -5,15 +5,15 @@
                 <div class="card border-0 shadow-lg">
                     <div class="card-body p-4">
                         <h1 class="h5 fw-bold mb-2">Confirmez votre identité</h1>
-                        <p class="text-secondary small">Cette action est sensible. Saisissez à nouveau votre PIN pour continuer.</p>
+                        <p class="text-secondary small">Cette action est sensible. Saisissez à nouveau votre mot de passe pour continuer.</p>
 
                         <form method="POST" action="{{ route('password.confirm.store') }}" x-data="{ envoi: false }" x-on:submit="envoi = true">
                             @csrf
 
                             <div class="mb-3">
-                                <label for="password" class="form-label fw-semibold">PIN</label>
+                                <label for="password" class="form-label fw-semibold">Mot de passe</label>
                                 <input type="password" id="password" name="password" required autofocus
-                                       inputmode="numeric" maxlength="5" autocomplete="current-password"
+                                       maxlength="72" autocomplete="current-password"
                                        class="form-control form-control-lg @error('password') is-invalid @enderror"
                                        @error('password') aria-describedby="erreur-password" @enderror>
                                 @error('password')

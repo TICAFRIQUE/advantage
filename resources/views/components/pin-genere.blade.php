@@ -10,8 +10,13 @@
         <div class="d-flex flex-wrap align-items-center gap-3">
             <i class="bi bi-key-fill fs-2" aria-hidden="true"></i>
             <div class="flex-grow-1">
-                <h2 class="h6 fw-bold mb-1" id="titre-pin">PIN de {{ $pin['nom'] }} ({{ '@'.$pin['nom_utilisateur'] }})</h2>
-                <p class="small mb-0">Transmettez-le à l'utilisateur en main propre. <strong>Il ne sera plus jamais affiché.</strong></p>
+                @if ($pin['personnel'] ?? false)
+                    <h2 class="h6 fw-bold mb-1" id="titre-pin">Votre nouveau mot de passe</h2>
+                    <p class="small mb-0">Notez-le maintenant. <strong>Il ne sera plus jamais affiché.</strong></p>
+                @else
+                    <h2 class="h6 fw-bold mb-1" id="titre-pin">PIN de {{ $pin['nom'] }} ({{ '@'.$pin['nom_utilisateur'] }})</h2>
+                    <p class="small mb-0">Transmettez-le à l'utilisateur en main propre. <strong>Il ne sera plus jamais affiché.</strong></p>
+                @endif
             </div>
             <output class="pin-genere__code" aria-label="PIN">{{ $pin['pin'] }}</output>
             <button type="button" class="btn btn-dark" x-on:click="copier()">
