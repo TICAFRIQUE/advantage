@@ -6,7 +6,7 @@ Commandes à exécuter sur le serveur de production (hébergement mutualisé cPa
 > - `composer install`, **jamais** `composer update` en production.
 > - `php artisan migrate --force` : les migrations sont les seules à modifier la base.
 > - `php artisan permissions:synchroniser` à **chaque** déploiement (additif : ne retire jamais les droits réglés dans Paramètres).
-> - Ne jamais lancer `migrate:fresh`, `migrate:reset`, `db:wipe` ni `db:seed` complet en production.
+> - Ne jamais lancer `migrate:fresh`, `migrate:reset`, `db:wipe` ni `db:seed` complet en production (seule exception : la remise à zéro **avant l'ouverture**, § 6).
 
 ## 1. Prérequis du serveur
 
@@ -209,7 +209,31 @@ Réinitialiser le PIN d'un compte (par exemple si plus aucun administrateur ne p
 php artisan utilisateur:reinitialiser-pin nom.utilisateur
 ```
 
-Le nouveau PIN s'affiche une seule fois dans le terminal.
+Le nouveau PIN s'affiche une seule fois dans le terminal. La commande déverrouille aussi le compte et remet son compteur d'échecs à zéro.
+
+**Superadmin** — relancer `SuperAdminSeeder` ne modifie jamais un compte existant (changer `SUPERADMIN_PIN` dans le `.env` est sans effet). Pour lui donner un nouveau mot de passe :
+
+- s'il peut se connecter : **Mon profil › Mot de passe** (le choisir ou en générer un) ;
+- sinon (oublié, compte verrouillé) :
+
+```bash
+php artisan utilisateur:reinitialiser-pin superadmin
+```
+
+### Remise à zéro complète (avant l'ouverture uniquement)
+
+Pour effacer les essais faits en production **avant l'ouverture** de la plateforme :
+
+```bash
+php artisan sauvegarde:creer              # filet de sécurité
+php artisan migrate:fresh --force         # supprime et recrée TOUTES les tables
+php artisan permissions:synchroniser
+php artisan db:seed --class=SuperAdminSeeder --force   # nouveau superadmin (SUPERADMIN_PIN ou généré)
+```
+
+> ⚠️ `migrate:fresh` efface **tout** : cartes, titulaires, transactions, journal d'audit, comptes. Une fois la plateforme ouverte aux agents et aux partenaires, ne **jamais** l'utiliser (règle d'or en tête de ce document).
+
+Ensuite : noter le mot de passe du superadmin s'il a été généré, retirer `SUPERADMIN_PIN` du `.env`, puis `php artisan config:cache`.
 
 ### Cartes
 
