@@ -203,9 +203,11 @@ jobs:
             # Caches de l'ancienne version (paquets, config, routes) : supprimés avant
             # tout appel à artisan, qui planterait sur un paquet retiré de vendor/.
             find bootstrap/cache -maxdepth 1 -name '*.php' -delete
-            $PHP artisan optimize:clear
+            # Migrations d'abord : cache:clear (dans optimize:clear) écrit dans la
+            # table cache, absente d'une base neuve.
             $PHP artisan migrate --force
             $PHP artisan permissions:synchroniser
+            $PHP artisan optimize:clear
             $PHP artisan optimize
             $PHP artisan queue:restart
             $PHP artisan securite:verifier
