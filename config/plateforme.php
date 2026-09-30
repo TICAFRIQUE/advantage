@@ -7,8 +7,9 @@ return [
     | Compte super administrateur
     |--------------------------------------------------------------------------
     |
-    | Compte créé par le seeder de manière idempotente. Le mot de passe n'est
-    | appliqué qu'à la création du compte, jamais écrasé ensuite.
+    | Compte créé par le seeder de manière idempotente, avec un PIN à 5 chiffres
+    | comme tous les comptes (SUPERADMIN_PIN, ou généré et affiché une fois).
+    | Le PIN n'est appliqué qu'à la création, jamais écrasé ensuite.
     |
     */
 
@@ -16,8 +17,7 @@ return [
         'nom' => env('SUPERADMIN_NOM', 'Super Administrateur'),
         'nom_utilisateur' => env('SUPERADMIN_NOM_UTILISATEUR', 'superadmin'),
         'email' => env('SUPERADMIN_EMAIL') ?: null,
-        'mot_de_passe' => env('SUPERADMIN_MOT_DE_PASSE'),
-        'longueur_min_mot_de_passe' => 12,
+        'pin' => env('SUPERADMIN_PIN'),
     ],
 
     /*

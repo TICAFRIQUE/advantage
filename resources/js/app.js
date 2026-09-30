@@ -304,17 +304,11 @@ function lireConfiguration(id) {
 }
 
 /**
- * Formulaire de connexion : affichage du PIN et clavier complet (mot de passe du superadmin).
+ * Formulaire de connexion : affichage du PIN.
  */
 Alpine.data('connexion', () => ({
     envoi: false,
     afficher: false,
-    clavierComplet: false,
-
-    basculerClavier() {
-        this.clavierComplet = !this.clavierComplet;
-        this.$nextTick(() => this.$refs.pin?.focus());
-    },
 }));
 
 /**

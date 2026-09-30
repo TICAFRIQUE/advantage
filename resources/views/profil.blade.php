@@ -32,7 +32,7 @@
                     <div class="alert alert-light border small mt-4 mb-0" role="note">
                         <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
                         @if ($superadmin)
-                            Votre mot de passe se change depuis la configuration du serveur (<code>SUPERADMIN_MOT_DE_PASSE</code>).
+                            Votre PIN se réinitialise sur le serveur : <code>php artisan utilisateur:reinitialiser-pin {{ $compte->nom_utilisateur }}</code>.
                         @else
                             Pour modifier vos informations ou obtenir un nouveau PIN, adressez-vous à un administrateur.
                         @endif

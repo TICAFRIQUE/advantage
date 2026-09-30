@@ -28,8 +28,12 @@ it('refuses an unknown account', function () {
     $this->artisan('utilisateur:reinitialiser-pin', ['nom_utilisateur' => 'inconnu'])->assertFailed();
 });
 
-it('refuses the superadmin, who uses a strong password', function () {
+it('resets the superadmin pin too, from the server only', function () {
     $superadmin = utilisateurAvecRole(Role::Superadmin);
 
-    $this->artisan('utilisateur:reinitialiser-pin', ['nom_utilisateur' => $superadmin->nom_utilisateur])->assertFailed();
+    $this->artisan('utilisateur:reinitialiser-pin', ['nom_utilisateur' => $superadmin->nom_utilisateur])
+        ->expectsOutputToContain('Nouveau PIN')
+        ->assertSuccessful();
+
+    expect(Hash::check(UserFactory::PIN, $superadmin->fresh()->password))->toBeFalse();
 });

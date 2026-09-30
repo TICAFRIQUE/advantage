@@ -4,14 +4,17 @@ namespace Database\Seeders;
 
 use App\Enums\Role;
 use App\Models\User;
+use App\Services\GenerateurPin;
 use Illuminate\Database\Seeder;
 use RuntimeException;
 
 /**
- * Crée le compte super administrateur à partir de la configuration (.env).
+ * Crée le compte super administrateur à partir de la configuration (.env),
+ * avec un PIN à 5 chiffres comme tous les comptes : SUPERADMIN_PIN, ou à
+ * défaut un PIN généré, affiché une seule fois.
  *
- * Idempotent : si le compte existe déjà, son mot de passe n'est jamais
- * écrasé (il a pu être changé depuis) ; seul le rôle est garanti.
+ * Idempotent : si le compte existe déjà, son PIN n'est jamais écrasé (il a pu
+ * être réinitialisé depuis) ; seul le rôle est garanti.
  */
 class SuperAdminSeeder extends Seeder
 {
@@ -28,16 +31,21 @@ class SuperAdminSeeder extends Seeder
             ->first();
 
         if ($superadmin === null) {
-            $this->verifierMotDePasse((string) $config['mot_de_passe'], (int) $config['longueur_min_mot_de_passe']);
+            $pin = filled($config['pin']) ? $this->verifierPin((string) $config['pin']) : GenerateurPin::generer();
 
             $superadmin = User::create([
                 'nom' => $config['nom'],
                 'nom_utilisateur' => $config['nom_utilisateur'],
                 'email' => $config['email'],
-                'password' => $config['mot_de_passe'],
+                'password' => $pin,
             ]);
 
             $this->command?->info("Compte superadmin « {$superadmin->nom_utilisateur} » créé.");
+
+            if (blank($config['pin'])) {
+                $this->command?->info("PIN généré : {$pin}");
+                $this->command?->warn('Notez-le : il ne sera plus affiché.');
+            }
         }
 
         // Compte de secours : il est toujours restauré s'il avait été supprimé.
@@ -50,10 +58,18 @@ class SuperAdminSeeder extends Seeder
         }
     }
 
-    private function verifierMotDePasse(string $motDePasse, int $longueurMin): void
+    private function verifierPin(string $pin): string
     {
-        if (mb_strlen($motDePasse) < $longueurMin) {
-            throw new RuntimeException("SUPERADMIN_MOT_DE_PASSE doit contenir au moins {$longueurMin} caractères.");
+        $longueur = (int) config('plateforme.connexion.longueur_pin', 5);
+
+        if (preg_match('/^\d{'.$longueur.'}$/', $pin) !== 1) {
+            throw new RuntimeException("SUPERADMIN_PIN doit contenir exactement {$longueur} chiffres.");
         }
+
+        if (GenerateurPin::estTrivial($pin)) {
+            throw new RuntimeException('SUPERADMIN_PIN est trop simple (chiffre répété ou suite comme 12345) : choisissez-en un autre.');
+        }
+
+        return $pin;
     }
 }

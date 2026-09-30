@@ -49,7 +49,7 @@ return [
 
     'attributes' => [
         'nom_utilisateur' => 'nom d\'utilisateur',
-        'password' => 'PIN / mot de passe',
+        'password' => 'PIN',
         'numero_carte' => 'numéro de carte',
         'telephone' => 'téléphone',
         'prenom' => 'prénom',

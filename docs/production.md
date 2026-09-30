@@ -66,7 +66,8 @@ CACHE_STORE=database
 
 SUPERADMIN_NOM="Super Administrateur"
 SUPERADMIN_NOM_UTILISATEUR=superadmin
-SUPERADMIN_MOT_DE_PASSE=<mot de passe fort, 12 caractères minimum>
+# PIN à 5 chiffres (ni suite ni chiffre répété) ; vide = PIN généré et affiché une fois
+SUPERADMIN_PIN=
 
 SMS_DRIVER=ticafrique
 SMS_EXPEDITEUR="FONTAINE G"
@@ -110,6 +111,8 @@ php artisan migrate --force
 php artisan permissions:synchroniser
 php artisan db:seed --class=SuperAdminSeeder --force
 ```
+
+Le superadmin se connecte, comme tous les comptes, avec un **PIN à 5 chiffres** : celui de `SUPERADMIN_PIN`, ou à défaut le PIN généré et affiché une seule fois par la commande (le noter). Retirer ensuite `SUPERADMIN_PIN` du `.env`. PIN oublié : `php artisan utilisateur:reinitialiser-pin superadmin`.
 
 Le seeder du superadmin est idempotent : relancé, il ne change jamais le mot de passe d'un compte existant.
 

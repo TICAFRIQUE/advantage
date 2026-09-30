@@ -3,7 +3,6 @@
 namespace App\Actions\Comptes;
 
 use App\Enums\Permission;
-use App\Enums\Role;
 use App\Enums\StatutDemandeOtp;
 use App\Enums\StatutUtilisateur;
 use App\Exceptions\OperationCompteException;
@@ -28,11 +27,9 @@ class GererCompteAction
      */
     public function reinitialiserPin(User $compte, ?User $auteur): string
     {
+        // Superadmin : jamais depuis l'interface (GardeDroits), seulement en
+        // ligne de commande sur le serveur (auteur null).
         $this->autoriser($compte, $auteur);
-
-        if ($compte->hasRole(Role::Superadmin)) {
-            throw new OperationCompteException('Le superadmin utilise un mot de passe fort, pas un PIN.');
-        }
 
         if ($auteur !== null && ! $auteur->can(Permission::ReinitialiserPin->value)) {
             throw new OperationCompteException('Vous n\'avez pas le droit de réinitialiser un PIN.');

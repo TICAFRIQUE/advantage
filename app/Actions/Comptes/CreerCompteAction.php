@@ -29,7 +29,7 @@ class CreerCompteAction
     {
         $role = RoleUtilisateur::depuis($role);
 
-        // Le superadmin a un mot de passe fort issu du .env, jamais un PIN.
+        // Le superadmin est créé uniquement depuis le .env (SuperAdminSeeder).
         if ($role->systeme() === Role::Superadmin) {
             throw new OperationCompteException('Le compte superadmin se crée uniquement depuis la configuration du serveur.');
         }

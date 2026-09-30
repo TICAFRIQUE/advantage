@@ -11,9 +11,9 @@
                             @csrf
 
                             <div class="mb-3">
-                                <label for="password" class="form-label fw-semibold">PIN / mot de passe</label>
+                                <label for="password" class="form-label fw-semibold">PIN</label>
                                 <input type="password" id="password" name="password" required autofocus
-                                       autocomplete="current-password"
+                                       inputmode="numeric" maxlength="5" autocomplete="current-password"
                                        class="form-control form-control-lg @error('password') is-invalid @enderror"
                                        @error('password') aria-describedby="erreur-password" @enderror>
                                 @error('password')

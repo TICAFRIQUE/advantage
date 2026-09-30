@@ -61,6 +61,19 @@ it('returns the same generic error for an unknown user and a wrong pin', functio
     $this->assertGuest();
 });
 
+it('only accepts a five-digit pin, for every account', function (string $saisie) {
+    $superadmin = utilisateurAvecRole(Role::Superadmin);
+
+    tenterConnexion($superadmin->nom_utilisateur, $saisie)->assertSessionHasErrors('password');
+
+    $this->assertGuest();
+    expect($superadmin->fresh()->tentatives_echouees)->toBe(0);
+})->with([
+    'trop court' => ['4815'],
+    'trop long' => ['481573'],
+    'mot de passe' => ['Motdepasse-Fort-2026'],
+]);
+
 it('counts each wrong pin as a failure', function () {
     $user = utilisateurAvecRole(Role::Agent);
 

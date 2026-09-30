@@ -32,7 +32,8 @@ class ConnexionRequest extends LoginRequest
     {
         return [
             'nom_utilisateur' => ['required', 'string', 'max:50', 'regex:/^[A-Za-z0-9._-]+$/'],
-            'password' => ['required', 'string', 'max:72'],
+            // PIN à 5 chiffres pour tous les comptes, superadmin compris.
+            'password' => ['required', 'string', 'digits:'.(int) config('plateforme.connexion.longueur_pin', 5)],
         ];
     }
 

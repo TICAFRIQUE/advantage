@@ -11,8 +11,8 @@ use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Fortify;
 
 /**
- * Authentifie un utilisateur par nom d'utilisateur + PIN (ou mot de passe
- * fort pour le superadmin), avec verrouillage après échecs cumulés.
+ * Authentifie un utilisateur par nom d'utilisateur + PIN (5 chiffres, pour
+ * tous les comptes), avec verrouillage après échecs cumulés.
  *
  * Règles anti-énumération :
  * - un compte inexistant et un PIN faux produisent le même message ;

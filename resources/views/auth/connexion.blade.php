@@ -41,14 +41,13 @@
                                        @error('nom_utilisateur') aria-describedby="erreurs-connexion" @enderror>
                             </div>
 
-                            <div class="mb-2">
+                            <div class="mb-4">
                                 <label for="password" class="form-label fw-semibold">PIN</label>
                                 <div class="input-group input-group-lg">
                                     <input x-bind:type="afficher ? 'text' : 'password'" type="password" x-ref="pin"
                                            id="password" name="password"
                                            class="form-control @error('password') is-invalid @enderror"
-                                           x-bind:inputmode="clavierComplet ? 'text' : 'numeric'" inputmode="numeric"
-                                           autocomplete="current-password" required maxlength="255">
+                                           inputmode="numeric" autocomplete="current-password" required maxlength="5">
                                     <button type="button" class="btn btn-outline-secondary"
                                             x-on:click="afficher = !afficher"
                                             x-bind:aria-label="afficher ? 'Masquer le PIN' : 'Afficher le PIN'"
@@ -58,13 +57,6 @@
                                 </div>
                             </div>
 
-                            <div class="mb-4 text-end">
-                                <button type="button" class="btn btn-link btn-sm p-0 texte-or-fonce"
-                                        x-on:click="basculerClavier()"
-                                        x-text="clavierComplet ? 'Clavier numérique' : 'Mot de passe (clavier complet)'">
-                                    Mot de passe (clavier complet)
-                                </button>
-                            </div>
 
                             <button type="submit" class="btn btn-or btn-lg w-100" x-bind:disabled="envoi">
                                 <span x-show="envoi" class="spinner-border spinner-border-sm me-2" aria-hidden="true" style="display: none"></span>
