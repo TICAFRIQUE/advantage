@@ -71,6 +71,11 @@
                             <i class="bi bi-clock-history me-2" aria-hidden="true"></i>Connecté le {{ $utilisateur->derniere_connexion_le->format('d/m/Y à H:i') }}
                         </span>
                     @endif
+                    <div x-data="installationApp" x-show="disponible" style="display: none">
+                        <button type="button" class="dropdown-item" x-on:click="installer()">
+                            <i class="bi bi-phone me-2" aria-hidden="true"></i>Installer l'application
+                        </button>
+                    </div>
                     <div class="dropdown-divider"></div>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf

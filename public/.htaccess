@@ -33,4 +33,13 @@
 <IfModule mod_headers.c>
     Header always unset X-Powered-By
     Header unset X-Powered-By
+
+    # Application installable : le service worker est toujours revalidé.
+    <Files "sw.js">
+        Header set Cache-Control "no-cache"
+    </Files>
+</IfModule>
+
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
 </IfModule>

@@ -69,6 +69,16 @@
                 <div class="text-center mt-4">
                     <img src="{{ asset('images/papillon-or.png') }}" alt="" width="90" aria-hidden="true">
                     <p class="small text-white-50 mt-2 mb-0">Mot de passe oublié ou compte verrouillé&nbsp;? Contactez votre administrateur.</p>
+
+                    <div x-data="installationApp">
+                        <button type="button" class="btn btn-outline-light mt-3" x-show="disponible" x-on:click="installer()" style="display: none">
+                            <i class="bi bi-phone me-1" aria-hidden="true"></i>Installer l'application
+                        </button>
+                        <p class="small text-white-50 mt-3 mb-0" x-show="iphone" style="display: none">
+                            Installer sur iPhone : touchez <i class="bi bi-box-arrow-up" aria-label="Partager"></i>
+                            puis « Sur l'écran d'accueil ».
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

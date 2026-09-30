@@ -371,6 +371,46 @@ Alpine.data('validationCode', (restant, renvoi) => ({
     },
 }));
 
+/**
+ * Application installable (PWA) : service worker (page « hors ligne ») et
+ * bouton « Installer l'application » (Android, ordinateur). Sur iPhone, pas
+ * d'invitation possible : on indique « Partager › Sur l'écran d'accueil ».
+ */
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+}
+
+let invitationInstallation = null;
+
+window.addEventListener('beforeinstallprompt', (evenement) => {
+    evenement.preventDefault();
+    invitationInstallation = evenement;
+    window.dispatchEvent(new CustomEvent('installation-disponible'));
+});
+
+Alpine.data('installationApp', () => ({
+    disponible: invitationInstallation !== null,
+    iphone: /iphone|ipad|ipod/i.test(navigator.userAgent)
+        && !window.navigator.standalone
+        && !window.matchMedia('(display-mode: standalone)').matches,
+
+    init() {
+        window.addEventListener('installation-disponible', () => { this.disponible = true; });
+        window.addEventListener('appinstalled', () => { this.disponible = false; });
+    },
+
+    async installer() {
+        if (!invitationInstallation) {
+            return;
+        }
+
+        invitationInstallation.prompt();
+        await invitationInstallation.userChoice;
+        invitationInstallation = null;
+        this.disponible = false;
+    },
+}));
+
 window.Alpine = Alpine;
 Alpine.start();
 

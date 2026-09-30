@@ -309,6 +309,16 @@ php artisan up
 php artisan optimize:clear
 ```
 
+### Application sur mobile (PWA)
+
+La plateforme s'installe comme une application (icône sur l'écran d'accueil, plein écran, sans barre du navigateur). HTTPS obligatoire.
+
+- **Android (Chrome)** : bouton **Installer l'application** sur l'écran de connexion ou dans le menu du compte (sinon menu ⋮ › *Installer l'application*).
+- **iPhone (Safari)** : bouton Partager › **Sur l'écran d'accueil** (rappelé sur l'écran de connexion).
+- **Ordinateur (Chrome, Edge)** : icône d'installation dans la barre d'adresse, ou le bouton du menu du compte.
+
+Aucune donnée n'est conservée sur le téléphone : l'application exige Internet et affiche une page « Pas de connexion Internet » hors réseau. Fichiers : `public/manifest.webmanifest`, `public/sw.js`, `public/hors-ligne.html`, icônes dans `public/images/icones/`. Après modification de `hors-ligne.html`, incrémenter `CACHE` dans `sw.js` (`advantage-v2`…).
+
 ## 7. Sauvegardes
 
 Les sauvegardes se gèrent dans **Administration › Paramètres › Sauvegardes** (superadmin) : création, téléchargement, restauration, choix du dossier. Les 10 plus récentes sont conservées et une sauvegarde automatique est faite chaque nuit à 01:30 (cron `schedule:run`).
