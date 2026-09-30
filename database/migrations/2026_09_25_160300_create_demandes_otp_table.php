@@ -17,8 +17,11 @@ return new class extends Migration
             $table->foreignId('partenaire_id')->constrained('partenaires')->restrictOnDelete();
             $table->foreignId('demandee_par_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('code_hash');
-            $table->timestamp('demandee_le');
-            $table->timestamp('expire_le');
+            // Défaut explicite (toujours renseigné par l'application) : sans lui, un
+            // MySQL avec explicit_defaults_for_timestamp=OFF ajoute ON UPDATE
+            // CURRENT_TIMESTAMP au premier timestamp et refuse le second.
+            $table->timestamp('demandee_le')->useCurrent();
+            $table->timestamp('expire_le')->useCurrent();
             $table->unsignedTinyInteger('tentatives')->default(0);
             $table->string('statut', 20)->default('en_attente');
             $table->timestamp('utilisee_le')->nullable();

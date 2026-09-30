@@ -19,7 +19,8 @@ return new class extends Migration
             $table->foreignId('demande_otp_id')->unique()->constrained('demandes_otp')->restrictOnDelete();
             $table->foreignId('valide_par_id')->nullable()->constrained('users')->restrictOnDelete();
             $table->decimal('taux_applique', 5, 2);
-            $table->timestamp('validee_le');
+            // Défaut explicite : jamais de ON UPDATE implicite (explicit_defaults_for_timestamp=OFF).
+            $table->timestamp('validee_le')->useCurrent();
             $table->string('statut', 20)->default('validee')->index();
             $table->timestamps();
 

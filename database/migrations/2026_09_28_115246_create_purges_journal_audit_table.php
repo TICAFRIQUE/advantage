@@ -23,7 +23,8 @@ return new class extends Migration
             $table->id();
             $table->string('type', 20);
             $table->unsignedBigInteger('purge_par_id')->nullable()->index();
-            $table->timestamp('supprime_avant');
+            // Défaut explicite : jamais de ON UPDATE implicite (explicit_defaults_for_timestamp=OFF).
+            $table->timestamp('supprime_avant')->useCurrent();
             $table->unsignedInteger('nombre_entrees');
             $table->string('motif')->nullable();
             $table->timestamp('cree_le')->useCurrent()->index();
