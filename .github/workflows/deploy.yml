@@ -131,27 +131,42 @@ jobs:
       # Échec : relance en mode détaillé pour afficher la cause exacte.
       - name: Tester la connexion SSH
         run: |
-          if ! ssh "$SERVEUR" "echo 'Connexion SSH OK' && $PHP -v | head -n 1 && command -v rsync"; then
+          if ! ssh "$SERVEUR" "echo 'Connexion SSH OK' && command -v $PHP && $PHP -v | head -n 1 && command -v rsync"; then
             echo "::error::Connexion SSH refusée ou rsync absent : voir le détail ci-dessous."
             ssh -v "$SERVEUR" true 2>&1 | grep -vE '^debug1: (Reading|Applying|identity file|Local version|compat_|kex: |Remote protocol|SSH2_MSG|expecting|rekey|channel|client_input|pledge|Sending env|Requesting|Entering|Exit status)' || true
             exit 1
           fi
+          if ! ssh "$SERVEUR" "$PHP -r 'exit(PHP_VERSION_ID >= 80300 ? 0 : 1);'"; then
+            echo "::error::« $PHP » n'est pas PHP 8.3 ou plus sur le serveur. Créer la variable PHP_BIN (ex. /opt/cpanel/ea-php83/root/usr/bin/php) dans l'environnement PRODUCTION."
+            exit 1
+          fi
 
       # ── 5. Contrôle de sécurité puis mise en maintenance ─────────────
-      # Configuration (.env) non conforme : arrêt avant toute coupure.
-      # Première installation (code absent) : seul le .env est exigé.
+      # Configuration (.env) non conforme (code 1) : arrêt avant toute coupure.
+      # Première installation, ou version en ligne qui plante (erreur fatale
+      # PHP : code 255) : le déploiement continue, c'est lui qui la répare.
       - name: Mise en maintenance
         run: |
           ssh "$SERVEUR" "bash -s" <<EOF
             set -e
             cd '$DOSSIER'
             test -f .env || { echo "::error::.env absent dans $DOSSIER : le créer d'abord (docs/production.md § 2.2)."; exit 1; }
-            if [ -f artisan ]; then
-              $PHP artisan securite:verifier
-              $PHP artisan down --retry=60
-            else
+            if [ ! -f artisan ]; then
               echo "Première installation : aucun code en ligne."
+              exit 0
             fi
+            # Caches régénérés ensuite ; d'anciens caches (paquets de dev…) feraient planter artisan.
+            find bootstrap/cache -maxdepth 1 -name '*.php' -delete 2>/dev/null || true
+            code=0
+            $PHP -d display_errors=stderr artisan securite:verifier || code=\$?
+            if [ "\$code" -eq 1 ]; then
+              echo "::error::Configuration de production non conforme (voir « À CORRIGER » ci-dessus) : site non touché."
+              exit 1
+            fi
+            if [ "\$code" -ne 0 ]; then
+              echo "::warning::La version en ligne plante (code \$code, erreur ci-dessus) : le déploiement la remplace."
+            fi
+            $PHP artisan down --retry=60 || echo "::warning::Mise en maintenance impossible sur la version en ligne."
           EOF
 
       # ── 6. Envoi des fichiers via rsync ──────────────────────────────
