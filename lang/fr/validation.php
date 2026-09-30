@@ -51,7 +51,6 @@ return [
         'nom_utilisateur' => 'nom d\'utilisateur',
         'password' => 'PIN / mot de passe',
         'numero_carte' => 'numéro de carte',
-        'numero_piece_identite' => 'numéro de pièce d\'identité',
         'telephone' => 'téléphone',
         'prenom' => 'prénom',
         'nom' => 'nom',

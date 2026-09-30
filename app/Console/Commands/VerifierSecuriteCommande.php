@@ -66,10 +66,6 @@ class VerifierSecuriteCommande extends Command
                 filled(config('app.key')),
                 'php artisan key:generate (une seule fois, puis la copier hors du serveur).',
             ],
-            'Clé HMAC de la plateforme' => [
-                strlen((string) config('plateforme.cle_hmac')) >= 32,
-                'PLATEFORME_CLE_HMAC : 32 octets aléatoires en base64, jamais modifiée ensuite.',
-            ],
             'Adresse en HTTPS (APP_URL)' => [
                 str_starts_with((string) config('app.url'), 'https://'),
                 'APP_URL=https://votre-domaine.ci',

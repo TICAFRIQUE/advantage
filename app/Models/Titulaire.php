@@ -5,11 +5,9 @@ namespace App\Models;
 use App\Enums\StatutTitulaire;
 use App\Models\Concerns\TraceAuteurs;
 use App\Observers\TitulaireObserver;
-use App\Services\IndexAveugle;
 use App\Services\Telephone;
 use Database\Factories\TitulaireFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -21,8 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Table('titulaires')]
-#[Fillable(['nom', 'prenom', 'telephone', 'numero_piece_identite'])]
-#[Hidden(['numero_piece_identite', 'numero_piece_identite_hash'])]
+#[Fillable(['nom', 'prenom', 'telephone'])]
 #[ObservedBy(TitulaireObserver::class)]
 class Titulaire extends Model
 {
@@ -39,24 +36,8 @@ class Titulaire extends Model
     protected function casts(): array
     {
         return [
-            'numero_piece_identite' => 'encrypted',
             'statut' => StatutTitulaire::class,
         ];
-    }
-
-    /**
-     * Maintient l'empreinte HMAC synchronisée avec le numéro de pièce chiffré
-     * (pièce facultative au MVP).
-     */
-    protected static function booted(): void
-    {
-        static::saving(function (Titulaire $titulaire): void {
-            if ($titulaire->isDirty('numero_piece_identite')) {
-                $titulaire->numero_piece_identite_hash = filled($titulaire->numero_piece_identite)
-                    ? IndexAveugle::calculer($titulaire->numero_piece_identite)
-                    : null;
-            }
-        });
     }
 
     /**
@@ -75,16 +56,6 @@ class Titulaire extends Model
     public function scopeParTelephone(Builder $query, string $telephone, ?string $pays = null): void
     {
         $query->where('telephone', Telephone::normaliser($telephone, $pays) ?? $telephone);
-    }
-
-    /**
-     * Recherche par numéro de pièce via l'empreinte (jamais en clair).
-     *
-     * @param  Builder<Titulaire>  $query
-     */
-    public function scopeParNumeroPiece(Builder $query, string $numero): void
-    {
-        $query->where('numero_piece_identite_hash', IndexAveugle::calculer($numero));
     }
 
     /**

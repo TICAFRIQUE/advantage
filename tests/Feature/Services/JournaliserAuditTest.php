@@ -8,7 +8,7 @@ it('strips sensitive fields at any depth before writing', function () {
     $entree = JournaliserAudit::enregistrer('test.action', donnees: [
         'password' => '12345',
         'code' => '654321',
-        'avant' => ['numero_piece_identite' => 'CI0012345678', 'statut' => 'actif'],
+        'avant' => ['code_hash' => '$2y$04$empreinte', 'statut' => 'actif'],
     ]);
 
     expect($entree->fresh()->donnees)->toBe(['avant' => ['statut' => 'actif']]);

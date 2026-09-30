@@ -24,8 +24,6 @@ class JournaliserAudit
         'remember_token',
         'code',
         'code_hash',
-        'numero_piece_identite',
-        'numero_piece_identite_hash',
     ];
 
     /**

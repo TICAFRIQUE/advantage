@@ -22,19 +22,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Indexation aveugle (blind index)
-    |--------------------------------------------------------------------------
-    |
-    | Clé HMAC servant à calculer l'empreinte recherchable des données
-    | chiffrées (numéro de pièce d'identité). Ne jamais la modifier après la
-    | mise en production : les empreintes existantes deviendraient invalides.
-    |
-    */
-
-    'cle_hmac' => env('PLATEFORME_CLE_HMAC'),
-
-    /*
-    |--------------------------------------------------------------------------
     | Cartes
     |--------------------------------------------------------------------------
     */

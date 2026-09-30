@@ -82,7 +82,6 @@ it('never keeps sensitive fields in the flashed old input', function () {
     });
 
     $this->from('/')->post('/_test/formulaire-sensible', [
-        'numero_piece_identite' => 'CI0012345678',
         'code' => '654321',
         'pin' => '48157',
         'nom' => 'Kouamé',

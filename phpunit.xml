@@ -33,7 +33,6 @@
         <env name="SMS_DRIVER" value="simulation"/>
         <env name="TICAFRIQUE_SMS_API_KEY" value=""/>
         <env name="TICAFRIQUE_SMS_API_URL" value=""/>
-        <env name="PLATEFORME_CLE_HMAC" value="base64:hBXQjVDFxRv1hqljL6VvAvrJ1GBUy3LsFKTZjj3qn5s="/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>

@@ -46,12 +46,6 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-Clé HMAC de la plateforme (à coller dans `PLATEFORME_CLE_HMAC`, **à ne jamais changer ensuite**) :
-
-```bash
-php -r "echo base64_encode(random_bytes(32)), PHP_EOL;"
-```
-
 Valeurs à renseigner dans `.env` :
 
 ```dotenv
@@ -73,7 +67,6 @@ CACHE_STORE=database
 SUPERADMIN_NOM="Super Administrateur"
 SUPERADMIN_NOM_UTILISATEUR=superadmin
 SUPERADMIN_MOT_DE_PASSE=<mot de passe fort, 12 caractères minimum>
-PLATEFORME_CLE_HMAC=<clé générée ci-dessus>
 
 SMS_DRIVER=ticafrique
 SMS_EXPEDITEUR="FONTAINE G"
@@ -326,7 +319,7 @@ mysqldump --single-transaction --routines --triggers -u UTILISATEUR -p BASE | gz
 
 `--triggers` est indispensable : sans eux, le journal d'audit ne serait plus protégé après une restauration.
 
-Conserver aussi en lieu sûr, hors du serveur : le fichier `.env`, en particulier `APP_KEY` et `PLATEFORME_CLE_HMAC`, ainsi que le dossier `public/uploads` (logo). Sans eux, les données chiffrées de la base sont illisibles.
+Conserver aussi en lieu sûr, hors du serveur : le fichier `.env`, en particulier `APP_KEY`, ainsi que le dossier `public/uploads` (logo). Sans eux, les données chiffrées de la base sont illisibles.
 
 ## 8. Checklist d'ouverture
 
@@ -337,7 +330,7 @@ Conserver aussi en lieu sûr, hors du serveur : le fichier `.env`, en particulie
 - [ ] `php artisan about` : `Environment: production`, `Debug Mode: OFF`.
 - [ ] `php artisan securite:verifier` : « Configuration de production conforme ».
 - [ ] `https://votre-domaine.ci/.env` et `https://votre-domaine.ci/composer.json` répondent 403 ou 404.
-- [ ] `APP_KEY` et `PLATEFORME_CLE_HMAC` générés **et** copiés hors du serveur.
+- [ ] `APP_KEY` généré **et** copié hors du serveur.
 - [ ] `SESSION_SECURE_COOKIE=true`, `SESSION_ENCRYPT=true`.
 - [ ] `TRUSTED_PROXIES` renseigné si le site est derrière Cloudflare ou un répartiteur (sinon les limites par IP visent le proxy).
 

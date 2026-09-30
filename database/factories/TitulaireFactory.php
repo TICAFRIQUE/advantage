@@ -23,14 +23,4 @@ class TitulaireFactory extends Factory
             'statut' => StatutTitulaire::Actif,
         ];
     }
-
-    /**
-     * Titulaire dont la pièce d'identité a été renseignée (facultative au MVP).
-     */
-    public function avecPieceIdentite(?string $numero = null): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'numero_piece_identite' => $numero ?? fake()->unique()->bothify('CI#########'),
-        ]);
-    }
 }

@@ -62,7 +62,7 @@ Ce fichier guide le développement de la plateforme de gestion de cartes de fid�
 - **Base de données** : MySQL
 - **Rôles & permissions** : Spatie `laravel-permission`
 - **Tables de données** : Yajra DataTables (server-side, toujours — jamais de rendu client-side sur des jeux de données volumineux)
-- **Médias** : Spatie MediaLibrary si besoin de pièces jointes (photo pièce d'identité, logo partenaire)
+- **Médias** : Spatie MediaLibrary si besoin de pièces jointes (logo partenaire)
 - **Alertes / confirmations UI** : SweetAlert2
 - **Sélecteurs** : Select2
 - **SMS (OTP + alertes d'expiration)** : passerelle SMS locale/agrégateur (Orange/MTN/Moov CI ou Africa's Talking / Nexah) — appel toujours via **queue**, jamais synchrone dans la requête HTTP
@@ -100,7 +100,7 @@ Règles d'implémentation :
 `nom`, `nom_utilisateur` (unique, minuscules — identifiant de connexion), `email` (nullable), `telephone`, `partenaire_id` (opérateur partenaire), `statut`, `tentatives_echouees`, `verrouille_le`, `derniere_connexion_le`, soft deletes
 
 ### `titulaires` (modèle `Titulaire`)
-`id`, `nom`, `prenom`, `telephone` (**unique**, format E.164 `+<indicatif><numéro>` — identifie le titulaire et reçoit les OTP), `numero_piece_identite` (**facultatif**, non collecté au MVP ; chiffré si renseigné) + `numero_piece_identite_hash` (HMAC, recherche/unicité), `statut`, `cree_par_id`, `modifie_par_id`, `created_at`, `updated_at`
+`id`, `nom`, `prenom`, `telephone` (**unique**, format E.164 `+<indicatif><numéro>` — identifie le titulaire et reçoit les OTP), `statut`, `cree_par_id`, `modifie_par_id`, `created_at`, `updated_at`
 
 ### `cartes` (modèle `Carte`)
 `id`, `numero_carte` (**7 chiffres**, unique à vie, soft-deletées comprises), `titulaire_id`, `active_par_id` (créateur — clé vers `users`), `active_le`, `expire_le` (= `active_le` + 1 an), `statut` (`non_activee`, `active`, `expiree`, `suspendue`, `revoquee`), `motif_statut`, `modifie_par_id`, `created_at`, `updated_at`
@@ -134,7 +134,7 @@ Règles métier structurantes à respecter dans les migrations/modèles :
 
 ### Décisions validées (priment sur le reste du document)
 - **Pas de stock de cartes** : elles sont produites hors application. La ligne `cartes` est créée à l'activation par l'agent, qui saisit le numéro imprimé (double saisie). La contrainte UNIQUE sur `numero_carte` empêche la double activation concurrente (erreur SQL convertie en message métier).
-- **Activation** : nom, prénoms, téléphone, numéro de carte — pas de pièce d'identité. Le **téléphone** retrouve le titulaire lors d'un renouvellement ; une seule carte en circulation par titulaire (déclarer la perte d'abord).
+- **Activation** : nom, prénoms, téléphone, numéro de carte — **aucune pièce d'identité** : ni collectée ni stockée (colonnes et clé HMAC supprimées le 30/09/2026). Le **téléphone** retrouve le titulaire lors d'un renouvellement ; une seule carte en circulation par titulaire (déclarer la perte d'abord).
 - **Téléphones multi-pays**, **Côte d'Ivoire par défaut** (10 chiffres, tout préfixe) : pays configurés dans `config/plateforme.php` (`telephone.pays`), normalisation par `App\Services\Telephone`.
 - **Connexion** : nom d'utilisateur + **PIN permanent à 5 chiffres** généré (`GenerateurPin`, sans suites triviales), affiché une fois, réinitialisable par un admin ou `php artisan utilisateur:reinitialiser-pin`. Protections : 5 essais/min par (utilisateur, IP), limite par IP, verrouillage après 10 échecs, message générique, sessions 8 h max / 2 h d'inactivité.
 - **Traçabilité** : chaque action affiche son auteur « Nom · Rôle » (`User::libelleActeur()`), en plus du journal d'audit (`JournaliserAudit`, champs sensibles retirés).
@@ -146,7 +146,7 @@ Règles métier structurantes à respecter dans les migrations/modèles :
 
 ## 4. Optimisation base de données
 
-- **Index** systématiques sur : `cartes.numero_carte` (unique), `cartes.statut`, `cartes.expire_le`, `titulaires.telephone` (unique), `titulaires.numero_piece_identite_hash` (unique), `transactions.carte_id`, `transactions.partenaire_id`, `transactions.validee_le`, `journaux_audit.type_entite` + `entite_id` (index composite), `demandes_otp.carte_id` + `statut`.
+- **Index** systématiques sur : `cartes.numero_carte` (unique), `cartes.statut`, `cartes.expire_le`, `titulaires.telephone` (unique), `transactions.carte_id`, `transactions.partenaire_id`, `transactions.validee_le`, `journaux_audit.type_entite` + `entite_id` (index composite), `demandes_otp.carte_id` + `statut`.
 - **Index composites** pour les requêtes fréquentes (ex. `cartes(statut, expire_le)` pour le job d'alertes d'expiration, `transactions(partenaire_id, validee_le)` pour l'historique partenaire).
 - **Requêtes N+1** : systématiquement `with()` / eager loading sur les relations affichées dans les DataTables (`Carte::with('titulaire', 'activePar')`), jamais de lazy loading dans une boucle Blade.
 - **Pagination serveur obligatoire** partout où le volume peut croître (Yajra DataTables server-side, jamais `->get()` puis pagination côté vue).
@@ -174,7 +174,6 @@ Règles métier structurantes à respecter dans les migrations/modèles :
 
 ## 7. Sécurité — points non négociables
 
-- `titulaires.numero_piece_identite` (facultatif) : cast `encrypted` en base (jamais en clair), recherche via empreinte HMAC.
 - `demandes_otp.code_hash` : hashé en base, jamais stocké ni loggé en clair ; rate limiting sur la génération d'OTP par carte (anti-spam/anti-harcèlement du titulaire).
 - Le partenaire ne voit **jamais** le nom/téléphone du titulaire avant validation OTP — uniquement le statut de la carte.
 - Idempotence sur la validation OTP (double soumission réseau ne doit jamais créer deux `transactions`).

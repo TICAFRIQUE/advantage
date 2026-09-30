@@ -5,10 +5,6 @@ namespace App\Observers;
 use App\Models\Titulaire;
 use App\Services\JournaliserAudit;
 
-/**
- * Le numéro de pièce d'identité n'est jamais journalisé (retiré par
- * JournaliserAudit::nettoyer en plus de n'être jamais sélectionné ici).
- */
 class TitulaireObserver
 {
     /**

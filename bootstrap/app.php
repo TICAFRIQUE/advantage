@@ -43,7 +43,7 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Jamais réaffichés ni stockés en session après une erreur de validation.
-        $exceptions->dontFlash(['pin', 'code', 'numero_piece_identite']);
+        $exceptions->dontFlash(['pin', 'code']);
 
         // Jeton CSRF expiré (419) : retour au formulaire avec un message clair
         // plutôt que la page d'erreur brute. La saisie sensible n'est pas conservée.
