@@ -13,6 +13,8 @@ $or-fonce: #8c5a1b;
 $or: #c9973a;
 $or-clair: #e9cb7a;
 $bleu-eau: #1f7fc4;
+$eau-clair: #79e4f1;
+$encre: #101324;
 
 $primary: $nuit;
 $secondary: #5b6178;
@@ -111,6 +113,30 @@ $focus-ring-width: 0.25rem;
     --bs-btn-disabled-border-color: #{$or};
     font-weight: 600;
     background-image: var(--adv-degrade-or);
+}
+
+// Accueil et connexion : bouton encre (texte blanc, ~17:1). Nom du groupe en bleu
+// eau clair (~11:1 sur bleu nuit) partout où il accompagne le logo. Liseré clair : le bouton reste lisible sur
+// le fond sombre.
+.texte-eau {
+    color: $eau-clair;
+}
+
+.btn-encre {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: #{$encre};
+    --bs-btn-border-color: #{rgba($eau-clair, 0.45)};
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #{lighten($encre, 8%)};
+    --bs-btn-hover-border-color: #{$eau-clair};
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #{lighten($encre, 8%)};
+    --bs-btn-active-border-color: #{$eau-clair};
+    // Bouton désactivé pendant l'envoi du formulaire de connexion.
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: #{$encre};
+    --bs-btn-disabled-border-color: #{$encre};
+    font-weight: 600;
 }
 
 .bordure-or {

@@ -65,7 +65,7 @@
                                 <div class="apercu-identite">
                                     <img src="{{ App\Services\Parametres::logoUrl() }}" alt="Logo actuel" width="56" height="56" class="rounded">
                                     <div>
-                                        <span class="d-block small texte-or">{{ App\Services\Parametres::nomOrganisation() }}</span>
+                                        <span class="d-block small texte-eau">{{ App\Services\Parametres::nomOrganisation() }}</span>
                                         <span class="d-block fs-5 fw-semibold text-white">{{ App\Services\Parametres::nomApplication() }}</span>
                                     </div>
                                 </div>

@@ -4,7 +4,7 @@
             <div class="col-12 col-sm-10 col-md-7 col-lg-5 col-xl-4">
                 <div class="text-center mb-4">
                     <img src="{{ App\Services\Parametres::logoUrl() }}" alt="{{ App\Services\Parametres::nomOrganisation() }}" width="72" height="72" class="rounded mb-3 logo-marque">
-                    <p class="texte-or fw-semibold mb-0">{{ App\Services\Parametres::nomOrganisation() }}</p>
+                    <p class="texte-eau fw-semibold mb-0">{{ App\Services\Parametres::nomOrganisation() }}</p>
                     <h1 class="fw-bolder text-white mb-0">{{ App\Services\Parametres::nomApplication() }}</h1>
                 </div>
 
@@ -58,7 +58,7 @@
                             </div>
 
 
-                            <button type="submit" class="btn btn-or btn-lg w-100" x-bind:disabled="envoi">
+                            <button type="submit" class="btn btn-encre btn-lg w-100" x-bind:disabled="envoi">
                                 <span x-show="envoi" class="spinner-border spinner-border-sm me-2" aria-hidden="true" style="display: none"></span>
                                 <span x-text="envoi ? 'Connexion…' : 'Se connecter'">Se connecter</span>
                             </button>

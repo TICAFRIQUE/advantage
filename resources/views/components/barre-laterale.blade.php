@@ -7,7 +7,7 @@
         <a href="{{ route('accueil-espace') }}" class="d-flex align-items-center gap-2 text-decoration-none" aria-label="{{ App\Services\Parametres::nomApplication() }} — accueil">
             <img src="{{ App\Services\Parametres::logoUrl() }}" alt="" width="40" height="40" class="rounded flex-shrink-0 logo-marque">
             <span class="barre-laterale__texte lh-1">
-                <span class="d-block texte-or small fw-semibold">{{ App\Services\Parametres::nomOrganisation() }}</span>
+                <span class="d-block texte-eau small fw-semibold">{{ App\Services\Parametres::nomOrganisation() }}</span>
                 <span class="d-block text-white fw-bolder fs-5" id="barre-laterale-titre">{{ App\Services\Parametres::nomApplication() }}</span>
             </span>
         </a>
