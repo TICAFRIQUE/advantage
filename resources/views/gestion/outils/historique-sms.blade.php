@@ -12,7 +12,7 @@
         @endcan
     </div>
     <p class="text-secondary mb-3">
-        Tous les SMS émis par la plateforme (codes de validation, alertes d'expiration, tests) avec leur statut, conservés {{ $retention }} jours.
+        Tous les SMS émis par la plateforme (codes de validation, alertes d'expiration, tests) avec leur statut. Chaque lundi, seuls les {{ $conserver }} plus récents sont conservés.
         Pilote actuel : <strong>{{ $pilote }}</strong>. Le texte des messages n'est jamais affiché.
     </p>
 

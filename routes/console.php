@@ -27,6 +27,9 @@ Schedule::command('cartes:alertes-expiration')
 // Rétention des codes de validation et des SMS (plateforme.retention).
 Schedule::command('donnees:purger')->dailyAt('02:30')->withoutOverlapping()->onOneServer();
 
+// Historique des SMS : chaque lundi, seuls les plus récents sont conservés (50 par défaut).
+Schedule::command('sms:purger-historique')->weeklyOn(1, '03:00')->withoutOverlapping()->onOneServer();
+
 // Sauvegarde nocturne de la base (10 dernières conservées), si activée.
 if (config('plateforme.sauvegardes.automatique')) {
     Schedule::command('sauvegarde:creer')->dailyAt('01:30')->withoutOverlapping()->onOneServer();

@@ -33,7 +33,7 @@ class HistoriqueSmsController extends Controller
             'statuts' => StatutLivraison::cases(),
             'indicateurs' => $this->indicateurs(),
             'file' => $this->fileAttente(),
-            'retention' => (int) config('plateforme.retention.messages_sms_jours', 90),
+            'conserver' => (int) config('plateforme.retention.messages_sms_conserver', 50),
             'pilote' => (string) config('plateforme.sms.driver'),
         ]);
     }

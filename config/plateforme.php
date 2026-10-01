@@ -165,6 +165,8 @@ return [
     'retention' => [
         'demandes_otp_jours' => (int) env('RETENTION_DEMANDES_OTP_JOURS', 90),
         'messages_sms_jours' => (int) env('RETENTION_MESSAGES_SMS_JOURS', 90),
+        // Purge hebdomadaire (sms:purger-historique, lundi 03:00) : SMS les plus récents conservés.
+        'messages_sms_conserver' => (int) env('RETENTION_MESSAGES_SMS_CONSERVER', 50),
     ],
 
     /*

@@ -153,6 +153,7 @@ Deux entrées cron (cPanel → *Tâches Cron*), exécutées chaque minute :
   - 01:30 : sauvegarde automatique de la base (les 10 plus récentes sont conservées ; désactivable avec `SAUVEGARDES_AUTOMATIQUE=false`) ;
   - 02:00 : purge du journal d'audit (rétention de 14 jours) ;
   - 02:30 : purge des codes de validation et des SMS de plus de 90 jours (ceux liés à une transaction sont conservés) ;
+  - lundi 03:00 : historique des SMS réduit aux 50 plus récents (`RETENTION_MESSAGES_SMS_CONSERVER`) ; les SMS encore en attente ne sont jamais supprimés ;
   - 09:00 : SMS d'alerte aux titulaires dont la carte expire dans 3, 2 ou 1 mois (une seule fois par palier ; désactivable avec `ALERTES_EXPIRATION_SMS=false`).
 - La seconde traite la file d'attente : envoi des SMS (codes OTP, alertes). Le processus reste à l'écoute 55 secondes puis s'arrête (`--max-time=55`) avant d'être relancé la minute suivante : un code OTP part en 1 à 2 secondes, et l'hébergement mutualisé n'a jamais de processus permanent. (Avec `--stop-when-empty`, un code pourrait attendre jusqu'à une minute.)
 
@@ -381,7 +382,7 @@ Conserver aussi en lieu sûr, hors du serveur : le fichier `.env`, en particulie
 - [ ] `php artisan permissions:synchroniser` exécuté, superadmin créé (`SuperAdminSeeder`).
 
 **Tâches de fond**
-- [ ] Les deux cron actifs ; `php artisan schedule:list` affiche 00:10, 01:30, 02:00, 02:30 et 09:00.
+- [ ] Les deux cron actifs ; `php artisan schedule:list` affiche 00:10, 01:30, 02:00, 02:30, 09:00 et la purge hebdomadaire des SMS (lundi 03:00).
 - [ ] `php artisan sms:tester <votre numéro>` : SMS reçu avec l'expéditeur « FONTAINE G ».
 - [ ] `php artisan queue:failed` vide.
 
