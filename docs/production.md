@@ -274,6 +274,10 @@ php artisan sms:tester 0707123456
 
 ### File d'attente (SMS)
 
+Dans l'application : **Système › Historique des SMS** (superadmin) liste tous les SMS (codes de validation, alertes, tests) avec leur statut, l'erreur ou la référence du fournisseur, et l'état de la file d'attente. Une alerte s'affiche si des SMS attendent depuis plus de 5 minutes : le worker ne tourne pas (vérifier le cron du § 3 avec `crontab -l` : deux lignes distinctes, chaque minute). Sur cPanel, `ps` ne montre pas les processus lancés par le cron : se fier à cet écran.
+
+En ligne de commande :
+
 ```bash
 php artisan queue:failed
 php artisan queue:retry all

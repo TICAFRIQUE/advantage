@@ -48,6 +48,7 @@ enum Permission: string
     case RestaurerElements = 'restaurer-elements';
     case VoirCommandesProduction = 'voir-commandes-production';
     case TesterSms = 'tester-sms';
+    case VoirHistoriqueSms = 'voir-historique-sms';
     case GererSauvegardes = 'gerer-sauvegardes';
 
     // Espace partenaire

@@ -306,6 +306,12 @@ Route::middleware(['auth', 'compte.actif'])->group(function () use ($parcoursTra
                 Route::post('/test-sms', [Gestion\TestSmsController::class, 'store'])
                     ->middleware(['permission:'.Permission::TesterSms->value, 'throttle:test-sms'])
                     ->name('sms-test.store');
+                Route::get('/historique-sms', [Gestion\HistoriqueSmsController::class, 'index'])
+                    ->middleware('permission:'.Permission::VoirHistoriqueSms->value)
+                    ->name('sms-historique.index');
+                Route::get('/historique-sms/donnees', [Gestion\HistoriqueSmsController::class, 'donnees'])
+                    ->middleware('permission:'.Permission::VoirHistoriqueSms->value)
+                    ->name('sms-historique.donnees');
                 Route::get('/mise-en-production', [Gestion\MiseEnProductionController::class, 'show'])
                     ->middleware('permission:'.Permission::VoirCommandesProduction->value)
                     ->name('mise-en-production');

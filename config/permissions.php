@@ -107,6 +107,7 @@ return [
                 'restaurer-elements' => ['libelle' => 'Restaurer les partenaires et comptes supprimés', 'roles' => []],
                 'gerer-sauvegardes' => ['libelle' => 'Créer, télécharger et restaurer les sauvegardes', 'roles' => []],
                 'tester-sms' => ['libelle' => "Tester l'envoi réel de SMS (consomme des unités)", 'roles' => []],
+                'voir-historique-sms' => ['libelle' => "Consulter l'historique des SMS envoyés", 'roles' => []],
                 'voir-commandes-production' => ['libelle' => 'Consulter les commandes de mise en production', 'roles' => []],
             ],
         ],

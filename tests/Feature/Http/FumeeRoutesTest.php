@@ -8,6 +8,7 @@ use App\Models\AlerteExpiration;
 use App\Models\Carte;
 use App\Models\DemandeOtp;
 use App\Models\JournalAudit;
+use App\Models\MessageSms;
 use App\Models\OperationCarte;
 use App\Models\Partenaire;
 use App\Models\RoleUtilisateur;
@@ -43,6 +44,7 @@ beforeEach(function () {
         AlerteExpiration::create(['carte_id' => $carte->id, 'palier' => '1_mois', 'canal' => 'sms', 'envoyee_le' => now()]);
     }
 
+    MessageSms::create(['telephone' => '+2250707123456', 'type' => 'otp', 'contenu' => 'Code', 'statut' => 'envoyee', 'fournisseur' => 'simulation']);
     Partenaire::factory()->count(2)->create()->each(fn (Partenaire $p) => $p->delete());
     User::factory()->count(2)->create()->each(fn (User $u) => $u->assignRole(Role::Agent))->each(fn (User $u) => $u->delete());
     JournalAudit::query()->count() > 3 ?: $this->fail('Le journal devrait contenir des entrées.');
@@ -96,7 +98,7 @@ it('renders every back-office page for the superadmin', function () {
 it('serves every data table for the superadmin', function () {
     $parametres = ['draw' => 1, 'start' => 0, 'length' => 50, 'search' => ['value' => '']];
 
-    foreach (['gestion.cartes.rapport.donnees', 'gestion.partenaires.donnees', 'gestion.transactions.rapport.donnees', 'gestion.utilisateurs.donnees', 'gestion.journal.donnees'] as $route) {
+    foreach (['gestion.cartes.rapport.donnees', 'gestion.partenaires.donnees', 'gestion.transactions.rapport.donnees', 'gestion.utilisateurs.donnees', 'gestion.journal.donnees', 'gestion.sms-historique.donnees'] as $route) {
         $reponse = fumeeTableau(connecter($this->superadmin)->getJson(route($route, $parametres)));
 
         expect($reponse->json('recordsTotal'))->toBeGreaterThan(0, "Tableau {$route} vide");

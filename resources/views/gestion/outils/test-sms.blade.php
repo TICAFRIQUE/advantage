@@ -80,6 +80,11 @@
                         </table>
                     </div>
                     <p class="small text-secondary mt-2 mb-0">« En attente » qui dure : le worker de la file d'attente ne tourne pas (voir le cron du guide de mise en production).</p>
+                    @can(App\Enums\Permission::VoirHistoriqueSms->value)
+                        <a href="{{ route('gestion.sms-historique.index') }}" class="btn btn-outline-primary btn-sm mt-3">
+                            <i class="bi bi-chat-left-text me-1" aria-hidden="true"></i>Voir tous les SMS envoyés
+                        </a>
+                    @endcan
                 </div>
             </section>
         </div>
