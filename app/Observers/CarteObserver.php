@@ -72,7 +72,10 @@ class CarteObserver
         EcheancesCartes::oublier();
         StatistiquesTableauDeBord::oublier();
 
-        JournaliserAudit::enregistrer('carte.supprimee', $carte);
+        // Suppression définitive : journalisée en détail par SupprimerCarteDefinitivementAction.
+        if (! $carte->isForceDeleting()) {
+            JournaliserAudit::enregistrer('carte.supprimee', $carte);
+        }
     }
 
     private function enregistrerChangementStatut(Carte $carte): void

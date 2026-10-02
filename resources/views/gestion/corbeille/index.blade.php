@@ -118,4 +118,43 @@
             <div class="mt-3">{{ $comptes->onEachSide(1)->links('pagination::bootstrap-5') }}</div>
         </div>
     </section>
+    <section class="card border-0 shadow-sm mt-4" aria-labelledby="titre-cartes-supprimees">
+        <div class="card-body">
+            <h2 class="h5 fw-bold" id="titre-cartes-supprimees">Cartes supprimées définitivement</h2>
+            <p class="small text-secondary">
+                Registre permanent, jamais effaçable : ces cartes et leur historique n'existent plus et ne peuvent pas être restaurés.
+            </p>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col">Carte</th>
+                            <th scope="col">Supprimée le</th>
+                            <th scope="col">Par</th>
+                            <th scope="col">Motif</th>
+                            <th scope="col">Effacé avec elle</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($cartesSupprimees as $suppression)
+                            <tr>
+                                <td class="fw-semibold text-nowrap">{{ $suppression->numeroFormate() }}</td>
+                                <td class="text-nowrap">{{ $suppression->cree_le->format('d/m/Y H:i') }}</td>
+                                <td class="small">{{ $suppression->supprimePar?->libelleActeur() ?? '—' }}</td>
+                                <td class="small text-break">{{ $suppression->motif }}</td>
+                                <td class="small">
+                                    {{ $suppression->transactions_supprimees }} transaction(s),
+                                    {{ $suppression->codes_supprimes }} code(s),
+                                    {{ $suppression->operations_supprimees }} opération(s){{ $suppression->titulaire_supprime ? ', titulaire' : '' }}
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="5" class="text-secondary">Aucune carte supprimée.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-3">{{ $cartesSupprimees->onEachSide(1)->links('pagination::bootstrap-5') }}</div>
+        </div>
+    </section>
 </x-layouts.app>

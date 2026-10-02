@@ -54,6 +54,8 @@ return [
                 'modifier-titulaire' => ['libelle' => 'Modifier le nom et les prénoms du titulaire', 'roles' => ['admin']],
                 'modifier-telephone-titulaire' => ['libelle' => 'Modifier le téléphone du titulaire', 'roles' => ['admin']],
                 'voir-rapport-cartes' => ['libelle' => 'Voir le rapport des cartes', 'roles' => ['admin', 'agent']],
+                // Aucun rôle par défaut : le superadmin la détient et peut la déléguer.
+                'supprimer-carte-definitivement' => ['libelle' => 'Supprimer définitivement une carte et tout son historique', 'roles' => []],
             ],
         ],
 

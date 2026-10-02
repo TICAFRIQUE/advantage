@@ -41,6 +41,7 @@ final class LibellesAudit
             'carte.modifiee' => 'Carte modifiée',
             'carte.statut_modifie' => 'Statut de carte modifié',
             'carte.supprimee' => 'Carte supprimée',
+            'carte.supprimee_definitivement' => 'Carte supprimée définitivement',
             'carte.consultee' => 'Carte consultée',
             'cartes.recherchees' => 'Recherche de cartes',
             'titulaire.cree' => 'Titulaire créé',
@@ -124,6 +125,8 @@ final class LibellesAudit
         'roles' => 'Rôles', 'permissions' => 'Permissions', 'libelle' => 'Libellé', 'name' => 'Code', 'espace' => 'Espace',
         'pilote' => 'Pilote SMS', 'liste' => 'Liste', 'format' => 'Format', 'lignes' => 'Lignes', 'filtres' => 'Filtres',
         'demandes_otp' => 'Codes supprimés', 'messages_sms' => 'SMS supprimés', 'transaction_id' => 'Transaction',
+        'transactions_supprimees' => 'Transactions supprimées', 'codes_supprimes' => 'Codes supprimés',
+        'operations_supprimees' => 'Opérations supprimées', 'titulaire_supprime' => 'Titulaire supprimé',
     ];
 
     /**

@@ -113,6 +113,19 @@ Route::middleware(['auth', 'compte.actif'])->group(function () use ($parcoursTra
                 ->middleware(['permission:'.Permission::GererStatutCarte->value, 'throttle:activation-carte'])
                 ->name('cartes.statut');
 
+            // Suppression définitive (cartes de test) : permission sans rôle par
+            // défaut + PIN confirmé depuis moins de 5 minutes.
+            Route::middleware(['permission:'.Permission::SupprimerCarteDefinitivement->value, 'password.confirm:password.confirm,300'])
+                ->group(function () {
+                    Route::get('/cartes/{carte}/suppression', [Gestion\SuppressionCarteController::class, 'create'])
+                        ->whereNumber('carte')
+                        ->name('cartes.suppression');
+                    Route::delete('/cartes/{carte}', [Gestion\SuppressionCarteController::class, 'destroy'])
+                        ->whereNumber('carte')
+                        ->middleware('throttle:5,1')
+                        ->name('cartes.destroy');
+                });
+
             // Titulaire : identité (permission dédiée) et téléphone (permission
             // dédiée + PIN confirmé depuis moins de 5 minutes).
             Route::get('/cartes/{carte}/titulaire', [Gestion\TitulaireController::class, 'edit'])

@@ -35,6 +35,15 @@ class CartePolicy
         return $user->can(Permission::GererStatutCarte->value) && $carte->transitionsPossibles() !== [];
     }
 
+    /**
+     * Suppression physique de la carte et de tout son historique (cartes de
+     * test) : permission sans rôle par défaut, détenue par le superadmin.
+     */
+    public function supprimerDefinitivement(User $user, Carte $carte): bool
+    {
+        return $user->can(Permission::SupprimerCarteDefinitivement->value);
+    }
+
     public function modifierTitulaire(User $user, Carte $carte): bool
     {
         return $user->can(Permission::ModifierTitulaire->value);

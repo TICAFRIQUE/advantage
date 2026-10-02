@@ -11,6 +11,12 @@
             <x-carte-visuelle :carte="$carte" class="mb-4" />
             <x-actions-statut-carte :carte="$carte" class="mb-2" />
 
+            @can('supprimerDefinitivement', $carte)
+                <a href="{{ route('gestion.cartes.suppression', $carte) }}" class="btn btn-outline-danger w-100 mb-2">
+                    <i class="bi bi-trash3 me-1" aria-hidden="true"></i>Supprimer définitivement (carte de test)
+                </a>
+            @endcan
+
             @if ($alertes->isNotEmpty())
                 <section class="card border-0 shadow-sm mt-3" aria-labelledby="titre-alertes">
                     <div class="card-body">

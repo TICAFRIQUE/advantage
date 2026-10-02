@@ -245,6 +245,18 @@ php artisan cartes:marquer-expirees
 php artisan cartes:alertes-expiration
 ```
 
+#### Supprimer une carte de test
+
+Pour retirer une carte créée pour un essai en production, sans toucher aux vraies données : fiche de la carte → **Supprimer définitivement (carte de test)**.
+
+- Réservé au superadmin (permission `supprimer-carte-definitivement`, sans rôle par défaut ; il peut la déléguer dans Administration › Rôles).
+- Le mot de passe est redemandé ; un motif et le numéro de la carte retapé sont exigés.
+- Sont effacés d'un seul bloc : la carte, ses transactions (elles disparaissent de l'historique des partenaires et des rapports), ses codes de validation, ses alertes, son historique d'opérations, et le titulaire s'il n'a aucune autre carte (avec les SMS qui lui ont été envoyés).
+- Le **numéro de la carte** et le **téléphone** redeviennent utilisables pour la vraie activation.
+- Chaque suppression est inscrite dans un registre permanent, consultable dans Système › Éléments supprimés (numéro, auteur, date, motif).
+
+> ⚠️ Irréversible : seule une sauvegarde (§ 7) permet de revenir en arrière. Pour une carte perdue ou volée, utiliser la **révocation**, qui conserve l'historique.
+
 ### Rôles et permissions
 
 ```bash
@@ -378,7 +390,7 @@ Conserver aussi en lieu sûr, hors du serveur : le fichier `.env`, en particulie
 
 **Base de données**
 - [ ] `php artisan migrate:status` : toutes les migrations « Ran » (index de performance compris).
-- [ ] Les 6 triggers existent : `SHOW TRIGGERS;` (journal d'audit, registre des purges, opérations sur les cartes).
+- [ ] Les 8 triggers existent : `SHOW TRIGGERS;` (journal d'audit, registre des purges, opérations sur les cartes, registre des cartes supprimées).
 - [ ] `php artisan permissions:synchroniser` exécuté, superadmin créé (`SuperAdminSeeder`).
 
 **Tâches de fond**
@@ -394,6 +406,7 @@ Conserver aussi en lieu sûr, hors du serveur : le fichier `.env`, en particulie
 - [ ] Nom et logo de l'application réglés dans Administration › Paramètres.
 - [ ] Comptes admin et agents créés (PIN transmis en main propre), rôles vérifiés.
 - [ ] Partenaires créés avec leur taux, un opérateur par partenaire.
+- [ ] Cartes de test supprimées (fiche de la carte → Supprimer définitivement), ou remise à zéro complète (§ 6).
 - [ ] Parcours complet testé : activation d'une carte → vérification chez un partenaire → code SMS → validation → transaction visible dans le rapport.
 
 ## 9. Déploiement automatique (GitHub Actions)

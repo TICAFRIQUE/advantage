@@ -22,6 +22,7 @@ enum Permission: string
     case ModifierTitulaire = 'modifier-titulaire';
     case ModifierTelephoneTitulaire = 'modifier-telephone-titulaire';
     case VoirRapportCartes = 'voir-rapport-cartes';
+    case SupprimerCarteDefinitivement = 'supprimer-carte-definitivement';
 
     // Partenaires
     case VoirPartenaires = 'voir-partenaires';

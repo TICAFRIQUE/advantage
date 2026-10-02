@@ -6,6 +6,7 @@ use App\Actions\Corbeille\RestaurerAction;
 use App\Exceptions\RestaurationException;
 use App\Http\Controllers\Controller;
 use App\Models\Partenaire;
+use App\Models\SuppressionCarte;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,8 @@ use Illuminate\View\View;
 
 /**
  * Éléments supprimés (archivés) : partenaires et comptes, avec l'auteur de
- * la suppression, et leur restauration. Superadmin uniquement (routes).
+ * la suppression, et leur restauration ; registre des cartes supprimées
+ * définitivement (consultation). Superadmin uniquement (routes).
  */
 class CorbeilleController extends Controller
 {
@@ -29,6 +31,11 @@ class CorbeilleController extends Controller
                 ->with(['roles', 'supprimePar.roles', 'partenaire' => fn ($q) => $q->withTrashed()])
                 ->latest('deleted_at')->latest('id')
                 ->paginate(15, pageName: 'page_comptes'),
+            // Registre permanent : rien à restaurer, consultation seule.
+            'cartesSupprimees' => SuppressionCarte::query()
+                ->with('supprimePar.roles')
+                ->latest('cree_le')->latest('id')
+                ->paginate(15, pageName: 'page_cartes'),
         ]);
     }
 

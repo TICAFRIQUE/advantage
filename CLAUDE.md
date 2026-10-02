@@ -103,7 +103,7 @@ Règles d'implémentation :
 `id`, `nom`, `prenom`, `telephone` (**unique**, format E.164 `+<indicatif><numéro>` — identifie le titulaire et reçoit les OTP), `statut`, `cree_par_id`, `modifie_par_id`, `created_at`, `updated_at`
 
 ### `cartes` (modèle `Carte`)
-`id`, `numero_carte` (**7 chiffres**, unique à vie, soft-deletées comprises), `titulaire_id`, `active_par_id` (créateur — clé vers `users`), `active_le`, `expire_le` (= `active_le` + 1 an), `statut` (`non_activee`, `active`, `expiree`, `suspendue`, `revoquee`), `motif_statut`, `modifie_par_id`, `created_at`, `updated_at`
+`id`, `numero_carte` (**7 chiffres**, unique à vie, soft-deletées comprises — sauf suppression définitive d'une carte de test), `titulaire_id`, `active_par_id` (créateur — clé vers `users`), `active_le`, `expire_le` (= `active_le` + 1 an), `statut` (`non_activee`, `active`, `expiree`, `suspendue`, `revoquee`), `motif_statut`, `modifie_par_id`, `created_at`, `updated_at`
 
 ### `transactions` (modèle `Transaction`)
 `id`, `carte_id`, `partenaire_id`, `demande_otp_id` (**unique** — idempotence), `valide_par_id` (opérateur), `taux_applique`, `validee_le`, `statut`, `created_at`, `updated_at` — **aucun montant** : une transaction atteste le passage chez un partenaire au taux indiqué
@@ -116,6 +116,9 @@ Règles d'implémentation :
 
 ### `purges_journal_audit` (modèle `PurgeJournalAudit`)
 `id`, `type` (`automatique`, `manuelle`), `purge_par_id`, `supprime_avant`, `nombre_entrees`, `motif`, `cree_le` — registre en ajout seul (triggers UPDATE/DELETE)
+
+### `suppressions_cartes` (modèle `SuppressionCarte`)
+`id`, `numero_carte`, `supprime_par_id`, `motif`, `transactions_supprimees`, `codes_supprimes`, `alertes_supprimees`, `operations_supprimees`, `sms_supprimes`, `titulaire_supprime`, `cree_le` — registre en ajout seul (triggers UPDATE/DELETE) des cartes supprimées définitivement ; aucune donnée personnelle du titulaire
 
 ### `messages_sms` (modèle `MessageSms`)
 `id`, `telephone`, `type` (`otp`, `alerte_expiration`, `information`), `contenu` (chiffré ; masqué après envoi réel pour un OTP), `statut`, `fournisseur`, `reference_fournisseur`, `erreur`, `tentatives`, `envoye_le`, `created_at`, `updated_at`
@@ -133,6 +136,7 @@ Règles métier structurantes à respecter dans les migrations/modèles :
 - Un OTP est à usage unique, à courte durée de vie (3–5 min), avec compteur de tentatives (`tentatives`) — jamais de transaction créée avant validation OTP.
 
 ### Décisions validées (priment sur le reste du document)
+- **Suppression définitive d'une carte** (décision du 02/10/2026, pour les cartes de test créées en production) : seule exception à « jamais de suppression physique ». `SupprimerCarteDefinitivementAction` efface en une transaction la carte, ses transactions, codes OTP, alertes, opérations, et le titulaire s'il n'a aucune autre carte (avec ses SMS) ; le numéro et le téléphone redeviennent utilisables. Permission `supprimer-carte-definitivement` sans rôle par défaut (superadmin, délégable), mot de passe confirmé, motif et numéro retapé obligatoires, 5 par minute. Chaque suppression est inscrite dans `suppressions_cartes` (jamais effaçable) et au journal d'audit. `operations_cartes` reste en ajout seul : son trigger ne cède que sous le verrou de session `@autoriser_suppression_carte`, levé par cette action seule. Une carte perdue ou volée se **révoque**, elle ne se supprime pas.
 - **Pas de stock de cartes** : elles sont produites hors application. La ligne `cartes` est créée à l'activation par l'agent, qui saisit le numéro imprimé (double saisie). La contrainte UNIQUE sur `numero_carte` empêche la double activation concurrente (erreur SQL convertie en message métier).
 - **Activation** : nom, prénoms, téléphone, numéro de carte — **aucune pièce d'identité** : ni collectée ni stockée (colonnes et clé HMAC supprimées le 30/09/2026). Le **téléphone** retrouve le titulaire lors d'un renouvellement ; une seule carte en circulation par titulaire (déclarer la perte d'abord).
 - **Téléphones multi-pays**, **Côte d'Ivoire par défaut** (10 chiffres, tout préfixe) : pays configurés dans `config/plateforme.php` (`telephone.pays`), normalisation par `App\Services\Telephone`.
@@ -153,7 +157,7 @@ Règles métier structurantes à respecter dans les migrations/modèles :
 - **Cache** : centraliser l'invalidation via des Observers Laravel sur les modèles (`Carte`, `Partenaire`) plutôt que des appels `Cache::forget()` dispersés dans les contrôleurs. Cache candidat : statistiques du dashboard admin, liste des partenaires actifs, taux de réduction (invalidé à chaque modification).
 - **Jobs asynchrones** pour tout traitement lourd ou externe : envoi SMS (OTP + alertes), calcul des statistiques agrégées, génération des alertes d'expiration — jamais dans le cycle de requête HTTP.
 - **Requêtes d'agrégation** (statistiques admin) : utiliser des requêtes SQL agrégées (`selectRaw`, `groupBy`) plutôt que de charger les collections en mémoire pour les compter/sommer côté PHP.
-- **Soft deletes** sur `cartes`, `partenaires`, `titulaires` pour préserver l'intégrité de l'historique — jamais de suppression physique d'une entité référencée par une transaction.
+- **Soft deletes** sur `cartes`, `partenaires`, `titulaires` pour préserver l'intégrité de l'historique — jamais de suppression physique d'une entité référencée par une transaction (seule exception : la suppression définitive d'une carte de test, voir « Décisions validées »).
 - **Archivage** à prévoir à terme sur `journaux_audit` et `demandes_otp` (tables à forte croissance) — partitionnement ou purge différée des `demandes_otp` expirées au-delà d'une rétention définie, sans jamais toucher aux `journaux_audit`.
 
 ## 5. Tables de données (Yajra DataTables)
